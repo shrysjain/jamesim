@@ -38,7 +38,7 @@ The exported meshes use X toward the intake, Y up, Z across the chassis, with th
 | Intake/fire rate | 40 / 13 fuel per second nominal, from the supplied FRSim card; Kepler feed transit is 50 ms so the single lane can sustain this rate |
 | Speed / acceleration | 14.4 ft/s (4.38912 m/s), 33 ft/s² (10.0584 m/s²), from the supplied FRSim card |
 | Nominal empty push | 130 lbf (578.27 N); grip calibrated against the estimated 54 kg empty mass; payload and actual contact loads still affect traction |
-| Moving-shot accuracy | Card rating 95%; the moving launch-angle spread is divided by .95. This is an interpretation of the rating, not a claim of a 95% hit rate across all distances and driving conditions. No forced misses or trajectory correction after release. |
+| Moving-shot accuracy | Card rating 95%; motion-dependent launch-angle/wheel-speed uncertainty is scaled by 1/.95, with a 60 ms motion estimate. This is an interpretation of the rating, not a claim of a 95% hit rate across all distances and driving conditions. No forced misses or trajectory correction after release. |
 | Passing reach | 32 ft (9.7536 m), checked from chassis center to the selected pass landing point; 2910 retains its 33 ft default |
 | Mass/inertia | Estimates, not measured Kepler performance |
 | Climb | Team confirms L1 in the [reveal discussion](https://www.chiefdelphi.com/t/orbit-1690-2026-robot-reveal-kepler/515277?page=2). Managed tower joint limited to .212 m lift; winch rate .15 m/s is an estimate. Support tether visualizes the constraint; it does not claim to reproduce a fully rigged CAD winch. |

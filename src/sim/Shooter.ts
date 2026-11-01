@@ -62,6 +62,9 @@ export class Shooter {
   private active = false;
   private blocked = false;
   private randomState = 29102026;
+  private velocityEstimate: Vector | null = null;
+  private previousVelocity: Vector | null = null;
+  private motionAcceleration = 0;
   private feedOrder: number[] = [];
   private laneOrder: number[] = [];
   private nextFeedAt = 0;
@@ -69,6 +72,10 @@ export class Shooter {
   private laneState: { z: number; id: number | null; age: number; duration: number; offset: number; availableAt: number; lastShotAt: number; start: Vector }[] = [];
   private makeLanes() { return this.mechanism.lanes.map(z => ({ z, id: null as number | null, age: 0, duration: SHOOTER.feedSeconds, offset: 0, availableAt: 0, lastShotAt: -Infinity, start: v3() })); }
   private random() { this.randomState = (Math.imul(this.randomState, 1664525) + 1013904223) >>> 0; return this.randomState / 0x100000000; }
+  private normalRandom() {
+    // Continuous bounded release variation; no target-based forced miss or hit correction.
+    return clamp(Math.sqrt(-2 * Math.log(Math.max(1e-9, this.random()))) * Math.cos(2 * Math.PI * this.random()), -3, 3);
+  }
   private refillOrder() {
     if (!this.laneOrder.length) {
       this.laneOrder = this.laneState.map((_, i) => i);
@@ -161,6 +168,11 @@ export class Shooter {
   }
 
   preStep(dt: number, requested: boolean, powered = true) {
+    const velocity = this.chassis.body.linvel();
+    const change = this.previousVelocity ? sub(velocity, this.previousVelocity) : v3();
+    this.motionAcceleration = Math.min(12, Math.hypot(change.x, change.y, change.z) / dt);
+    this.previousVelocity = { ...velocity };
+    this.velocityEstimate = this.velocityEstimate ? lerp(this.velocityEstimate, velocity, 1 - Math.exp(-dt / .06)) : { ...velocity };
     this.active = requested; this.blocked = false;
     this.solution = requested ? this.solve() : null;
     if (this.mechanism.turret && powered && this.solution) {
@@ -226,18 +238,22 @@ export class Shooter {
       if (hit || !this.clearExit(z)) { this.blocked = true; continue; }
       // Small, repeatable wheel slip and release-angle differences break up
       // ruler-straight rows while retaining the physical aiming solution.
-      // The card's percentage is an accuracy rating, not a forced hit/miss roll.
-      // Reduce precision while translating; the released ball keeps its physical trajectory.
-      const accuracy = this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? this.geometry.movingAccuracy ?? 1 : 1;
-      const dispersion = 1 / clamp(accuracy, .05, 1);
-      const elevation = this.elevation + (this.random() - 0.5) * 0.008 * dispersion;
-      const yaw = (this.random() - 0.5) * 0.009 * dispersion;
-      const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
-        this.rpm * this.speedPerRpm * (0.996 + this.random() * 0.008))), q);
-      const velocity = add(this.chassis.body.velocityAtPoint(position), exit);
+      const speed = this.chassis.telemetry.speed, turn = Math.abs(this.chassis.body.angvel().y);
+      const motion = this.mechanism.movingShots ? clamp(Math.max(0, speed-.1)/.4 + Math.max(0, turn-.1)/1.4, 0, 1) : 0;
+      const precision = 1 / clamp(this.geometry.movingAccuracy ?? .95, .5, 1);
+      const yawSpread = motion * (.008 + .006*speed + .014*turn + .0015*this.motionAcceleration) * precision;
+      const elevationSpread = motion * (.015 + .010*speed + .030*turn + .004*this.motionAcceleration) * precision;
+      const speedSpread = motion * (.020 + .0075*speed + .025*turn + .0025*this.motionAcceleration) * precision;
+      const elevation = this.elevation + (this.random()-.5)*.008 + (motion ? this.normalRandom()*elevationSpread : 0);
+      const yaw = (this.random()-.5)*.009 + (motion ? this.normalRandom()*yawSpread : 0);
+      const wheelSlip = .996 + this.random()*.008 + (motion ? clamp(this.normalRandom()*speedSpread, -.08, .08) : 0);
+      const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation)*Math.cos(yaw), Math.sin(elevation), Math.cos(elevation)*Math.sin(yaw)), this.rpm*this.speedPerRpm*wheelSlip)), q);
+      // A 60 ms motion estimate leaves transient compensation error under acceleration/braking.
+      const estimationError = this.velocityEstimate ? scale(sub(this.chassis.body.linvel(), this.velocityEstimate), motion*.35) : v3();
+      const velocity = add(add(this.chassis.body.velocityAtPoint(position), exit), estimationError);
       if (!this.fuel.release(f, position, velocity, true)) continue;
       this.payloadChanged();
-      this.chassis.body.applyImpulseAtPoint(scale(exit, -FUEL_MASS), position, true);
+      this.chassis.body.applyImpulseAtPoint(scale(add(exit, estimationError), -FUEL_MASS), position, true);
       this.shotsFired++; this.shots.push({ id: f.id, lane: this.mechanism.lanes.indexOf(lane.z), time: this.fuel.time, position, velocity, target: this.solution.target, flightTime: this.solution.time });
       if (this.shots.length > 64) this.shots.shift();
       this.rpm = Math.max(0, this.rpm - SHOOTER.rpmDropPerBall);
@@ -251,7 +267,7 @@ export class Shooter {
       if (lane.id !== null) { const f = this.fuel.records[lane.id]; if (f.owner === this.owner && f.state === 'feeding') { f.state = 'stored'; f.local = { ...lane.start }; } }
       lane.id = null; lane.age = lane.availableAt = 0; lane.lastShotAt = -Infinity;
     }
-    this.turretYaw = 0;
+    this.turretYaw = 0; this.velocityEstimate = this.previousVelocity = null; this.motionAcceleration = 0;
     this.rpm = this.drumAngle = this.feederAngle = 0; this.elevation = this.maxElevation;
     this.solution = null; this.selection = null; this.active = this.blocked = false;
     this.feedOrder = []; this.laneOrder = []; this.nextFeedAt = this.nextLaunchAt = 0;

@@ -86,6 +86,7 @@ export class FieldSimulation {
           r.clearInput(); r.chassis.stopDrive();
         }
         r.actuatorsEnabled = this.match.actuatorsEnabled;
+        if (!r.actuatorsEnabled) r.chassis.holdDisabledDrive();
         if (!this.match.driverEnabled) {
           r.chassis.input = { ...NEUTRAL_INPUT }; r.input = { intake: false, reverse: false,
             shoot: false };
@@ -124,6 +125,7 @@ export class FieldSimulation {
         }
       }
       this.match.advance();
+      if (!this.match.actuatorsEnabled) this.robot?.holdDisabledDrive();
       if (this.match.phase === 'Complete') { this.setRunning(false); break; }
     }
     this.physicsMs = performance.now() - start;

@@ -66,6 +66,15 @@ export class SwerveChassis {
     this.body.setAngvel(vec(), true);
   }
 
+  /** Match-time hold: stop ground drift while retaining falling and climbing motion. */
+  holdDisabledDrive() {
+    this.stopDrive();
+    if (this.modules.some(m => m.grounded && m.load > 1)) {
+      const velocity = this.body.linvel();
+      this.body.setLinvel(vec(0, velocity.y, 0), true);
+    }
+  }
+
   /** Keep the physical frame upright; terrain lean belongs only to rendering. */
   enforceUpright() {
     const q = this.body.rotation(), angular = this.body.angvel();
