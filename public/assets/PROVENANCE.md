@@ -14,3 +14,5 @@
 FIRST retains its rights in its official field model, marks, and materials. FIRST's season materials page requests no re-hosting/redistribution. These prepared assets are for the requested local development and have not been published. Review the applicable redistribution terms before external deployment. No assets or code were taken from FRSim or MoSimulator.
 
 The fonts under `public/fonts` are Barlow and Barlow Condensed, obtained from the Google Fonts repository under their included SIL Open Font License files. The OpenCascade conversion dependency is a development-only tool, with its license retained by the installed npm package; it is not shipped in the runtime bundle.
+
+Publication update, November 1, 2026: the project owner authorized including the prepared runtime payload for the noncommercial v1 release and deferred license review. Earlier local-only statements describe preparation history. Source/license review status is unchanged; see `docs/V1_PUBLICATION.md`.

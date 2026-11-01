@@ -11,3 +11,5 @@ Collecting source SHA-256: `f1b4e4b05d99ca56d675e119e185aaa7bedb825cb78d559b2d52
 CAD and binder remain Team 2910's materials. Their redistribution license has not been established; the retained MIT code license applies to the reference code, not automatically to CAD. This asset is for the authorized local development workspace pending terms review before external publication.
 
 Gate 2 removes the source robot’s single `Fuel` part from the prepared GLB. All visible gameplay fuel now comes from stable simulation IDs. White 2910 bumper numbers are local canvas decals added by the renderer; the original CAD is retained unchanged.
+
+Publication update, November 1, 2026: the project owner authorized including the prepared runtime payload for the noncommercial v1 release and deferred license review. Earlier local-only statements describe preparation history. Source/license review status is unchanged; see `docs/V1_PUBLICATION.md`.

@@ -11,10 +11,20 @@ assets/source/robots/**/*.step
 assets/source/robots/**/*.zip
 assets/source/robots/**/*.glb
 
-# Local third-party payloads: keep out of the public repository until cleared.
+# Keep preparation artifacts local; publish only the v1 runtime allowlist.
 public/assets/**/*.glb
 public/assets/**/*.json
 public/audio/**/*.wav
+!public/assets/rebuilt-field.glb
+!public/assets/field-manifest.json
+!public/assets/field-collisions.json
+!public/assets/robots/2910-reblitz/robot.glb
+!public/audio/frc/start.wav
+!public/audio/frc/end.wav
+!public/audio/frc/resume.wav
+!public/audio/frc/shift_change.wav
+!public/audio/frc/warning.wav
+!public/audio/frc/abort.wav
 assets/source/**/*.pdf
 assets/source/**/technical-binder.txt
 assets/source/audio/match_sounds.go
