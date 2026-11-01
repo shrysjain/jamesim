@@ -53,6 +53,14 @@ The original Rapier body and stable ID of every fuel remain intact. Owned field 
 
 A floating-point tolerance in the world accumulator prevents 144 Hz rendering from deferring a 120 Hz tick. Frame-rate checks now require equal physics time and matching cargo positions at 30, 60 and 144 Hz. Hopper tests cover gravity/settling, moving walls, inertia, turning, bump lean, full-capacity containment, pause, reset and original fuel-body conservation. Existing shooting throughput and physical hub-hit tests remain in force.
 
+
+## Moving-shot uncertainty and match cutoff hold
+
+Moving shooters now add seeded, bounded Gaussian variation to release yaw/elevation and wheel speed. The variation grows with translation, turning and acceleration; a 60 ms velocity estimate also leaves transient compensation error when starting, braking or changing direction. Quiet stationary shots retain the previous small release variation. The coefficients are gameplay tuning, not measured team calibration; the card percentage is not a guaranteed success rate. Slow, steady motion can still score an entire short series, while the more demanding full-hopper driving/turning regression must produce physical misses and remain useful. There is no target-based hit/miss coin flip or correction after release.
+
+At AUTO, teleop and manual early-stop cutoffs, the chassis clears wheel commands and yaw, then zeros horizontal velocity while supported by grounded wheels. The hold runs at the cutoff tick and through disabled assessment, preventing momentum from carrying the robot across the carpet. Vertical falling, suspension settling and tower support remain physical, and unsupported airborne horizontal travel continues until landing. Pause and practice behavior are unchanged.
+
+This branch changes moving-shot tuning and match-time stopping only. Cargo weight, local hopper contacts and per-fuel mass use the existing main-branch implementation.
 Both retained robot choices switch bumper materials between blue and red on session changes. Prepared 2910 bumper vertex colors are disabled only on the bumper material so a blue vertex tint cannot mask red. Team numbers and other CAD colors are preserved. Browser checks inspect robot/alliance combinations; a separate WebGL render verifies the visible red/blue change.
 
 ## Stage 19.5
