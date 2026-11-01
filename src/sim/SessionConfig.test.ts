@@ -19,6 +19,6 @@ describe('singleplayer setup boundaries', () => {
   it('keeps a selected custom start through restart/config and explicit practice entry', () => {
     const m=new MatchRules();m.start({...DEFAULT_MATCH,alliance:'red',robot:'1690-kepler',start:{x:-6.6,z:.2,yaw:Math.PI}});
     const config={...m.config};m.enterPractice();expect(m.mode).toBe('practice');expect(m.config).toEqual(config);
-    expect(Object.keys(ROBOTS)).toEqual(['2910-reblitz','1690-kepler']);
+    expect(Object.keys(ROBOTS)).toEqual(expect.arrayContaining(['2910-reblitz','1690-kepler']));
   });
 });

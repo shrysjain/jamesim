@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "2910-reblitz",
+  "group": {
+    "name": "2910 ReBlitz CAD",
+    "source": "https://www.chiefdelphi.com/t/2910-cad-and-tech-binder-release-2026/521705",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/2910-reblitz/robot.glb",
+        "bytes": 4140124,
+        "sha256": "ac11fc6cf402f1ae4679d2b698d1272c820d9b985e62a842a76099c00edd3891"
+      }
+    ]
+  }
+}

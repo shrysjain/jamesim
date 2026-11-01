@@ -1,3 +1,4 @@
+import { readRuntimeManifest } from './runtime-manifest.ts';
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, extname, resolve } from 'node:path';
 import type { Plugin } from 'vite';
@@ -8,7 +9,7 @@ type Asset = { path: string; sha256: string };
 /** Emit only runtime payloads, fonts/licenses and our public identity assets. */
 export function runtimeAssetsPlugin(): Plugin {
   const root = resolve(import.meta.dirname, '..');
-  const manifest = JSON.parse(readFileSync(resolve(root, 'assets/runtime-manifest.json'), 'utf8'));
+  const manifest = readRuntimeManifest(root);
   const assets: Asset[] = manifest.groups.flatMap((group: { files: Asset[] }) => group.files);
   let build = false;
   const prepared = new Map<string, { data: Uint8Array; hash: string }>();

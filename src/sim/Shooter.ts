@@ -1,4 +1,3 @@
-import type { RobotDefinition } from '../robot/RobotDefinition';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { FIELD_HALF_LENGTH, shotTarget } from '../field/targets';
 import type { Alliance, ShotTarget } from '../field/targets';
@@ -17,7 +16,6 @@ export const SHOOTER = {
   hoodRadiansPerSecond: 140 * DEG, feedSeconds: 0.10, laneInterval: 0.125, fireRate: 32, movingThreshold: 0.18, passRange: 33 * 0.3048,
   yawTolerance: 1.5 * DEG, hoodTolerance: 1 * DEG,
 };
-const DEFAULT_GEOMETRY: NonNullable<RobotDefinition['shooterGeometry']> = { pivot: [.282575, .25325, 0], drumRadius: SHOOTER.drumRadius, guideLength: .155, turretRadiansPerSecond: 3 };
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 const approach = (from: number, to: number, amount: number) => from + clamp(to - from, -amount, amount);
 export type AimSolution = { target: ShotTarget; speed: number; elevation: number; yawError: number; trackingRate: number; time: number; obstructed: boolean };
@@ -39,7 +37,7 @@ export function flightPosition(position: Vector, velocity: Vector, seconds: numb
 /** Definition-owned feed lanes and flywheel geometry, with chassis or turret aiming. */
 export class Shooter {
   turretYaw = 0;
-  get geometry() { return this.chassis.definition.shooterGeometry ?? DEFAULT_GEOMETRY; }
+  get geometry() { return this.chassis.definition.shooterGeometry; }
   private get minElevation() { return this.geometry.minElevation ?? SHOOTER.minElevation; }
   private get maxElevation() { return this.geometry.maxElevation ?? SHOOTER.maxElevation; }
   /** Rotate every point about the bearing axis, including an offset flywheel axle. */

@@ -27,7 +27,7 @@ export function SetupScreen({ config, practice: initialPractice, onStart, onSett
     <div className="setup-grid">
       <section className="robot-selection" aria-label="Robot and alliance">
         <label className="setup-label" htmlFor="robot-choice">Robot</label>
-        <div className="robot-choice"><span className="team-number">{robot.id.split('-')[0]}</span><label><span className="sr-only">Choose robot</span><select id="robot-choice" value={robot.id} onChange={e => { setDraft({ ...draft, robot: e.target.value as RobotId }); focusMap(); }}>{Object.values(ROBOTS).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</select><small>{robot.mechanisms.turret ? 'Turret · moving shots · L1 climb' : 'Chassis aim · four shooting lanes'}</small></label></div>
+        <div className="robot-choice"><span className="team-number">{robot.teamNumber}</span><label><span className="sr-only">Choose robot</span><select id="robot-choice" value={robot.id} onChange={e => { setDraft({ ...draft, robot: e.target.value as RobotId }); focusMap(); }}>{Object.values(ROBOTS).map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</select><small>{robot.summary}</small></label></div>
         <div className="robot-preview"><Suspense fallback={<p>Loading robot…</p>}><RobotPreview robot={robot} alliance={alliance} /></Suspense><span>Drag to inspect</span></div>
         <fieldset className="alliance-choice"><legend>Alliance</legend>{(['blue', 'red'] as const).map(a => <button key={a} className={a} aria-pressed={alliance === a} onClick={() => chooseAlliance(a)}><i />{a}</button>)}</fieldset>
       </section>

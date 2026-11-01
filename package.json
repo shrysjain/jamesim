@@ -14,14 +14,17 @@
     "benchmark:drive": "node scripts/benchmark-drive.mjs",
     "benchmark:shoot": "node scripts/benchmark-shooter.mjs",
     "benchmark:practice": "node scripts/benchmark-shooter.mjs --practice",
-    "test:unit": "vitest run src/controls.test.ts src/sim/SessionConfig.test.ts src/sim/MatchRules.test.ts src/sim/MatchCues.test.ts src/settings.test.ts src/field/collisionAsset.test.ts src/view/MatchAudio.test.ts",
+    "test:unit": "vitest run src/robot/RobotDefinitions.test.ts src/robot/RobotWorkflow.test.ts src/controls.test.ts src/sim/SessionConfig.test.ts src/sim/MatchRules.test.ts src/sim/MatchCues.test.ts src/settings.test.ts src/field/collisionAsset.test.ts src/view/MatchAudio.test.ts",
     "test:sim": "pnpm assets:check && vitest run --maxWorkers=1 --testTimeout=30000",
     "assets:check": "node scripts/check-assets.mjs",
     "assets:check:release": "node scripts/check-assets.mjs --release",
     "build:release": "pnpm assets:check && pnpm build && pnpm check:build",
     "build:local": "pnpm assets:check && pnpm build && pnpm check:build",
     "check:build": "node scripts/check-build.mjs",
-    "assets:kepler": "node scripts/prepare-kepler.mjs"
+    "assets:kepler": "node scripts/prepare-kepler.mjs",
+    "test:robots": "vitest run src/robot",
+    "robot:branch": "node scripts/robot-branch.ts",
+    "robot:push": "node scripts/robot-branch.ts --push"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",

@@ -6,6 +6,7 @@ import type { DriveSpawn } from './SwerveChassis';
 import { FuelSystem, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { Fuel } from './FuelSystem';
 import type { RobotDefinition, RobotPose } from '../robot/RobotDefinition';
+import { REBLITZ_CARGO, REBLITZ_FEEDER_POCKET } from '../robot/robots/2910-reblitz/cargo';
 import { REBLITZ, STARTING_POSE } from '../robot/RobotDefinition';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
@@ -15,16 +16,9 @@ import { GameplayContacts } from './GameplayContacts';
 
 export type MechanismInput = { intake: boolean; reverse: boolean; shoot?: boolean; toggleIntake?: boolean; climb?: boolean; supply?: boolean };
 export const NEUTRAL_MECHANISMS: MechanismInput = { intake: false, reverse: false, shoot: false };
-/** Close-packed 150 mm fuel: 54 in three staggered layers plus one feeder pocket.
- * The managed packing uses 151 mm center spacing; no smaller rendered balls. */
-const spacing = 0.151, rowPitch = spacing * Math.sqrt(3) / 2, layerPitch = spacing * Math.sqrt(2 / 3);
-export const STORAGE_SLOTS: Vector[] = [0, 1, 2].flatMap(layer =>
-  [0, 1, 2, 3].flatMap(row => Array.from({ length: layer === 1 ? 4 : 5 }, (_, column) =>
-    v3(-0.56 + row * spacing + (column % 2) * spacing / 2 + (layer === 1 ? spacing / 2 : 0),
-      -0.022 + layer * layerPitch, (column - 2) * rowPitch + (layer === 1 ? rowPitch / 3 : 0)))
-    .filter(p => p.x < 0)));
-export const FEEDER_POCKET = STORAGE_SLOTS.length;
-STORAGE_SLOTS.push(v3(0.13, 0.04, 0));
+/** Compatibility exports for existing 2910 benches; every robot now supplies its own cargo layout. */
+export const STORAGE_SLOTS: Vector[] = REBLITZ_CARGO.map(([x, y, z]) => v3(x, y, z));
+export const FEEDER_POCKET = REBLITZ_FEEDER_POCKET;
 export const INTAKE = { capacity: STORAGE_SLOTS.length, deploySeconds: 0.18, compressSeconds: 0.45, transferSeconds: 0.3, capturePerSecond: 50, ejectPerSecond: 12 };
 /** Eight balls fit with the mechanism fully in; excess cargo limits compression. */
 export const cargoExtension = (count: number, capacity = INTAKE.capacity) => Math.max(0, Math.min(1, (count - 8) / Math.max(1, capacity - 8)));
@@ -64,9 +58,9 @@ export class RobotSimulation {
   private payloadSignature = '';
 
   constructor(private world: RAPIER.World, readonly fuel: FuelSystem, private fieldElements: Map<number, string>, definition: RobotDefinition = REBLITZ, readonly owner = 'robot-0') {
-    this.storageSlots = definition.cargoSlots?.map(([x, y, z]) => v3(x, y, z)) ?? STORAGE_SLOTS.slice(0, definition.mechanisms.capacity).map(p => ({ ...p }));
+    this.storageSlots = definition.cargoSlots.map(([x, y, z]) => v3(x, y, z));
     if (this.storageSlots.length !== definition.mechanisms.capacity) throw new Error(`Invalid cargo layout for ${definition.id}`);
-    this.pickup = definition.pickup ?? { minX: -.79, maxX: -.44, halfWidth: .29, mouthX: -.53, ejectX: -.755 };
+    this.pickup = definition.pickup;
     this.hopper = new HopperDynamics(definition);
     this.chassis = new SwerveChassis(world, definition, fieldElements);
     this.climber = new Climber(world, this.chassis, fieldElements);

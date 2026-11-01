@@ -1,10 +1,11 @@
+import { readRuntimeManifest } from './runtime-manifest.ts';
 import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { resolve, relative } from 'node:path';
 import { unpackCollisions } from '../src/field/collisionAsset.ts';
 
 const root = resolve(import.meta.dirname, '..'), dist = resolve(root, 'dist');
-const manifest = JSON.parse(await readFile(resolve(root, 'assets/runtime-manifest.json'), 'utf8'));
+const manifest = readRuntimeManifest(root);
 async function walk(dir) {
   const files = [];
   for (const item of await readdir(dir, { withFileTypes: true })) {
