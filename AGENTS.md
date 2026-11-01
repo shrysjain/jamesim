@@ -26,19 +26,19 @@ Jamesim is a browser-only FRC 2026 REBUILT simulator. Read `docs/SINGLEPLAYER_RE
 
 ## Assets and publication
 
-- The public Git repository currently contains code, source URLs, hashes, provenance and redistributable fonts, not the pending-clearance CAD/audio payloads or binders.
-- `.gitignore` deliberately excludes those local payloads. Do not force-add them or infer CAD/media permissions from the MIT license on Team 2910's reference code.
-- `assets/runtime-manifest.json` lists the expected local runtime payloads. `pnpm assets:check` checks presence and hashes; `pnpm assets:check:release` also requires recorded redistribution clearance.
-- A clean clone can type-check/build the application shell and run asset-independent unit checks. Full gameplay and asset-dependent tests require the local asset pack described in `docs/ASSETS.md`.
-- Public deployment must use `pnpm build:release`, not the shell-only build. Do not mark an unreviewed asset cleared without source evidence. Preserve attribution and license records.
-- Do not upload original CAD/binders, caches, credentials or `node_modules`. Do not deploy automatically as part of routine commits.
+- The project owner explicitly authorized the noncommercial v1 runtime publication on November 1, 2026, deferring license review. This supersedes the earlier local-only asset restriction; see `docs/V1_PUBLICATION.md`.
+- Only the prepared field data/model, prepared robot and six match samples are allowlisted in Git. Keep original CAD, binders, conversion reports, caches, credentials and `node_modules` excluded. Do not broaden that allowlist without a task requiring it.
+- `assets/runtime-manifest.json` records runtime paths, sizes, hashes and redistribution-review status. `pnpm assets:check` validates the payload. The separate `pnpm assets:check:release` remains a license-record audit and is not the v1 build gate.
+- `pnpm build:release` must retain asset-integrity, TypeScript/Vite and production-payload checks. Do not mark unreviewed third-party material cleared or infer CAD rights from the reference code's MIT license. Preserve attribution and source/license records.
+- A clean clone now contains the complete runtime pack. The Vercel config pins pnpm 10.20.0 explicitly for install and build; Node 26 is pinned in `package.json`.
+- Do not publish a site or change hosting/account settings unless asked. GitHub pushes and CI checks do not themselves authorize a manual deployment.
 
 ## Verification and changes
 
 - Match the verification to the change. Do not repeatedly run broad browser/physics benchmarks for small edits. Respect an explicit request to skip tests and say what was skipped.
 - `pnpm test:unit`: asset-independent rule/audio schedule checks.
 - `pnpm test:sim`: complete simulation checks, serial workers to avoid memory/CPU contention; requires local field assets.
-- `pnpm build`: TypeScript and Vite compilation (shell-only clones allowed). `pnpm build:local`: source-pack integrity, complete build and production-payload checks. `pnpm build:release`: clearance plus build/payload checks. `pnpm preview` serves the production interface on port 4173.
+- `pnpm build`: TypeScript and Vite compilation (shell-only clones allowed). `pnpm build:local`: source-pack integrity, complete build and production-payload checks. `pnpm build:release`: the same integrity/build/payload checks for the owner-authorized v1 release. `pnpm preview` serves the production interface on port 4173.
 - For gameplay changes, run relevant simulation cases when authorized. Update assertions when the intended behavior changes; do not weaken checks to hide regressions.
 - When UI is changed, use one focused local browser check when appropriate, rather than exhaustive exploration.
 - Keep commits scoped and descriptions concrete. Review staged files and sizes before pushing. Never force-push or rewrite published history without an explicit request.

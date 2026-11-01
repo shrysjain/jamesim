@@ -1,4 +1,4 @@
-name: Source checks
+name: Release checks
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: source-checks-${{ github.ref }}
+  group: release-checks-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,6 +22,5 @@ jobs:
           node-version-file: .nvmrc
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:unit
-      - run: pnpm build
-      # CAD/audio payloads are intentionally local pending clearance.
-      # This validates source, not a complete release, and publishes no artifact.
+      - run: pnpm build:release
+      # Validate the complete runtime payload without deploying it.

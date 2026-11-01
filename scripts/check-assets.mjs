@@ -29,6 +29,6 @@ for (const group of manifest.groups) {
 }
 if (errors.length) {
   console.error(errors.join('\n'));
-  console.error('The working asset pack is local. Follow docs/ASSETS.md; do not substitute cache paths or unreviewed public downloads.');
+  console.error('Follow docs/ASSETS.md. Restore the recorded runtime files; do not substitute cache paths.');
   process.exitCode = 1;
 } else console.log(`${count} runtime files verified (${(bytes / 1024 / 1024).toFixed(2)} MiB)${release ? '; redistribution records present' : '; local integrity only, not publication clearance'}.`);

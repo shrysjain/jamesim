@@ -1,6 +1,6 @@
 # Singleplayer release candidate — local acceptance
 
-November 1, 2026. The v1 player flow is implemented and prepared for the user's local review. Nothing has been deployed or connected to a hosting project. Publication still requires recorded runtime-media clearance; user acceptance on the intended machines remains the final release decision.
+November 1, 2026. The v1 player flow is implemented and prepared for the user's local review. Nothing has been deployed or connected to a hosting project. The user subsequently approved the preview and authorized preparing noncommercial v1 publication with license review deferred. [V1_PUBLICATION.md](V1_PUBLICATION.md) supersedes the original publication gate below; no third-party review status was changed.
 
 ## Try the production interface
 

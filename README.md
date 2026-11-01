@@ -6,7 +6,7 @@ Jamesim is a browser-only singleplayer simulator for the 2026 FIRST Robotics Com
 
 The local release candidate opens directly into a timed solo fuel match with R restart, saved settings and a compact fuel/status HUD. Production builds exclude the inspector and development shortcuts. See [release acceptance](docs/SINGLEPLAYER_ACCEPTANCE.md), [the v1 plan](docs/SINGLEPLAYER_RELEASE_PLAN.md) and [agent instructions](AGENTS.md). No public deployment has been made.
 
-This public repository currently contains code, tools, source records and licensed fonts. Pending-clearance CAD/audio payloads and binders stay in the original local workspace. **A clean clone needs an authorized runtime asset pack to play.** See [asset setup and release preflight](docs/ASSETS.md); compiling the shell alone is not a complete deployment. Vercel configuration deliberately uses the release preflight and will not publish while assets/clearance are missing.
+The prepared runtime field, robot and audio pack is included for the owner-authorized noncommercial v1 release. A clean clone can build the complete game. Raw CAD, binders and preparation reports remain excluded. Source records, hashes and attribution are retained; the owner's publication decision does not reclassify pending third-party license reviews. See [runtime assets](docs/ASSETS.md) and [Vercel import instructions](docs/V1_PUBLICATION.md).
 
 ## Run locally
 
@@ -77,7 +77,7 @@ The internal frame uses meters: X along field length, Y up, Z across field width
 
 ## Rebuild the field asset
 
-The existing local workspace contains the prepared runtime files; public Git does not yet include the pending-clearance pack. To intentionally regenerate them, download the [official STEP](https://firstfrc.blob.core.windows.net/frc2026/FieldAssets/FE-2026-rev-rebuilt-playing-field.step) to `assets/source/field.step`, then run:
+Git includes the prepared runtime files. Original CAD sources remain local. To intentionally regenerate them, download the [official STEP](https://firstfrc.blob.core.windows.net/frc2026/FieldAssets/FE-2026-rev-rebuilt-playing-field.step) to `assets/source/field.step`, then run:
 
 ```sh
 python3 scripts/prepare-step.py

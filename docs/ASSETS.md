@@ -1,8 +1,8 @@
-# Local runtime assets and public Git
+# Runtime assets and builds
 
-The public repository contains the application, tests, offline preparation tools, source URLs/hashes, provenance and OFL-licensed fonts. The existing working directory also contains a local runtime media pack. These are different sets: a fresh Git checkout can compile the application shell but cannot play the game until that pack is installed.
+The repository includes the prepared field/model data, 2910 runtime model, six match sounds and fonts needed for a complete clean-clone build. Original STEP/GLB exports, binders, conversion reports and QA captures remain local and excluded.
 
-`assets/runtime-manifest.json` records the required prepared files, byte sizes and SHA-256 hashes. `pnpm assets:check` validates a local pack. `pnpm assets:check:release` additionally requires redistribution clearance with source evidence for every group. The three pending groups are FIRST field derivatives, 2910 CAD and match audio.
+The project owner explicitly authorized noncommercial v1 publication on November 1, 2026, deferring license review. This supersedes the earlier local-only restriction. See [the decision and Vercel instructions](V1_PUBLICATION.md). Redistribution-review statuses in `assets/runtime-manifest.json` remain factual and unchanged; this is a project-owner publication decision, not a new third-party license.
 
 ## Required files
 
@@ -13,37 +13,19 @@ The public repository contains the application, tests, offline preparation tools
 
 The original STEP/GLBs, intermediate meshes, binder PDF/full extraction and local browser screenshots are not required by the browser and are excluded from Git. Keep them in the existing workspace if needed for offline preparation. Never depend on a system cache.
 
-## Developing from a clean checkout
+## Clean checkout
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm test:unit
-pnpm build
-```
-
-Those commands validate rules/cue timing and compile code, not a playable public release. For full gameplay, place an authorized copy of the prepared pack at the paths above, then:
-
-```sh
-pnpm assets:check
-pnpm dev
-```
-
-Run `pnpm test:sim` for the complete simulation checks once the pack is present. Source and conversion instructions are in README and the retained provenance files. Do not infer an automatic right to publicly redistribute a prepared model because its source can be downloaded.
-
-## Publication
-
-Before a public site or media commit, establish permission/license terms or replace the pending assets. Record the evidence in the manifest and relevant provenance; do not just flip a status flag. See the [release plan](SINGLEPLAYER_RELEASE_PLAN.md) for the blocking questions and alternatives. The release build intentionally fails while files or clearance are missing:
-
-```sh
 pnpm build:release
+pnpm preview
 ```
 
-Normal Vite `pnpm build` remains available for source-only CI and local development. Do not configure public production deployment to bypass the release preflight. No public deployment is created by the repository's checks workflow.
+`pnpm assets:check` verifies every recorded size/hash. `pnpm build:release` runs that integrity check, TypeScript/Vite compilation and the complete production-payload check. Missing or changed assets still fail the build. The separate `pnpm assets:check:release` audits source-backed redistribution clearance and will continue reporting the pending field, CAD and audio reviews; the owner has deferred that audit as a v1 publication gate.
 
-After clearance, preferably commit the roughly 14 MiB prepared runtime pack with versioned URLs, while continuing to exclude the roughly 400 MiB raw/intermediate preparation workspace. A separately supplied approved versioned build pack is also possible. CI does not currently fetch missing media from third parties or publish it as an artifact.
+## Production packaging
 
-## Local release packaging
+The Vite runtime-assets plugin allowlists recorded payloads instead of copying the whole public directory. It emits content-hashed model, metadata and audio files. Collision JSON is packed into a hashed binary containing exactly the float32 vertices and uint32 indices Rapier used before. Source JSON and hashes remain unchanged. All browser asset references resolve through the same generated URL map.
 
-`pnpm build:local` checks the installed pack, builds the production interface and runs `pnpm check:build`. It is intended for the user's offline/local review while publication records are completed. `pnpm build:release` performs the additional source-backed clearance gate before the same build/payload check.
-
-The Vite runtime-assets plugin allowlists the recorded payloads instead of copying the whole public directory. It emits content-hashed model, metadata and audio files. Collision JSON is packed into a hashed binary containing the exact float32 vertices and uint32 indices Rapier previously constructed; source JSON/hashes remain unchanged. The browser resolves all metadata URLs through the same generated map. `check:build` compares the built geometry and checks for missing/unexpected files and development interfaces. Font/OFL files and retained media/dependency notices ship alongside the owned favicon/social image.
+`pnpm check:build` verifies the packed geometry and checks for missing/unexpected files or development interfaces. Font/OFL files and retained media/dependency notices ship alongside the owned favicon/social image. No raw CAD conversion or external asset download is required during hosting builds or browser startup.

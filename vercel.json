@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm build:release",
+  "installCommand": "npx --yes pnpm@10.20.0 install --frozen-lockfile",
+  "buildCommand": "npx --yes pnpm@10.20.0 run build:release",
   "outputDirectory": "dist",
   "headers": [
     { "source": "/", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },

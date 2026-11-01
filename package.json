@@ -18,7 +18,7 @@
     "test:sim": "pnpm assets:check && vitest run --maxWorkers=1 --testTimeout=30000",
     "assets:check": "node scripts/check-assets.mjs",
     "assets:check:release": "node scripts/check-assets.mjs --release",
-    "build:release": "pnpm assets:check:release && pnpm build && pnpm check:build",
+    "build:release": "pnpm assets:check && pnpm build && pnpm check:build",
     "build:local": "pnpm assets:check && pnpm build && pnpm check:build",
     "check:build": "node scripts/check-build.mjs"
   },
