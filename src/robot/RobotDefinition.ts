@@ -7,6 +7,7 @@ export type RobotDefinition = {
   id: string; name: string; model: string;
   mass: number; inertia: Vec3; length: number; width: number;
   wheelRadius: number; mountY: number; springLength: number; travel: number; bumperCenterY: number;
+  drive?: { maxSpeed: number; acceleration: number; grip: number };
   modules: { name: string; x: number; z: number }[];
   intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean };
   hopper: { stowTravel: number };
@@ -15,8 +16,8 @@ export type RobotDefinition = {
   climb?: { maxLift: number; rate: number };
   cargoSlots?: Vec3[];
   pickup?: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
-  shooterGeometry?: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number };
-  mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; turret: boolean; movingShots: boolean; simultaneousIntake?: boolean; climb: boolean };
+  shooterGeometry?: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number };
+  mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; movingShots: boolean; simultaneousIntake?: boolean; climb: boolean };
 };
 
 /** CAD dimensions in meters; empty mass/inertia remain estimates.
@@ -94,18 +95,19 @@ export const HIGH_TIDE: RobotDefinition = {
   ],
 };
 /** Team release CAD; dimensions/frames measured from the closed/open exports.
- * Mass, rates and 60-ball managed packing are gameplay estimates (docs/KEPLER.md). */
+ * Gameplay performance follows the user-supplied FRSim card; CAD mass remains estimated (docs/KEPLER.md). */
 export const KEPLER: RobotDefinition = {
   ...REBLITZ, id: '1690-kepler', name: '1690 Orbit · Kepler', model: '/assets/robots/1690-kepler/robot.glb',
   mass: 54, inertia: [3.0, 5.6, 3.2], length: .7874, width: .889,
   springLength: .1122,
+  drive: { maxSpeed: 14.4 * .3048, acceleration: 33 * .3048, grip: 130 * 4.4482216152605 / (54 * 9.81) },
   modules: REBLITZ.modules.map(m => ({ ...m, x: Math.sign(m.x) * .2505, z: Math.sign(m.z) * .3013 })),
   intake: { pivot: [0, 0, 0], stowedAngle: 0, stowTravel: .312, stowRise: .0691, manualRetraction: true, passiveKicker: true },
   hopper: { stowTravel: 0 }, hood: { pivot: [.204, .241, .1872], maxAngle: (82.47 - 35) * Math.PI / 180 },
-  shooterGeometry: { pivot: [.204, .241, .1872], turretPivot: [.134, -.223, .1872], drumRadius: .0502, guideLength: .155, turretRadiansPerSecond: 4, minElevation: 35 * Math.PI / 180, maxElevation: 82.47 * Math.PI / 180 },
+  shooterGeometry: { pivot: [.204, .241, .1872], turretPivot: [.134, -.223, .1872], drumRadius: .0502, guideLength: .155, turretRadiansPerSecond: 4, minElevation: 35 * Math.PI / 180, maxElevation: 82.47 * Math.PI / 180, passRange: 32 * .3048, movingAccuracy: .95 },
   climb: { maxLift: .212, rate: .15 },
-  mechanisms: { capacity: 60, intakeRate: 16, compress: false, lanes: [0], fireRate: 8, turret: true, movingShots: true, simultaneousIntake: true, climb: true },
-  cargoSlots: Array.from({ length: 60 }, (_, i): Vec3 => {
+  mechanisms: { capacity: 50, intakeRate: 40, compress: false, lanes: [0], fireRate: 13, feedSeconds: .05, turret: true, movingShots: true, simultaneousIntake: true, climb: true },
+  cargoSlots: Array.from({ length: 50 }, (_, i): Vec3 => {
     const layer = Math.floor(i / 20), row = Math.floor(i % 20 / 5), column = i % 5;
     return [-.39 + row * .151 + (column % 2) * .0755 + (layer % 2) * .0755,
       -.022 + layer * .151 * Math.sqrt(2 / 3),

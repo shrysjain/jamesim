@@ -89,7 +89,7 @@ export class Shooter {
 
   private candidate(target: ShotTarget, t: number) {
     const body = this.chassis.body, q = this.chassis.renderRotation;
-    if (target.kind === 'Pass' && Math.hypot(target.position.x - body.translation().x, target.position.z - body.translation().z) > SHOOTER.passRange) return null;
+    if (target.kind === 'Pass' && Math.hypot(target.position.x - body.translation().x, target.position.z - body.translation().z) > (this.geometry.passRange ?? SHOOTER.passRange)) return null;
     const a = (1 - Math.exp(-FUEL_LINEAR_DAMPING * t)) / FUEL_LINEAR_DAMPING;
     const b = (t - a) / FUEL_LINEAR_DAMPING;
     let elevation = this.elevation, relative = v3();
@@ -204,7 +204,7 @@ export class Shooter {
         f = this.fuel.ownedBy(this.owner).filter(fuel => fuel.state === 'stored').sort((a, b) => b.local.x - a.local.x || Math.abs(a.local.z - lane.z) - Math.abs(b.local.z - lane.z) || a.id - b.id)[0] ?? null;
         if (f) {
           lane.id = f.id; lane.age = 0; lane.start = { ...f.local }; f.state = 'feeding';
-          lane.duration = SHOOTER.feedSeconds + (this.random() - 0.5) * 0.024;
+          lane.duration = (this.mechanism.feedSeconds ?? SHOOTER.feedSeconds) * (1 + (this.random() - 0.5) * .24);
           lane.offset = (this.random() - 0.5) * 0.016;
           this.nextFeedAt = Math.max(this.nextFeedAt, this.fuel.time - dt) + (0.8 + this.random() * 0.4) / this.mechanism.fireRate;
           this.feedOrder.shift();
@@ -216,7 +216,7 @@ export class Shooter {
       const end = this.muzzleLocal(this.elevation, z), control = this.turretPoint(v3(-.102575, -.13325, z));
       f.local = lerp(lerp(lane.start, control, t), lerp(control, end, t), t);
       if (!requested && lane.age === 0) { f.state = 'stored'; lane.id = null; continue; }
-      if (t < 1 || !this.ready || !requested || !this.solution || this.fuel.time < this.nextLaunchAt || this.fuel.time < lane.lastShotAt + (this.mechanism.turret ? 1 / this.mechanism.fireRate : SHOOTER.laneInterval) - 1e-7) continue;
+      if (t < 1 || !this.ready || !requested || !this.solution || this.fuel.time < this.nextLaunchAt || this.fuel.time < lane.lastShotAt + (this.mechanism.turret ? Math.min(1 / this.mechanism.fireRate, this.mechanism.feedSeconds ?? Infinity) : SHOOTER.laneInterval) - 1e-7) continue;
       const position = this.muzzle(z), q = this.chassis.renderRotation;
       const relative = rotate(this.turretRotate(v3(Math.cos(this.elevation), Math.sin(this.elevation), 0)), q);
       // Include own proxies and other loose balls: never create a projectile in solid geometry.
@@ -226,8 +226,12 @@ export class Shooter {
       if (hit || !this.clearExit(z)) { this.blocked = true; continue; }
       // Small, repeatable wheel slip and release-angle differences break up
       // ruler-straight rows while retaining the physical aiming solution.
-      const elevation = this.elevation + (this.random() - 0.5) * 0.008;
-      const yaw = (this.random() - 0.5) * 0.009;
+      // The card's percentage is an accuracy rating, not a forced hit/miss roll.
+      // Reduce precision while translating; the released ball keeps its physical trajectory.
+      const accuracy = this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? this.geometry.movingAccuracy ?? 1 : 1;
+      const dispersion = 1 / clamp(accuracy, .05, 1);
+      const elevation = this.elevation + (this.random() - 0.5) * 0.008 * dispersion;
+      const yaw = (this.random() - 0.5) * 0.009 * dispersion;
       const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
         this.rpm * this.speedPerRpm * (0.996 + this.random() * 0.008))), q);
       const velocity = add(this.chassis.body.velocityAtPoint(position), exit);

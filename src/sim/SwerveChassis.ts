@@ -84,6 +84,7 @@ export class SwerveChassis {
 
   constructor(private world: RAPIER.World, readonly definition: RobotDefinition = REBLITZ,
     private fieldElements = new Map<number, string>()) {
+    this.tuning = { ...DEFAULT_TUNING, ...definition.drive };
     this.modules = definition.modules.map(({ x, z }) => ({ x, z, angle: 0, speed: 0, suspension: definition.springLength, grounded: false, load: 0, point: vec(), force: vec() }));
     this.body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setCanSleep(false)
       .enabledRotations(false, true, false)

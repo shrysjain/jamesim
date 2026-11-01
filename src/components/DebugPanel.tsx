@@ -20,7 +20,8 @@ export default function DebugPanel({ engine, stats, onClose, onRestart, onSync }
   const match = stats.match, isMatch = match?.mode === 'match';
   const robot = stats.robot, mechanisms = stats.mechanisms, shooter = mechanisms?.shooter, hubs = stats.hubs;
   const [options, setOptions] = useState({ ...defaultOptions });
-  const [tuning, setTuning] = useState({ ...DEFAULT_TUNING });
+  const chassis = engine.sim.robot?.definition ?? CHASSIS;
+  const [tuning, setTuning] = useState(() => ({ ...(engine.sim.robot?.tuning ?? DEFAULT_TUNING) }));
   const [driveFrame, setDriveFrame] = useState<DriveFrame>('field');
   const [robotPose, setRobotPose] = useState<RobotPose>({ ...STARTING_POSE });
   const displayedPose = mechanisms && !mechanisms.preview ? { intake: mechanisms.intake, hopper: mechanisms.hopper, hood: mechanisms.hood } : robotPose;
@@ -54,7 +55,7 @@ export default function DebugPanel({ engine, stats, onClose, onRestart, onSync }
     return () => {
       window.removeEventListener('keydown', key); engine.inspectEnabled = false;
       engine.resumeMechanisms(); engine.updateOptions(defaultOptions); engine.setMode('follow');
-      engine.setDriveFrame('field'); engine.sim.robot?.setTuning(DEFAULT_TUNING);
+      engine.setDriveFrame('field'); engine.sim.robot?.setTuning({ ...DEFAULT_TUNING, ...engine.sim.robot?.definition.drive });
     };
   }, [engine]);
   return <aside className="debug-panel" aria-label="Drive testing and debugging">
@@ -67,7 +68,7 @@ export default function DebugPanel({ engine, stats, onClose, onRestart, onSync }
             {([
               ['maxSpeed', 'Top speed', 1, 5.5, 0.1, 'm/s'], ['acceleration', 'Wheel acceleration', 2, 12, 0.5, 'm/s²'], ['grip', 'Tire grip', 0.5, 1.6, 0.05, 'μ'],
             ] as const).map(([key, label, min, max, step, unit]) => <label className="tuning-control" key={key}><span>{label}<output>{tuning[key].toFixed(key === 'grip' ? 2 : 1)} {unit}</output></span><input type="range" disabled={isMatch} aria-label={label} min={min} max={max} step={step} value={tuning[key]} onChange={(e) => changeTuning(key, Number(e.target.value))} /></label>)}
-            <div className="spec-note">{CHASSIS.mass} kg · {CHASSIS.length} × {CHASSIS.width} m bumpers<br />4 force-limited modules · 120 Hz physics</div><button className="text-button" disabled={isMatch} onClick={() => setTuning({ ...DEFAULT_TUNING })}>Restore driving defaults</button>
+            <div className="spec-note">{chassis.mass} kg · {chassis.length} × {chassis.width} m bumpers<br />4 force-limited modules · 120 Hz physics</div><button className="text-button" disabled={isMatch} onClick={() => setTuning({ ...DEFAULT_TUNING, ...engine.sim.robot?.definition.drive })}>Restore driving defaults</button>
           </section>
           <section className="panel-section"><h3>Robot assembly</h3><p className="section-note">Both assemblies deploy at the start. The hopper stays out; Space compresses only the intake. Shift runs intake rollers; Q reverses. Intake is at −X; the shooter is at +X.</p><div className="button-grid"><button disabled={isMatch} onClick={() => applyPose({ intake: 0, hopper: 0, hood: 0 })}>Starting pose</button><button disabled={isMatch} onClick={() => applyPose({ ...COLLECTING_POSE })}>Collecting pose</button></div>
             {([['intake', 'Intake deployment'], ['hopper', 'Hopper deployment'], ['hood', 'Hood position']] as const).map(([key, label]) => <label className="tuning-control" key={key}><span>{label}<output>{Math.round(displayedPose[key] * 100)}%</output></span><input type="range" disabled={isMatch} aria-label={label} min={0} max={1} step={0.01} value={displayedPose[key]} onChange={e => changePose(key, Number(e.target.value))} /></label>)}
