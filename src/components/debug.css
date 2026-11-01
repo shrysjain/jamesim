@@ -41,7 +41,6 @@ select { width: 100%; color: #bfcede; background: #23394c; border: 1px solid #61
 
 .with-debug .viewport { right: 344px; }
 .with-debug .play-header { right: 366px; }
-.with-debug .drive-hints { left: calc((100% - 344px) / 2); bottom: 24px; gap: 10px; }
 .with-debug .drive-readout { bottom: 90px; }
 .with-debug .pause-shade { right: 344px; }
 .shooter-lanes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; font-size: 10px; color: #91a5b6; }

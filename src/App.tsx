@@ -1,3 +1,4 @@
+import { ControlsHint } from './components/ControlsHint';
 import { SessionDialog } from './components/SessionDialog';
 import { ACTIONS, ACTION_LABELS, keyLabel } from './controls';
 import { ROBOTS } from './robot/RobotDefinition';
@@ -118,19 +119,17 @@ export function App() {
       <main className="stage" aria-label="Jamesim solo fuel match">
         <div ref={viewport} className="viewport" />
         {manifest && <>
-          <div className="inventory-hud" aria-label="Robot fuel and status">
-            <div className="robot-label"><span />{activeRobot.name}</div>
-            <div className={`fuel-readout ${fuelStatus === 'Full' ? 'full' : ''}`} aria-label={`${fuel?.count ?? 0} of ${fuel?.capacity ?? 55} fuel. ${fuelStatus}`}><i /><strong>{fuel?.count ?? 0}<small> / {fuel?.capacity ?? 55}</small></strong><span>FUEL<b>{fuelStatus}</b></span></div>
-            {activeRobot.intake.stowTravel && <div className="shooter-readout" aria-label="Intake extension"><span>Intake</span><strong>{fuel?.intakeStatus ?? 'Retracted'}</strong></div>}
-            {activeRobot.mechanisms.climb && <div className="shooter-readout" aria-label="Climber status"><span>Climber</span><strong>{fuel?.climb.status ?? 'Approach your own tower'}</strong></div>}
-            {match?.config.humanSupply && <div className="shooter-readout" aria-label="Outpost supply"><span>Outpost · {match.config.alliance ?? 'blue'}</span><strong>{stats.humanPlayer?.[match.config.alliance ?? 'blue'] ?? 0} fuel{stats.humanPlayer?.blocked ? ' · outlet blocked' : ''}</strong></div>}
-            {shooter?.active && <div className="shooter-readout" aria-label={`Shooter: ${shooter.mode}`}><span>{shooter.target ?? 'Shooter'}</span><strong>{shooter.mode}</strong></div>}
+          <div className="player-hud">
+            <div className="inventory-hud" aria-label="Robot fuel and status">
+              <div className="robot-label"><span />{activeRobot.name}</div>
+              <div className={`fuel-readout ${fuelStatus === 'Full' ? 'full' : ''}`} aria-label={`${fuel?.count ?? 0} of ${fuel?.capacity ?? 55} fuel. ${fuelStatus}`}><i /><strong>{fuel?.count ?? 0}<small> / {fuel?.capacity ?? 55}</small></strong><span>FUEL<b>{fuelStatus}</b></span></div>
+              {activeRobot.intake.stowTravel && <div className="shooter-readout" aria-label="Intake extension"><span>Intake</span><strong>{fuel?.intakeStatus ?? 'Retracted'}</strong></div>}
+              {activeRobot.mechanisms.climb && <div className="shooter-readout" aria-label="Climber status"><span>Climber</span><strong>{fuel?.climb.status ?? 'Approach your own tower'}</strong></div>}
+              {match?.config.humanSupply && <div className="shooter-readout" aria-label="Outpost supply"><span>Outpost · {match.config.alliance ?? 'blue'}</span><strong>{stats.humanPlayer?.[match.config.alliance ?? 'blue'] ?? 0} fuel{stats.humanPlayer?.blocked ? ' · outlet blocked' : ''}</strong></div>}
+              {shooter?.active && <div className="shooter-readout" aria-label={`Shooter: ${shooter.mode}`}><span>{shooter.target ?? 'Shooter'}</span><strong>{shooter.mode}</strong></div>}
+            </div>
+            <ControlsHint controls={settings.controls} expanded={settings.showHints} robot={activeRobot} humanSupply={!!match?.config.humanSupply} onExpand={() => { setSettings(s => ({ ...s, showHints: !s.showHints })); focus(); }} />
           </div>
-          {settings.showHints && <div className="drive-hints">
-            <span><kbd>{(['forward', 'left', 'backward', 'right'] as const).map(action => keyLabel(settings.controls.keys[action][0])).join(' ')}</kbd>Move</span>
-            <span><kbd>{settings.controls.keys.turnLeft.map(keyLabel).join('/')} / {settings.controls.keys.turnRight.map(keyLabel).join('/')}</kbd>Turn</span>
-            {(['intake', 'shoot', 'reverse', ...(activeRobot.intake.stowTravel ? ['toggleIntake'] as const : []), ...(activeRobot.mechanisms.climb ? ['climb', 'lower'] as const : []), ...(match?.config.humanSupply ? ['supply'] as const : []), 'restart'] as const).map(action => <span key={action}><kbd>{keyLabel(settings.controls.keys[action][0])}</kbd>{ACTION_LABELS[action]}</span>)}
-          </div>}
           {fuel?.climb.attached && <div className="match-notice">Tower attached · level {fuel.climb.level} · release climb to hold, lower to descend</div>}
           {import.meta.env.DEV && cameraMode !== 'follow' && <div className="camera-notice"><span>Inspection camera</span><button onClick={() => { viewer.current?.setMode('follow'); focus(); }}>Follow robot</button></div>}
           {match?.mode === 'match' && stats.running && !match.driverEnabled && !match.complete && <div className="match-notice">Processing final fuel · driving resumes with the next period</div>}
@@ -173,7 +172,7 @@ export function App() {
     {modal === 'settings' && <SettingsDialog settings={settings} onChange={setSettings} onClose={closeModal} onAbout={() => openModal('about')} />}
     {modal === 'help' && <Dialog title="Take the wheel." eyebrow="JAMESIM · CONTROLS" onClose={closeModal}>
       <p>You drive during AUTO and teleop. Use your mapped intake and shoot actions to collect fuel and aim at your alliance hub, or pass back into your zone. Re•Blitz must stop to fire; High Tide uses turret aiming; Toggle intake extension retracts or extends its sliding intake when cargo space permits. Intake/reverse commands extend it, and shooting compresses it as fuel empties. The Tower trainer can attach near its own tower: hold Climb to rise, release to hold, and hold Lower to descend. Enable outpost stock in Session, then hold Supply to release it.</p>
-      <dl className="controls-list">{[...ACTIONS.filter(a => !(a === 'toggleIntake' && !activeRobot.intake.stowTravel) && !(['climb', 'lower'].includes(a) && !activeRobot.mechanisms.climb) && !(a === 'supply' && !match?.config.humanSupply)).map(a => [settings.controls.keys[a].map(keyLabel).join(' / '), ACTION_LABELS[a]]), ['Enter', 'Pause / resume'], ['Esc', 'Pause / close a dialog'], ['H', 'Driving controls']].map(([key, label]) => <div key={key}><dt><kbd>{key}</kbd></dt><dd>{label}</dd></div>)}</dl>
+      <dl className="controls-list">{[...ACTIONS.filter(a => !(a === 'toggleIntake' && !activeRobot.intake.stowTravel) && !(['climb', 'lower'].includes(a) && !activeRobot.mechanisms.climb) && !(a === 'supply' && !match?.config.humanSupply)).map(a => [settings.controls.keys[a].map(keyLabel).join(' / ') || 'Unbound', ACTION_LABELS[a]]), ['Enter', 'Pause / resume'], ['Esc', 'Pause / close a dialog'], ['H', 'Driving controls']].map(([key, label]) => <div key={`${label}-${key}`}><dt><kbd>{key}</kbd></dt><dd>{label}</dd></div>)}</dl>
       <p>Losing focus pauses the match and clears held inputs. {activeRobot.intake.stowTravel ? 'The sliding hopper follows the intake. Retraction stops when the remaining cargo needs more space.' : 'The hopper stays deployed; the intake compresses while shooting and extends again when you release Shoot.'}</p>
       <button className="primary-button" onClick={closeModal}>Got it</button>
     </Dialog>}
