@@ -108,8 +108,8 @@ export class SwerveChassis {
 
   /** Update the articulated collision proxies for simulation or pose inspection. */
   setPose(pose: RobotPose) {
-    const next = { intake: Math.max(0, Math.min(1, pose.intake)), hopper: Math.max(0, Math.min(1, pose.hopper)), hood: Math.max(0, Math.min(1, pose.hood)) };
-    if (this.poseInitialized && next.intake === this.pose.intake && next.hopper === this.pose.hopper && next.hood === this.pose.hood) return;
+    const next = { intake: Math.max(0, Math.min(1, pose.intake)), hopper: Math.max(0, Math.min(1, pose.hopper)), hood: Math.max(0, Math.min(1, pose.hood)), climber: Math.max(0, Math.min(1, pose.climber ?? 0)) };
+    if (this.poseInitialized && next.intake === this.pose.intake && next.hopper === this.pose.hopper && next.hood === this.pose.hood && next.climber === this.pose.climber) return;
     this.poseInitialized = true; this.pose = next;
     for (const { collider, definition: shape } of this.mechanismColliders) {
       const { angle, pivot, shift, rise } = partTransform(this.definition, shape.part, this.pose);

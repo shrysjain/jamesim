@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "1678-limestone",
+  "group": {
+    "name": "Team 1678 Limestone CAD",
+    "source": "https://1678.onshape.com/documents/acdaaf42764a293a9452326d/w/f887ef4c6a254c09c73344c3/e/a9684fa7665096e977b19c44",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/1678-limestone/robot.glb",
+        "bytes": 1889552,
+        "sha256": "127f13055cb4c89ae31594202080d2d4a609297e9a987972d8b1e42270cf0b48"
+      }
+    ]
+  }
+}

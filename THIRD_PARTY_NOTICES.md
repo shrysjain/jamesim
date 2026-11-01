@@ -9,6 +9,7 @@ Jamesim is an independent browser simulator. Public source availability does not
 | Team 2910 Java references | `assets/source/robots/2910-reblitz/CODE-LICENSE` (MIT); preserved reference files, not an inferred CAD/media license |
 | Cheesy Arena sound samples | `assets/source/audio/CHEESY_ARENA_LICENSE.txt` and `manifest.json`; unmodified WAV payloads included by that decision; license review pending |
 | Orbit 1690 Kepler CAD | [Team release](https://www.chiefdelphi.com/t/frc-orbit-1690-2026-robot-cad-release/520673); CAD-derived mesh exports from [TylerHandel/rebuilt-sim-2026](https://github.com/TylerHandel/rebuilt-sim-2026/tree/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots). Source chain and hashes: `assets/kepler-cad-sources.json`, `docs/KEPLER.md`. Redistribution review pending; no clearance inferred from public CAD access. Local review addition. |
+| Team 1678 Citrus Circuits Limestone CAD | [Team release](https://www.chiefdelphi.com/t/1678-citrus-circuits-2026-cad-and-robot-code-release/521535); pinned official MK5n geometry and derivative tessellation of the linked Onshape release. Sources/hashes and pending CAD redistribution review: `assets/robots/1678-limestone/sources.json`; preparation/tuning: `src/robot/robots/1678-limestone/README.md`. Raw CAD excluded; owner-authorized noncommercial v1 policy applies. |
 | Barlow / Barlow Condensed fonts | SIL Open Font License, notices under `public/fonts/`; included with their notices |
 | Application dependencies | Exact versions in `pnpm-lock.yaml`; their respective package licenses apply |
 

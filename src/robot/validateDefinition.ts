@@ -18,7 +18,7 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(d.cargoSlots.length === m.capacity && d.cargoSlots.every(vector), 'Provide one finite cargo seed per capacity slot.');
   check(d.hopper.fixedSlot === undefined || Number.isInteger(d.hopper.fixedSlot) && d.hopper.fixedSlot >= 0 && d.hopper.fixedSlot < m.capacity, 'Fixed cargo slot is outside capacity.');
   check(vector(d.intake.pivot) && vector(d.hood.pivot) && Number.isFinite(d.intake.stowedAngle) && Number.isFinite(d.hood.maxAngle), 'Mechanism transforms must be finite.');
-  check(d.colliders.length > 0 && d.colliders.every(c => ['chassis', 'intake', 'hopper', 'hood'].includes(c.part) && vector(c.center) && c.halfExtents.every(positive) && (c.radius === undefined || Number.isFinite(c.radius) && c.radius >= 0)), 'Collider envelopes must be finite with positive extents.');
+  check(d.colliders.length > 0 && d.colliders.every(c => ['chassis', 'intake', 'hopper', 'hood', 'climber'].includes(c.part) && vector(c.center) && c.halfExtents.every(positive) && (c.radius === undefined || Number.isFinite(c.radius) && c.radius >= 0)), 'Collider envelopes must be finite with positive extents.');
   check(Object.values(d.pickup).every(Number.isFinite) && d.pickup.minX < d.pickup.maxX && positive(d.pickup.halfWidth), 'Pickup bounds must be finite and ordered.');
   const geometry = d.shooterGeometry;
   check(vector(geometry.pivot) && [geometry.drumRadius, geometry.guideLength, geometry.turretRadiansPerSecond].every(positive), 'Shooter geometry must be finite and positive.');
@@ -26,6 +26,11 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(!geometry.feedPath || geometry.feedPath.every(vector), 'Feed path points must be finite.');
   check(m.climb === !!d.climb, 'Climb capability and physics profile must agree.');
   if (d.climb) check(d.climb.kind === 'side-hook-l1' && [d.climb.maxLift, d.climb.rate, d.climb.travel, d.climb.deploySeconds].every(positive) && vector(d.climb.hook), 'Unsupported or invalid climber profile.');
+  if (d.climb) {
+    check(d.climb.approachAxis === undefined || ['x', 'z'].includes(d.climb.approachAxis), 'Invalid climber approach axis.');
+    check(d.climb.hookOffsetsZ === undefined || d.climb.hookOffsetsZ.length > 0 && d.climb.hookOffsetsZ.every(Number.isFinite), 'Hook offsets must be finite and nonempty.');
+  }
+  if (d.hopper.volume?.ceilingTravel !== undefined) check(!!d.climb && positive(d.hopper.volume.ceilingTravel) && d.hopper.volume.ceilingTravel === d.climb.travel, 'Moving hopper roof must match its climber stage.');
   const v = d.visual, names = v.requiredNodes;
   check(names.includes('chassis') && new Set(names).size === names.length, 'Declare unique required mechanism nodes, including chassis.');
   const bindings = [...Object.values(v.poseNodes), v.turret, v.turretHood, v.kicker?.node, v.climber].filter((n): n is string => !!n);

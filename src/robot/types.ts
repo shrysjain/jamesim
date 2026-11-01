@@ -1,11 +1,12 @@
 import type { Vec3 } from '../field/types';
 
-export type RobotPart = 'chassis' | 'intake' | 'hopper' | 'hood';
+export type RobotPart = 'chassis' | 'intake' | 'hopper' | 'hood' | 'climber';
 export type RobotCollider = { part: RobotPart; center: Vec3; halfExtents: Vec3; radius?: number };
-export type RobotPose = { intake: number; hopper: number; hood: number };
+export type RobotPose = { intake: number; hopper: number; hood: number; climber?: number };
 export type HopperVolume = {
   frontX: number; backX: number; halfWidth: number; floorY: number; ceilingY: number;
-  frontTravel: number; floorSlope?: number; slopedFront?: boolean;
+  frontTravel: number; ceilingTravel?: number; // roof follows the vertical climber/lid stage
+  floorSlope?: number; slopedFront?: boolean;
 };
 export type RobotDefinition = {
   id: string; teamNumber: string; name: string; summary: string; model: string;
@@ -15,10 +16,10 @@ export type RobotDefinition = {
   drive?: { maxSpeed: number; acceleration: number; grip: number };
   modules: { name: string; x: number; z: number }[];
   intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean };
-  hopper: { stowTravel: number; volume?: HopperVolume; fixedSlot?: number };
+  hopper: { stowTravel: number; coupledToIntake?: boolean; volume?: HopperVolume; fixedSlot?: number };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
-  climb?: { kind: 'side-hook-l1'; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };
+  climb?: { kind: 'side-hook-l1'; approachAxis?: 'x' | 'z'; hookOffsetsZ?: number[]; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };
   cargoSlots: Vec3[];
   pickup: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
   shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number; feedPath?: Vec3[] };
