@@ -1,141 +1,79 @@
 # Jamesim
 
-Jamesim is a browser-only singleplayer simulator for the 2026 FIRST Robotics Competition game, REBUILT, using Team 2910 Re•Blitz CAD. Built with TypeScript, Vite, React, Three.js, and Rapier 3D.
+A browser FRC 2026 REBUILT simulator built with TypeScript, React, Vite, Three.js and Rapier. The supported robots are CAD-backed **2910 Re•Blitz** and **1690 Orbit / Kepler**.
 
-## Release preparation
+## Local play
 
-The local release candidate opens directly into a timed solo fuel match with R restart, saved settings and a compact fuel/status HUD. Production builds exclude the inspector and development shortcuts. See [release acceptance](docs/SINGLEPLAYER_ACCEPTANCE.md), [the v1 plan](docs/SINGLEPLAYER_RELEASE_PLAN.md) and [agent instructions](AGENTS.md). No public deployment has been made.
-
-The prepared runtime field, robot and audio pack is included for the owner-authorized noncommercial v1 release. A clean clone can build the complete game. Raw CAD, binders and preparation reports remain excluded. Source records, hashes and attribution are retained; the owner's publication decision does not reclassify pending third-party license reviews. See [runtime assets](docs/ASSETS.md) and [Vercel import instructions](docs/V1_PUBLICATION.md).
-
-## Player extensions branch
-
-Optional **Session** setup now exposes alliance, spawn, preloads, event profiles, free practice and robot selection. Settings include saved key/controller mappings and stick deadzones. 4414 High Tide / Ripcurrent has a procedural turret/rotor model and an 85-fuel hopper based on the team binder; exact FRSim tuning remains unverified. The separate original Tower trainer exercises climbing and tower scoring. Optional outpost supply conserves fuel, and manual foul assessment adds penalty points. See [implementation scope and accuracy limits](docs/PLAYER_EXTENSIONS.md). The older release descriptions below describe the previous v1 baseline.
-
-## Run locally
+Use Node 26 and the pinned pnpm 10.20.0:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm assets:check
 pnpm dev
 ```
 
-Open **http://127.0.0.1:5173**. All runtime assets, including fonts and the converted field model, live in this project. Normal startup does not fetch or convert CAD and does not depend on a system cache.
+Open **http://127.0.0.1:5173**. An existing server can be reused. Source and all runtime assets live in this repository; normal play never downloads or converts CAD.
+
+For the production interface:
 
 ```sh
-pnpm test:unit  # no local field pack needed
-pnpm test:sim   # requires the local runtime pack
-pnpm build:local  # verifies local assets, compiles and checks the full production payload
-pnpm preview     # production interface at http://127.0.0.1:4173
+pnpm build:release
+pnpm preview
 ```
 
-## Drive
+Open **http://127.0.0.1:4173**. Both commands are local; they do not deploy anything.
 
-The main screen is the robot follow view, match scoreboard and fuel/status HUD. Startup begins a timed match after loading. Settings offer volume/mute, graphics presets, controls hints and restore defaults; choices persist locally.
+## Singleplayer
 
-| Key | Action |
+Launch opens setup with robot inspection, alliance selection and an interactive starting-position map. Drag to place the robot in its alliance staging area; WASD moves the square marker and J/L rotate it. Its arrow points toward the intake. Match options offer timed play/free practice, 0–8 preloads, scoring-target profiles and finite outpost supply.
+
+Start enters the field with **only the scoreboard**. Escape opens the pause menu for restart, settings, controls and returning to setup. Settings persist locally. Blur/tab hiding pauses and clears input; resume explicitly. R repeats the selected session, including its seed and pose.
+
+| Default | Action |
 | --- | --- |
-| W / S, up / down arrows | Forward / reverse |
-| A / D, left / right arrows | Strafe left / right |
-| J / L | Turn left / right |
-| Shift | Hold to run intake rollers |
-| Space | Hold to align the chassis and shoot at the blue hub, or pass into the blue zone |
-| Q | Hold to reverse rollers and eject held fuel |
-| R | Restart the entire timed match, including from pause or results |
-| Enter / Escape | Pause or resume / pause |
-| H | Driving controls |
+| WASD / arrows | Field-relative movement |
+| J / L | Turn |
+| Shift | Intake |
+| Space | Aim and shoot; pass into your alliance zone when outside it |
+| Q | Reverse/eject |
+| V | Kepler intake extension toggle |
+| C | Kepler climber deployment toggle |
+| B | Outpost supply, when enabled |
+| R | Restart session, including pause/results |
+| Escape / P / Enter | Pause/menu or resume |
+| H | Controls while paused |
 
-Translation is **field-relative** by default, aligned with the blue-side view: W moves toward the red side, D moves screen-right, and J/L rotates independently. The follow camera retains its field orientation. Debug also offers robot-relative drive with a camera that turns with the chassis. The shooter end is local +X and the intake is at −X. The intake faces the neutral zone at spawn, so W approaches the supply intake-first. Losing window focus pauses the match and clears held inputs. Resume explicitly to continue.
+Keyboard and standard controller bindings/deadzones are configurable in Settings. Controller input requires neutral controls after connection or interruption.
 
-## Test and inspect
+2910 aims with the chassis and stops to shoot. Kepler has an independent turret and moving shots; Shift + Space can collect while firing. Its intake compresses remaining fuel toward the feeder during shooting, with physical local hopper motion and visible feed transit. All transfers conserve the existing fuel IDs.
 
-Development builds (`pnpm dev`) offer **Debug** / backtick to access live top-speed, wheel-acceleration, and tire-grip tuning, plus tire contact, tilt, speed, and angular-rate telemetry. The four test locations place the robot near a bump, a trench, fuel, or the blue practice area. **Reset world** restores all 504 fuel and the robot, then pauses.
+For Kepler L1, deploy C, approach beside your own tower along the low rung, stop to engage, then toggle C to winch up. Toggle again to lower/release. Climbing uses managed support and the original CAD sliding hook/stage; it is a gameplay approximation.
 
-The panel retains orbit/free-flight cameras, four field presets (1–4), selection/focus (F), colliders and tire force vectors (C), a measurement grid (G), labels (N), visibility layers, and the orange contact probe. Free-flight mode assigns WASD and Q/E to the camera and disables driving. Closing Debug restores the clean follow view and normal display layers.
+AUTO and teleop are both driver-operated. Timed play supports hub shifts, processed-fuel windows, match audio, tower points, bonus targets and results. There is no singleplayer foul interface, opponent simulation, multiplayer or win/tie ranking score. Event profiles adjust targets, not field supply layouts.
 
-The robot has four separately steered contact patches, spring/damper support, limited motor acceleration, a friction budget, and physical bumper/frame collisions. The chassis has stable collision support and capped bump-only visual tilt, rises over bumps on assisted suspension, and displaces floor fuel horizontally to prevent beaching. See [driving model](docs/DRIVING.md) and [verification notes](docs/VERIFICATION.md). Full competition rules, climbing, gamepad support, and multiplayer remain future work; mass, inertia, and tire response remain provisional. Debug also offers intake, hopper, and hood pose inspection with matching collision proxies. See `docs/REBLITZ_ASSET_GATE.md` for measurements and source limits.
+## Development
 
-```sh
-pnpm benchmark:drive
-```
-
-This runs a headless drive/reverse test through the full fuel supply and writes `docs/driving-baseline.json`.
-
-## Project layout
-
-```text
-src/field/         Shared asset and field types
-src/sim/           Renderer-independent Rapier simulation
-src/view/          Three.js viewer, cameras, selection, debug drawing
-src/App.tsx        Timed-player shell, pause and modal state
-src/components/    Player dialogs and development-only DebugPanel
-src/settings.ts    Validated, versioned local settings
-public/assets/    Prepared runtime field assets and provenance
-public/fonts/     Local fonts and their licenses
-assets/source/    Original STEP source, excluded from Git
-assets/intermediate/ Offline tessellation, excluded from Git
-scripts/          Reproducible asset preparation
-```
-
-The internal frame uses meters: X along field length, Y up, Z across field width, with the origin at the carpet's center and top surface. Asset conversion applies the source coordinate transform once.
-
-## Rebuild the field asset
-
-Git includes the prepared runtime files. Original CAD sources remain local. To intentionally regenerate them, download the [official STEP](https://firstfrc.blob.core.windows.net/frc2026/FieldAssets/FE-2026-rev-rebuilt-playing-field.step) to `assets/source/field.step`, then run:
+Backtick opens development-only inspection. F6 toggles colliders; F7 restores the follow camera. Production excludes inspector geometry, shortcuts and tuning controls. Physics uses SI units, a 120 Hz fixed step, stable upright support, bump-only visual lean and horizontal fuel displacement to prevent beaching.
 
 ```sh
-python3 scripts/prepare-step.py
-node --max-old-space-size=8192 scripts/inspect-step.mjs
-pnpm assets:field
+pnpm test:unit     # asset-independent checks, including bindings and setup
+pnpm test:sim      # complete source suite, serial workers
+pnpm build:local   # integrity + compilation + production-payload validation
 ```
 
-STEP tessellation is an expensive offline operation. It uses the npm `occt-import-js` OpenCascade build; no CAD parser is shipped in the browser bundle. The converter preserves field structure geometry, batches surfaces, removes small hardware, extracts fuel centers, and generates independent static collision geometry.
+CI runs the complete simulation suite and release build. The prepared field, robot and audio pack is tracked, so a clean checkout can run those checks.
 
-This is local development using FIRST's official model. See `public/assets/PROVENANCE.md` for sources and limitations. Establish asset redistribution terms before publishing the converted model; the original field documentation and branding remain FIRST's materials.
+| Location | Responsibility |
+| --- | --- |
+| `src/sim/` | Physics, fuel ownership, mechanisms, scoring and fixed-step rules |
+| `src/robot/` | Robot geometry and behavior definitions |
+| `src/view/` | Three.js, browser input, cameras and audio |
+| `src/components/` | Setup, settings, pause/results and development inspector |
+| `scripts/` | Offline CAD preparation and asset/build validation |
 
-## Rebuild the robot asset
+See [stage 19.5 scope](docs/STAGE_19_5.md), [gameplay tuning](docs/GAMEPLAY_TUNING.md), [Kepler provenance/model](docs/KEPLER.md), [asset records](docs/ASSETS.md) and [Vercel import configuration](docs/V1_PUBLICATION.md). Earlier gate/release acceptance documents describe their historical baseline.
 
-Original collecting/starting GLBs, the team binder, and checksums are retained in `assets/source/robots/2910-reblitz/`. Run `pnpm assets:robot` to prepare the collecting GLB; `node scripts/inspect-robot.mjs` and `node scripts/compare-robot-poses.mjs` audit dimensions and configuration transforms. The browser loads only the optimized local model. See `public/assets/robots/2910-reblitz/PROVENANCE.md`.
+## Assets and hosting
 
-## Intake practice (gate 2)
+The owner authorized the noncommercial v1 runtime publication while deferring third-party license review. Source, hashes and attribution remain recorded; unreviewed assets remain marked pending. Only prepared runtime assets are tracked; original CAD/binders and conversion caches are excluded. See [publication decision](docs/V1_PUBLICATION.md).
 
-The intake and hopper snap out at session start. The hopper stays out. Shift runs intake rollers; Space retracts only the intake as cargo empties, and releasing Space pops it out again. Hold Q to reverse (takes priority over Shift). Reverse also pushes nearby loose fuel outward. A blocked outlet waits for clearance. Fuel transfers visibly into 55 close-packed storage positions. The HUD shows inventory and mechanism status; carried fuel adds mass, center of mass, and approximate inertia. In public timed play, R restarts with eight existing preloads and resets every original ball. Development-only practice respawn retains cargo. No preloaded ball comes from the robot CAD.
-
-Pose preview in Debug suspends capture/ejection. Press Shift/Q/Space, choose Resume mechanisms, or close Debug to return to normal actuation. See [mechanism model](docs/INTAKE.md) for the physics and calibration limits.
-
-
-## Shooter bench (gate 3)
-
-Hold Space to turn toward the blue hub and shoot. Outside the blue zone, Space aims a pass at the nearest reachable floor point inside it. WASD stays active; shooting waits until translation settles below 0.18 m/s, with real chassis alignment, hood position, flywheel speed, and clear ball paths. Space retracts the intake; Q overrides shooting. Release Space to stop feeding. All four lanes reuse the collected balls as physical projectiles, with staggered releases, small seeded variation, gravity, damping, CCD, inherited chassis motion, and recoil.
-
-Debug exposes shooter readiness, RPM, hood, lanes, launch count, and airborne fuel. Launch count is separate from the confirmed practice hit counter; gate 4 supplies hub-entry detection and returns. See [shooter model and tuning limits](docs/SHOOTER.md).
-
-```sh
-pnpm benchmark:shoot
-```
-
-This collects actual fuel from the full field, respawns with that cargo, shoots it, and records conservation and headless step timings in `docs/shooter-baseline.json`.
-
-
-## Continuous practice (gate 4)
-
-Confirmed downward entries through either hub mouth increment the compact blue/red Practice hits counter. The same balls move through managed hub transit and return physically from the four neutral-facing outlets. Drive back, intake them, and repeat. Blocked exits retain their fuel until clear. R keeps hits and fuel; Reset world clears the practice and restores all 504 original balls.
-
-Debug exposes hit/return counts, pending transit, blocked exits, entry outlines, and fuel conservation. These are practice hits; match rules and active/inactive hubs remain separate. See [practice loop model](docs/PRACTICE.md).
-
-```sh
-pnpm benchmark:practice
-```
-
-The full-field collect/shoot/hit/return sample writes `docs/practice-baseline.json`.
-
-
-## Solo timed matches (stage 5)
-
-Opening Jamesim automatically starts a timed blue-alliance match with eight existing preloads and regional/district fuel targets after the environment has loaded. AUTO and teleop are both driver-operated. The HUD follows auto, transition, four hub shifts, endgame, and final processing, with live fuel scores and hub lights. Pause freezes the match; R restarts it.
-
-Hub mouth hits and processed fuel points are separate. Three-second assessment windows and inactive-hub scoring use simulation timestamps. Results show auto/teleop fuel totals and target progress. Results offer a restart; R also works while playing or paused. Free practice and early completion remain development tools.
-
-This is a solo fuel match. Climbing/Tower/Traversal, penalties, opponents, win/tie RP, and expanded championship fuel layouts remain unimplemented. See [match rules and verification](docs/MATCH.md) for precise scope and timing.
-
-The current 2910 baseline follows the supplied FRSim card: 16.7 ft/s, 33 ft/s², approximately 130 lbf empty traction, 32 balls/s nominal shooting, 50 balls/s intake, 55-fuel capacity, and 33 ft passing reach. Match audio uses local samples with a mute button. See [gameplay tuning](docs/GAMEPLAY_TUNING.md).
+Vercel can serve the static `dist` output using the checked-in configuration; no database, functions or environment variables are needed. Hosting changes and stage 20 require the owner's next instruction.
