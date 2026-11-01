@@ -52,10 +52,13 @@ AUTO and teleop are both driver-operated. Timed play supports hub shifts, proces
 
 ## Development
 
+For parallel robot contributions, start at **[ROBOT_AUTHORING.md](ROBOT_AUTHORING.md)**. Give an agent that file and “implement team XXXX.” It covers research, the template, isolated definitions/assets, model bindings, testing, branch-only pushes and PR disclosures. Core work stays on `main`; robot contributors use `robot/<team>-<name>` branches and never push `main`.
+
 Backtick opens development-only inspection. F6 toggles colliders; F7 restores the follow camera. Production excludes inspector geometry, shortcuts and tuning controls. Physics uses SI units, a 120 Hz fixed step, stable upright support, bump-only visual lean and horizontal fuel displacement to prevent beaching.
 
 ```sh
 pnpm test:unit     # asset-independent checks, including bindings and setup
+pnpm test:robots   # every registered robot's definition, model and acceptance checks
 pnpm test:sim      # complete source suite, serial workers
 pnpm build:local   # integrity + compilation + production-payload validation
 ```

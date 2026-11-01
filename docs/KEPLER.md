@@ -16,7 +16,7 @@ To recreate the prepared model with Node 26 and dependencies installed:
 pnpm assets:kepler --download
 ```
 
-Without `--download`, conversion uses existing local inputs and verifies their recorded hashes. Conversion changes require updating the corresponding output hash/size in `assets/runtime-manifest.json`; `pnpm build:release` verifies them.
+Without `--download`, conversion uses existing local inputs and verifies their recorded hashes. Conversion changes require updating the corresponding output hash/size in `assets/robots/1690-kepler/runtime.json`; `pnpm build:release` verifies the aggregated payload.
 
 ## Frames and behavior
 
