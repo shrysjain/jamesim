@@ -1,0 +1,46 @@
+{
+  "robot": "2910 Re•Blitz",
+  "release": "https://www.chiefdelphi.com/t/2910-cad-and-tech-binder-release-2026/521705",
+  "cad": "https://2910.onshape.com/documents/dfb391aac173a4555d00a5b5/w/3dc64f602735252892b0e47b/e/6c654da4eb6b1710fb0900bd",
+  "codeCommit": "921c85bf725fbd9c488eb7d557e0e065640da095",
+  "files": [
+    {
+      "file": "technical-binder.pdf",
+      "url": "https://drive.google.com/uc?export=download&id=1r-6zR4afbr_BpeZfWwcM5XL1N74FjScI",
+      "bytes": 5905576,
+      "sha256": "5e7159cec66e81e3d398b745f4737ac24d1414316523cdb19b5c95ad657f9cff"
+    },
+    {
+      "file": "ReBlitz.java",
+      "url": "https://raw.githubusercontent.com/FRCTeam2910/2026CompetitionRobot-Public/921c85bf725fbd9c488eb7d557e0e065640da095/src/main/java/org/frc2910/robot/config/ReBlitz.java",
+      "bytes": 31339,
+      "sha256": "76a2dc3c76b6ad7970b2e4f0e851215ec783fa84182478564574fb7649e41563"
+    },
+    {
+      "file": "Constants.java",
+      "url": "https://raw.githubusercontent.com/FRCTeam2910/2026CompetitionRobot-Public/921c85bf725fbd9c488eb7d557e0e065640da095/src/main/java/org/frc2910/robot/config/Constants.java",
+      "bytes": 5915,
+      "sha256": "29ba5c37a1d8ac2015dc0d85071306e65624bfa15377f8311f089740cc1264d7"
+    },
+    {
+      "file": "CODE-LICENSE",
+      "url": "https://raw.githubusercontent.com/FRCTeam2910/2026CompetitionRobot-Public/921c85bf725fbd9c488eb7d557e0e065640da095/LICENSE",
+      "bytes": 1081,
+      "sha256": "2bb3164b781721055aac6e312b1a4b0d57284cc86d49e962e27b963ee601e23d"
+    },
+    {
+      "file": "2910-reblitz-collecting.glb",
+      "url": "https://2910.onshape.com/documents/dfb391aac173a4555d00a5b5/w/3dc64f602735252892b0e47b/e/6c654da4eb6b1710fb0900bd",
+      "bytes": 137633780,
+      "sha256": "f1b4e4b05d99ca56d675e119e185aaa7bedb825cb78d559b2d52c7f039f702f6"
+    },
+    {
+      "file": "2910-reblitz-starting.glb",
+      "url": "https://2910.onshape.com/documents/dfb391aac173a4555d00a5b5/w/3dc64f602735252892b0e47b/e/6c654da4eb6b1710fb0900bd",
+      "bytes": 137647708,
+      "sha256": "aa20018df3fa23349d20d88c72005867185b4e934249e71272b260db5189bda5"
+    }
+  ],
+  "cadExportStatus": "Collecting and starting GLB configurations exported via the public Onshape viewer. Medium resolution; original Z-up axes; bumpers and battery included.",
+  "terms": "Code reference MIT license retained. CAD/binder redistribution permission not inferred from code license. Local development only until terms established."
+}

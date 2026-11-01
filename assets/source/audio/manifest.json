@@ -1,0 +1,37 @@
+{
+  "source": "https://github.com/Team254/cheesy-arena/tree/248d9de497e701223e2cdbc986a19bbfea054c21/static/audio",
+  "commit": "248d9de497e701223e2cdbc986a19bbfea054c21",
+  "downloaded": "2026-11-01",
+  "samples": [
+    {
+      "file": "abort.wav",
+      "bytes": 690476,
+      "sha256": "61ec6647bd9ab03051f7949512ec77fa870fffc0d90ee7ed0eae1109e0808d2b"
+    },
+    {
+      "file": "end.wav",
+      "bytes": 65652,
+      "sha256": "11d81b82b77cee873244f7b4c4774d7a89379da111c98f8d03cecf045af7caf5"
+    },
+    {
+      "file": "resume.wav",
+      "bytes": 70832,
+      "sha256": "a34bfdc52e8e441eeeaa30b95af28df46d2f6637901a2f75f30aba8ddc88d45d"
+    },
+    {
+      "file": "shift_change.wav",
+      "bytes": 87760,
+      "sha256": "2ed56e87bbc84f3e436a1660f0d2728cc78a435527bce8fc065fc842e9c0700f"
+    },
+    {
+      "file": "start.wav",
+      "bytes": 37832,
+      "sha256": "6c1a61c91b68d594d22c2cfdc5d110eaec21b9f5b214e3a4c36e11a095bc8df0"
+    },
+    {
+      "file": "warning.wav",
+      "bytes": 29599,
+      "sha256": "151984d4cfe331c52ed9fcbed2d1be50172a376691c7bfb5e96f83b1d97d1a86"
+    }
+  ]
+}
