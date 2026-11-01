@@ -1,0 +1,29 @@
+node_modules/
+dist/
+.pnpm-store/
+.sites-runtime/
+.DS_Store
+assets/source/*.step
+assets/intermediate/
+*.log
+.tools/
+assets/source/robots/**/*.step
+assets/source/robots/**/*.zip
+assets/source/robots/**/*.glb
+
+# Local third-party payloads: keep out of the public repository until cleared.
+public/assets/**/*.glb
+public/assets/**/*.json
+public/audio/**/*.wav
+assets/source/**/*.pdf
+assets/source/**/technical-binder.txt
+assets/source/audio/match_sounds.go
+docs/*.jpg
+
+# Credentials, local hosting state and generated output.
+.env
+.env.*
+!.env.example
+.vercel/
+coverage/
+*.tsbuildinfo
