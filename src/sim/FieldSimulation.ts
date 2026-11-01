@@ -77,7 +77,8 @@ export class FieldSimulation {
     if (!this.running) return;
     this.accumulator += Math.min(delta, 0.05);
     const start = performance.now();
-    while (this.accumulator >= STEP) {
+    // Roundoff at rates such as 144 Hz must not defer a whole physics tick.
+    while (this.accumulator + 1e-12 >= STEP) {
       this.fuelSystem.time += STEP;
       if (this.robotController) {
         const r = this.robotController;
@@ -106,7 +107,7 @@ export class FieldSimulation {
       // Clearance queries need the current broad phase before a managed release.
       this.humanPlayer.step(!!robot?.input.supply, this.match.actuatorsEnabled, robot?.shooter.alliance ?? 'blue');
       this.robotController?.postStep(STEP);
-      this.accumulator -= STEP;
+      this.accumulator = Math.max(0, this.accumulator - STEP);
       if (this.match.mode === 'match' && robot) {
         const time = this.match.elapsed + STEP;
         if (!this.autoTowerAssessed && time >= 20 && !this.match.telemetry.endedEarly) {

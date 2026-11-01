@@ -19,7 +19,7 @@ Actual acceleration still depends on steering, load and tire force. Firing waits
 
 The latest user correction supersedes the earlier coupled retraction proposal. At reset both assemblies are in. At the start of the simulation they snap out together over 0.18 s, without requiring Shift. The hopper stays out. Shift runs the intake rollers, Q reverses, and Space retracts only the intake over up to 0.45 s as cargo empties. Releasing Space pops it out again automatically.
 
-Eight or fewer balls allow full intake compression. Required extension increases linearly to full at 55. Stored cargo follows the intake's pushing motion; the feeder pocket stays fixed. The 55-ball layout uses 54 close-packed positions in three layers plus one feeder pocket, with non-overlapping 150 mm spheres. The pocket feeds first.
+Eight or fewer balls allow full intake compression. Required extension increases linearly to full at 55. Stored fuel responds to the intake's pushing wall; the feed inlet remains attached to the frame. Cargo slots now seed entry positions rather than pinning stored fuel. The 55-ball layout uses 54 close-packed positions in three layers plus one feeder pocket, with non-overlapping 150 mm spheres. The pocket feeds first.
 
 ## Forgiving contacts
 
@@ -44,3 +44,13 @@ November 1 follow-up: bump-only pitch/roll is now rendered from the four module 
 The user's Kepler FRSim card sets 14.4 ft/s maximum wheel speed, 33 ft/s² command acceleration, 130 lbf nominal empty traction, 13 shots/s in one turret lane, 40 fuel/s intake, approximately 50-fuel capacity, 95% moving-shot accuracy rating and 32 ft passing. Adjustable hood, simultaneous intake/shooting and L1 support remain enabled. These settings belong to Kepler's definition; selecting it does not change 2910 or High Tide defaults.
 
 The managed lane uses 50 ms feed transit to avoid capping a 13 shots/s setting at the old 100 ms transit. Cadence still depends on aim, recovery, hood readiness and exit clearance. The 95% rating scales launch-angle spread while translating by 1/.95; actual hits remain physical, with no selected forced misses or correction after launch. This mapping is an implementation interpretation because the card does not define the percentage's calculation. CAD dimensions, approximate mass/inertia, hood lower stop and the managed L1 support model are documented in `docs/KEPLER.md`.
+
+## Hopper dynamics and alliance bumpers
+
+Stored fuel now moves under gravity, ball-to-ball contacts, friction and forces from chassis acceleration/turning. Two substeps with iterative equal-mass sphere contacts run per 120 Hz physics tick. Simplified inner wall/floor/roof envelopes belong to each robot definition; the inward-moving intake boundary pushes cargo as the carriage compresses. High Tide's procedural side-wall height and collision proxies match its full-size three-layer cargo envelope. These are gameplay contact envelopes, not a full CAD mesh/contact simulation or a discrete model of every internal roller.
+
+The original Rapier body and stable ID of every fuel remain intact. Owned field bodies stay disabled while their local sphere positions are solved; chassis payload mass, center of mass and inertia use those evolving positions once. Intake transfer and shooter feed remain managed handoffs. Shooting/ejection reactivate the same field body, while pause freezes the fixed-step simulation and restart/respawn clears hopper velocity history. Rendering uses solved positions without a separate clamp. The 2910 feeder exception applies only to 2910's entry slot, not index 54 on other robots.
+
+A floating-point tolerance in the world accumulator prevents 144 Hz rendering from deferring a 120 Hz tick. Frame-rate checks now require equal physics time and matching cargo positions at 30, 60 and 144 Hz. Hopper tests cover gravity/settling, moving walls, inertia, turning, bump lean, full-capacity containment, pause, reset and original fuel-body conservation. Existing shooting throughput and physical hub-hit tests remain in force.
+
+All four robot choices switch bumper materials between blue and red on session changes, including procedural models. Prepared 2910 bumper vertex colors are disabled only on the bumper material so a blue vertex tint cannot mask red. Team numbers and other CAD colors are preserved. Browser checks inspect all robot/alliance combinations; a separate WebGL render verifies the visible red/blue change.

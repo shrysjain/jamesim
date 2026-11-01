@@ -566,6 +566,7 @@ export class FieldViewer {
     this.startMatch(config); this.sessionPractice = practice;
     if (practice) { const applied = { ...this.sim.match.config }; this.sim.match.reset(); this.sim.match.config = applied; }
     this.robotView.setDefinition(this.sim.robot!.definition);
+    this.robotView.setAlliance(this.sim.robotController!.shooter.alliance);
     this.syncFuel();
   }
   applySettings(settings: Settings) {

@@ -3,6 +3,10 @@ import type { Vec3 } from '../field/types';
 export type RobotPart = 'chassis' | 'intake' | 'hopper' | 'hood';
 export type RobotCollider = { part: RobotPart; center: Vec3; halfExtents: Vec3; radius?: number };
 export type RobotPose = { intake: number; hopper: number; hood: number };
+export type HopperVolume = {
+  frontX: number; backX: number; halfWidth: number; floorY: number; ceilingY: number;
+  frontTravel: number; floorSlope?: number; slopedFront?: boolean;
+};
 export type RobotDefinition = {
   id: string; name: string; model: string;
   mass: number; inertia: Vec3; length: number; width: number;
@@ -10,7 +14,7 @@ export type RobotDefinition = {
   drive?: { maxSpeed: number; acceleration: number; grip: number };
   modules: { name: string; x: number; z: number }[];
   intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean };
-  hopper: { stowTravel: number };
+  hopper: { stowTravel: number; volume?: HopperVolume };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
   climb?: { maxLift: number; rate: number };
@@ -35,7 +39,7 @@ export const REBLITZ: RobotDefinition = {
     { name: 'module-rear-right', x: -0.282575, z: 0.276225 },
   ],
   intake: { pivot: [-0.27305, -0.0467875, 0], stowedAngle: -114 * Math.PI / 180 },
-  hopper: { stowTravel: 0.29845 }, // measured between collecting and starting CAD configurations
+  hopper: { stowTravel: 0.29845, volume: { frontX: -.63897, backX: .30, halfWidth: .34845, floorY: -.10, ceilingY: .327, frontTravel: .29845, slopedFront: true } }, // measured between collecting and starting CAD configurations
   hood: { pivot: [0.282575, 0.25325, 0], maxAngle: 37 * Math.PI / 180 },
   colliders: [
     // Bumpers match the CAD envelope; contact surfaces use rounded edges.
@@ -82,16 +86,16 @@ export const HIGH_TIDE: RobotDefinition = {
   }),
   pickup: { minX: -1.15, maxX: -.88, halfWidth: .29, mouthX: -.94, ejectX: -1.14 },
   shooterGeometry: { pivot: [.12, .25325, 0], drumRadius: .0381, guideLength: .155, turretRadiansPerSecond: 3 },
-  hopper: { stowTravel: .45 }, intake: { pivot: [-0.27305, -0.0467875, 0], stowedAngle: 0, stowTravel: .45 },
+  hopper: { stowTravel: .45, volume: { frontX: -.95, backX: .25, halfWidth: .334, floorY: -.10, ceilingY: .328, frontTravel: .45 } }, intake: { pivot: [-0.27305, -0.0467875, 0], stowedAngle: 0, stowTravel: .45 },
   colliders: [
     ...[-1, 1].flatMap((sign): RobotCollider[] => [
       { part: 'chassis', center: [sign * .4445, -.12616, 0], halfExtents: [.0381, .05715, .3937], radius: .008 },
       { part: 'chassis', center: [0, -.12616, sign * .3556], halfExtents: [.4064, .05715, .0381], radius: .008 },
     ]),
     { part: 'chassis', center: [0, -.18215, 0], halfExtents: [.4, .002, .31], radius: .006 },
-    ...[-1, 1].map((sign): RobotCollider => ({ part: 'hopper', center: [-.59, .08, sign * .34], halfExtents: [.36, .15, .008] })),
+    ...[-1, 1].map((sign): RobotCollider => ({ part: 'hopper', center: [-.59, .114, sign * .34], halfExtents: [.36, .214, .008] })),
     { part: 'intake', center: [-1.04, -.10, 0], halfExtents: [.035, .035, .32], radius: .008 },
-    { part: 'hopper', center: [-.96, .10, 0], halfExtents: [.008, .16, .34] },
+    { part: 'hopper', center: [-.96, .114, 0], halfExtents: [.008, .214, .34] },
   ],
 };
 /** Team release CAD; dimensions/frames measured from the closed/open exports.
@@ -103,7 +107,7 @@ export const KEPLER: RobotDefinition = {
   drive: { maxSpeed: 14.4 * .3048, acceleration: 33 * .3048, grip: 130 * 4.4482216152605 / (54 * 9.81) },
   modules: REBLITZ.modules.map(m => ({ ...m, x: Math.sign(m.x) * .2505, z: Math.sign(m.z) * .3013 })),
   intake: { pivot: [0, 0, 0], stowedAngle: 0, stowTravel: .312, stowRise: .0691, manualRetraction: true, passiveKicker: true },
-  hopper: { stowTravel: 0 }, hood: { pivot: [.204, .241, .1872], maxAngle: (82.47 - 35) * Math.PI / 180 },
+  hopper: { stowTravel: 0, volume: { frontX: -.617, backX: .3175, halfWidth: .358, floorY: -.085, ceilingY: .328, frontTravel: .312, floorSlope: -.08 } }, hood: { pivot: [.204, .241, .1872], maxAngle: (82.47 - 35) * Math.PI / 180 },
   shooterGeometry: { pivot: [.204, .241, .1872], turretPivot: [.134, -.223, .1872], drumRadius: .0502, guideLength: .155, turretRadiansPerSecond: 4, minElevation: 35 * Math.PI / 180, maxElevation: 82.47 * Math.PI / 180, passRange: 32 * .3048, movingAccuracy: .95 },
   climb: { maxLift: .212, rate: .15 },
   mechanisms: { capacity: 50, intakeRate: 40, compress: false, lanes: [0], fireRate: 13, feedSeconds: .05, turret: true, movingShots: true, simultaneousIntake: true, climb: true },
@@ -125,6 +129,6 @@ export const KEPLER: RobotDefinition = {
     { part: 'intake', center: [-.5593, -.062, 0], halfExtents: [.021, .021, .3235], radius: .004 },
   ],
 };
-export const TOWER_TRAINER: RobotDefinition = { ...HIGH_TIDE, id: 'tower-trainer', name: 'Tower trainer (original)', cargoSlots: undefined, pickup: undefined, hopper: { stowTravel: 0 }, intake: { ...REBLITZ.intake, stowedAngle: 0 }, length: REBLITZ.length, width: REBLITZ.width, modules: REBLITZ.modules, colliders: REBLITZ.colliders.filter(c => c.part === 'chassis' && c.center[1] < 0), mechanisms: { ...HIGH_TIDE.mechanisms, capacity: 24, climb: true } };
+export const TOWER_TRAINER: RobotDefinition = { ...HIGH_TIDE, id: 'tower-trainer', name: 'Tower trainer (original)', cargoSlots: undefined, pickup: undefined, hopper: { stowTravel: 0, volume: { frontX: -.64, backX: .25, halfWidth: .334, floorY: -.10, ceilingY: .328, frontTravel: 0 } }, intake: { ...REBLITZ.intake, stowedAngle: 0 }, length: REBLITZ.length, width: REBLITZ.width, modules: REBLITZ.modules, colliders: REBLITZ.colliders.filter(c => c.part === 'chassis' && c.center[1] < 0), mechanisms: { ...HIGH_TIDE.mechanisms, capacity: 24, climb: true } };
 export const ROBOTS = { '2910-reblitz': REBLITZ, '1690-kepler': KEPLER, '4414-high-tide': HIGH_TIDE, 'tower-trainer': TOWER_TRAINER };
 export type RobotId = keyof typeof ROBOTS;

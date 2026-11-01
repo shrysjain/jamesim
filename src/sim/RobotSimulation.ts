@@ -1,3 +1,4 @@
+import { HopperDynamics } from './HopperDynamics';
 import { Climber } from './Climber';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { SwerveChassis } from './SwerveChassis';
@@ -44,6 +45,7 @@ export class RobotSimulation {
   readonly climber: Climber;
   readonly shooter: Shooter;
   readonly contacts: GameplayContacts;
+  readonly hopper: HopperDynamics;
   readonly owner = 'robot-0';
   input = { ...NEUTRAL_MECHANISMS };
   inspectionPose: RobotPose | null = null;
@@ -65,6 +67,7 @@ export class RobotSimulation {
     this.storageSlots = definition.cargoSlots?.map(([x, y, z]) => v3(x, y, z)) ?? STORAGE_SLOTS.slice(0, definition.mechanisms.capacity).map(p => ({ ...p }));
     if (this.storageSlots.length !== definition.mechanisms.capacity) throw new Error(`Invalid cargo layout for ${definition.id}`);
     this.pickup = definition.pickup ?? { minX: -.79, maxX: -.44, halfWidth: .29, mouthX: -.53, ejectX: -.755 };
+    this.hopper = new HopperDynamics(definition);
     this.chassis = new SwerveChassis(world, definition, fieldElements);
     this.climber = new Climber(world, this.chassis, fieldElements);
     this.chassis.setPose(STARTING_POSE);
@@ -76,9 +79,9 @@ export class RobotSimulation {
   get held() { return this.fuel.ownedBy(this.owner); }
   private storedPosition(slot: number) {
     const p = this.storageSlots[slot];
-    // The hopper stays out. The retracting intake pushes cargo toward the
-    // feeder, whose pocket remains fixed to the frame throughout actuation.
-    return { ...p, x: p.x + (slot === FEEDER_POCKET ? 0 : this.chassis.definition.hopper.stowTravel * (1 - this.chassis.pose.intake)) };
+    // Initial preload/transfer packing; stored cargo then evolves in HopperDynamics.
+    // Keep the original feeder entry pocket fixed on 2910.
+    return { ...p, x: p.x + (this.chassis.definition.id === REBLITZ.id && slot === FEEDER_POCKET ? 0 : this.chassis.definition.hopper.stowTravel * (1 - this.chassis.pose.intake)) };
   }
   preload(ids: number[]) {
     for (const id of ids.slice(0, 8)) {
@@ -95,14 +98,14 @@ export class RobotSimulation {
     if (pose) this.chassis.setPose(pose);
   }
   reset() {
-    this.climber.reset();
+    this.climber.reset(); this.hopper.reset();
     this.clearInput(); this.deployed = false; this.intakeOut = true; this.intakeTarget = 0; this.inspectionPose = null; this.actuatorsEnabled = true;
     this.overturnedFor = 0; this.outletBlocked = false; this.rollerAngle = 0; this.kickerDeployment = 0;
     this.chassis.reset(); this.chassis.setPose(STARTING_POSE); this.updatePayload();
     this.shooter.reset();
   }
   respawn(spawn: DriveSpawn) {
-    this.climber.reset();
+    this.climber.reset(); this.hopper.reset();
     this.clearInput(); this.inspectionPose = null; this.overturnedFor = 0; this.outletBlocked = false;
     this.chassis.reset(spawn); // Held IDs and cargo remain owned by this robot.
     this.deployed = true; this.kickerDeployment = 1;
@@ -141,8 +144,12 @@ export class RobotSimulation {
         const control = v3(-0.4, 0.25, f.start.z * 0.5 + end.z * 0.5);
         f.local = lerp(lerp(f.start, control, t), lerp(control, end, t), t);
         if (t === 1) f.state = 'stored';
-      } else if (f.state === 'stored') f.local = this.storedPosition(f.slot);
+      } else if (f.state === 'stored' && !this.chassis.definition.hopper.volume) f.local = this.storedPosition(f.slot);
     }
+    if (!this.inspectionPose && this.chassis.definition.hopper.volume) this.hopper.step(dt, held, this.chassis.pose, {
+      position: this.chassis.body.translation(), velocity: this.chassis.body.linvel(),
+      angularVelocity: this.chassis.body.angvel(), rotation: this.chassis.renderRotation,
+    });
     this.updatePayload();
     if (!this.climber.attached) this.chassis.step(dt, aimTurn, this.actuatorsEnabled);
   }
@@ -240,13 +247,7 @@ export class RobotSimulation {
   toWorld(local: Vector) { return add(this.chassis.body.translation(), rotate(local, this.chassis.body.rotation())); }
   renderPosition(fuel: Fuel) {
     if (fuel.owner !== this.owner) return this.fuel.renderPosition(fuel);
-    const local = { ...fuel.local };
-    // The upper rear panel slopes inward at 45°. Keep the visible full-hopper
-    // packing behind its inner face, including the ball radius and a small gap.
-    const hopperShift = this.chassis.definition.hopper.stowTravel * (1 - this.chassis.pose.hopper);
-    if (!this.chassis.definition.cargoSlots && fuel.state !== 'transferring') local.x = Math.max(local.x, -0.63897 + FUEL_RADIUS + 0.006 + hopperShift,
-      local.y - 0.832565 + (FUEL_RADIUS + 0.006) * Math.SQRT2 + hopperShift);
-    return add(this.chassis.body.translation(), rotate(local, this.chassis.renderRotation));
+    return add(this.chassis.body.translation(), rotate(fuel.local, this.chassis.renderRotation));
   }
   get telemetry(): MechanismTelemetry {
     const held = this.held, counts = this.fuel.counts;

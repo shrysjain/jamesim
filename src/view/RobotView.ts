@@ -1,3 +1,4 @@
+import type { Alliance } from '../field/targets';
 import * as THREE from 'three';
 import { runtimeAsset } from '../runtimeAssets';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -16,6 +17,8 @@ export class RobotView {
   private nodes = new Map<string, THREE.Object3D>();
   private models = new Map<string, THREE.Group>();
   private activeId = '';
+  private alliance: Alliance = 'blue';
+  private refreshBumpers = true;
   private wheelRotation = [0, 0, 0, 0];
   private disposed = false;
   // A visible support tether for the managed tower constraint; not an invented CAD winch assembly.
@@ -28,7 +31,7 @@ export class RobotView {
   private proceduralId = '';
   setDefinition(definition: RobotDefinition) {
     if (this.activeId !== definition.id) {
-      this.activeId = definition.id;
+      this.activeId = definition.id; this.refreshBumpers = true;
       this.model = this.models.get(definition.id) ?? null;
       this.nodes.clear();
       for (const [id, model] of this.models) model.visible = id === definition.id;
@@ -42,16 +45,16 @@ export class RobotView {
     this.disposeObject(this.procedural); this.procedural.clear(); this.proceduralId = definition.id;
     const box = (parent: THREE.Object3D, name: string, size: [number, number, number], position: [number, number, number], color: number, opacity = 1) => {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), new THREE.MeshStandardMaterial({ color, transparent: opacity < 1, opacity, depthWrite: opacity === 1 }));
-      mesh.position.set(...position); mesh.name = name; mesh.castShadow = opacity === 1; parent.add(mesh); return mesh;
+      mesh.position.set(...position); mesh.name = name; if (name.startsWith('bumper-')) (mesh.material as THREE.MeshStandardMaterial).name = 'bumper'; mesh.castShadow = opacity === 1; parent.add(mesh); return mesh;
     };
     const highTide = !!definition.cargoSlots, rear = highTide ? -.96 : -.64, width = definition.width;
     box(this.procedural, 'frame', [definition.length - .1, .07, width - .12], [0, -.12, 0], 0x1b3138);
     for (const sign of [-1, 1]) {
       box(this.procedural, `bumper-side-${sign}`, [definition.length, .115, .076], [0, definition.bumperCenterY, sign * (width / 2 - .038)], 0x106b7a);
       box(this.procedural, `bumper-end-${sign}`, [.076, .115, width - .152], [sign * (definition.length / 2 - .038), definition.bumperCenterY, 0], 0x106b7a);
-      box(this.procedural, `hopper-side-${sign}`, [.25 - rear, .32, .012], [(rear + .25) / 2, .1, sign * .34], 0x72dfdb, .3);
+      box(this.procedural, `hopper-side-${sign}`, [.25 - rear, .428, .012], [(rear + .25) / 2, .114, sign * .34], 0x72dfdb, .3);
     }
-    box(this.procedural, 'hopper-rear', [.015, .32, .68], [rear, .1, 0], 0x72dfdb, .3);
+    box(this.procedural, 'hopper-rear', [.015, .428, .68], [rear, .114, 0], 0x72dfdb, .3);
     const intake = new THREE.Mesh(new THREE.CylinderGeometry(.038, .038, .64, 16), new THREE.MeshStandardMaterial({ color: 0x15191d }));
     intake.rotation.x = Math.PI / 2; intake.position.set(highTide ? -1.04 : -.61, -.10, 0); intake.name = 'pickup-roller'; this.procedural.add(intake);
     const rotor = new THREE.Mesh(new THREE.CylinderGeometry(.26, .26, .045, 32), new THREE.MeshStandardMaterial({ color: 0xd7c783 }));
@@ -69,6 +72,20 @@ export class RobotView {
       box(this.procedural, 'climber-hook', [.75, .045, .06], [.6, .55, -.27], 0xf4d56a);
     }
     this.group.add(this.procedural);
+  }
+
+  setAlliance(alliance: Alliance) {
+    if (alliance === this.alliance && !this.refreshBumpers) return;
+    this.alliance = alliance; this.refreshBumpers = false;
+    (this.model ?? this.procedural).traverse(object => {
+      if (!(object instanceof THREE.Mesh)) return;
+      for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+        if (!(material instanceof THREE.MeshStandardMaterial) || material.name !== 'bumper') continue;
+        // Prepared 2910 bumper vertices contain blue; disable that tint on bumper material only.
+        if (material.vertexColors) { material.vertexColors = false; material.needsUpdate = true; }
+        material.color.setHex(alliance === 'red' ? 0xc72f45 : 0x215fc4);
+      }
+    });
   }
 
   async load() {
@@ -107,6 +124,7 @@ export class RobotView {
   }
 
   update(robot: SwerveChassis, dt: number, mechanisms: RobotSimulation | null = null) {
+    if (mechanisms) this.setAlliance(mechanisms.shooter.alliance);
     const p = robot.body.translation(), q = robot.renderRotation, physicalRotation = robot.body.rotation(), d = robot.definition;
     this.group.position.set(p.x, p.y, p.z); this.group.quaternion.set(q.x, q.y, q.z, q.w);
     for (const part of ['intake', 'hopper', 'hood'] as RobotPart[]) {
