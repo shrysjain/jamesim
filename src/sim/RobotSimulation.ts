@@ -126,10 +126,10 @@ export class RobotSimulation {
       const target = demand ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? cargoExtension(held.length, this.capacity) : 1;
       this.intakeTarget = target;
       const intake = approach(this.chassis.pose.intake, target, target < this.chassis.pose.intake ? INTAKE.compressSeconds : INTAKE.deploySeconds);
-      const hopper = this.chassis.definition.hopper.intakeCurve ? linkedHopperExtension(this.chassis.definition, intake) : this.chassis.definition.hopper.stowTravel && this.chassis.definition.intake.stowTravel ? intake : approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
+      const hopper = this.chassis.definition.hopper.intakeCurve ? linkedHopperExtension(this.chassis.definition, intake) : (this.chassis.definition.hopper.coupledToIntake || this.chassis.definition.hopper.stowTravel && this.chassis.definition.intake.stowTravel) ? intake : approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
       if (hopper === 1 && intake === 1) this.deployed = true;
       if (this.chassis.definition.intake.passiveKicker && intake > .1) this.kickerDeployment = Math.min(1, this.kickerDeployment + dt / .25);
-      this.chassis.setPose({ intake, hopper, hood: this.shooter.hood });
+      this.chassis.setPose({ intake, hopper, hood: this.shooter.hood, climber: this.climber.telemetry.extension });
       if (demand) this.rollerAngle += (this.input.reverse ? -1 : 1) * 32 * dt;
     }
     for (const f of held) {

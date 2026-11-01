@@ -63,7 +63,7 @@ export class HopperDynamics {
           a.x -= n.x*correction; a.y -= n.y*correction; a.z -= n.z*correction;
           b.x += n.x*correction; b.y += n.y*correction; b.z += n.z*correction;
         }
-        for (const p of balls) this.constrain(p.fuel.local, front, width);
+        for (const p of balls) this.constrain(p.fuel.local, front, width, pose);
       }
       for (const p of balls) {
         p.velocity = scale(sub(p.fuel.local, p.previous), 1/h);
@@ -81,10 +81,10 @@ export class HopperDynamics {
   }
   front(pose: RobotPose) { return this.volume.frontX + this.volume.frontTravel*(1-(this.definition.hopper.intakeCurve ? pose.hopper : pose.intake)); }
   floor(x: number) { return this.volume.floorY + (this.volume.floorSlope ?? 0)*x; }
-  private constrain(p: Vector, front: number, width: number) {
+  private constrain(p: Vector, front: number, width: number, pose: RobotPose) {
     p.x = Math.max(front+FUEL_RADIUS, Math.min(this.volume.backX-FUEL_RADIUS, p.x));
     p.z = Math.max(-width, Math.min(width, p.z));
-    p.y = Math.min(this.volume.ceilingY-FUEL_RADIUS, p.y);
+    p.y = Math.min(this.volume.ceilingY+(this.volume.ceilingTravel ?? 0)*(pose.climber ?? 0)-FUEL_RADIUS, p.y);
     const slope = this.volume.floorSlope ?? 0, penetration = this.floor(p.x)+FUEL_RADIUS*Math.sqrt(1+slope*slope)-p.y;
     if (penetration > 0) { p.x -= slope*penetration/(1+slope*slope); p.y += penetration/(1+slope*slope); }
     if (this.volume.slopedFront) {
