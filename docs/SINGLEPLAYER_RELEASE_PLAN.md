@@ -1,6 +1,6 @@
 # Jamesim v1 singleplayer release
 
-Plan date: November 1, 2026. This is the next implementation plan, not a claim that the launch interface is already built. GitHub preparation is authorized now; the public site is not being deployed in this step.
+Plan date: November 1, 2026. Steps 1–5 have now been implemented and checked locally to the extent recorded in [release acceptance](SINGLEPLAYER_ACCEPTANCE.md). The remaining external gates are user playtest/sign-off and source-backed asset clearance. Step 6 is not authorized: no hosting project or deployment was created.
 
 ## The release we are building
 
@@ -22,7 +22,7 @@ No accounts, leaderboard, robot picker, gamepad/mobile controls, multiplayer, re
 | Continuity | Stable fuel IDs, hub return/recollection, pause/focus handling, world/match restart |
 | Presentation | Approved follow camera and occluder fading, fuel/status readouts, match sounds and mute |
 
-The remaining work is mainly product flow, settings, production cleanup and publication readiness. The current application still starts in free practice and exposes the field lab through Debug.
+The application now starts directly in a timed match. Saved settings and the compact player HUD are implemented; the inspector is a development-only component. See the acceptance record for checks, payload measurements and remaining publication gates.
 
 ## 0. Establish the repository and publishable asset set
 
@@ -43,7 +43,7 @@ Main files: `src/view/FieldViewer.ts`, `src/App.tsx`, `src/components/MatchUI.ts
 1. Finish loading physics, both models, fonts and fuel before starting the match clock. Show clear loading progress and a useful retry message on failure.
 2. Start the timed default match automatically. Use a short automatic 3–2–1 count-in if needed to give the player control; no menu or required Start button.
 3. Route initial load, `R` and the results' restart action through one match-start path. Reset robot/cargo, fuel, score, hub queues, aim, modules, inputs, clock, cues and results state together.
-4. Make `R` work while playing, paused, and viewing results. **Current gap:** the App keyboard handler returns early on results, so `R` currently cannot restart there. Do not trigger restart while typing/rebinding in a focused control.
+4. Make `R` work while playing, paused, and viewing results. **Implemented:** the App handles `R` before the results lock, so it also restarts there. Do not trigger restart while typing/rebinding in a focused control.
 5. End at the existing final-assessment boundary; show a compact fuel result and a clear `R`/restart action. Remove practice/setup branches from the public flow.
 6. Keep focus-loss/tab-hidden pause and clear held input. Resume explicitly; never resume into a stale movement/shoot command. Settings/help should preserve whether the match was running before they opened.
 7. Handle browser audio policy: the match may start automatically, but audio must unlock on a real click/key. Do not make a misleading promise of audible first-load start cues without user interaction. Do not replay an old start sound late into a match.
@@ -87,7 +87,7 @@ HUD:
 
 ## 4. Prepare the static production payload
 
-Measured local snapshot: approximately 14 MiB under `public/`, 19 MiB built output, 5.32 MB application JS (about 1.94 MB gzip), and 647,441 triangles in the prepared robot. The 6.2 MB collision JSON is a notable part of the transfer. These are disk/build observations, not measured download times or a frame-rate guarantee.
+The original local snapshot had about 14 MiB under `public/`, 19 MiB built output, 5.32 MB monolithic application JS and 647,441 robot triangles. The candidate uses separate player/viewer/Three/physics chunks and reduces collision coordinates from 6.2 MB JSON to 3.86 MB packed data. Current measurements and their limits are in the acceptance record.
 
 1. After clearance, pin approved asset versions, validate hashes and retain attribution. Keep audit reports/source exports outside the public payload where they are not needed by players.
 2. Split major engine/physics and UI chunks where it improves loading/cache reuse. Do not switch frameworks or add a backend to solve an existing chunk-size warning.

@@ -41,3 +41,9 @@ pnpm build:release
 Normal Vite `pnpm build` remains available for source-only CI and local development. Do not configure public production deployment to bypass the release preflight. No public deployment is created by the repository's checks workflow.
 
 After clearance, preferably commit the roughly 14 MiB prepared runtime pack with versioned URLs, while continuing to exclude the roughly 400 MiB raw/intermediate preparation workspace. A separately supplied approved versioned build pack is also possible. CI does not currently fetch missing media from third parties or publish it as an artifact.
+
+## Local release packaging
+
+`pnpm build:local` checks the installed pack, builds the production interface and runs `pnpm check:build`. It is intended for the user's offline/local review while publication records are completed. `pnpm build:release` performs the additional source-backed clearance gate before the same build/payload check.
+
+The Vite runtime-assets plugin allowlists the recorded payloads instead of copying the whole public directory. It emits content-hashed model, metadata and audio files. Collision JSON is packed into a hashed binary containing the exact float32 vertices and uint32 indices Rapier previously constructed; source JSON/hashes remain unchanged. The browser resolves all metadata URLs through the same generated map. `check:build` compares the built geometry and checks for missing/unexpected files and development interfaces. Font/OFL files and retained media/dependency notices ship alongside the owned favicon/social image.

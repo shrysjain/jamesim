@@ -38,7 +38,7 @@ Jamesim is a browser-only FRC 2026 REBUILT simulator. Read `docs/SINGLEPLAYER_RE
 - Match the verification to the change. Do not repeatedly run broad browser/physics benchmarks for small edits. Respect an explicit request to skip tests and say what was skipped.
 - `pnpm test:unit`: asset-independent rule/audio schedule checks.
 - `pnpm test:sim`: complete simulation checks, serial workers to avoid memory/CPU contention; requires local field assets.
-- `pnpm build`: TypeScript and Vite compilation. `pnpm build:release`: asset clearance checks plus the production build.
+- `pnpm build`: TypeScript and Vite compilation (shell-only clones allowed). `pnpm build:local`: source-pack integrity, complete build and production-payload checks. `pnpm build:release`: clearance plus build/payload checks. `pnpm preview` serves the production interface on port 4173.
 - For gameplay changes, run relevant simulation cases when authorized. Update assertions when the intended behavior changes; do not weaken checks to hide regressions.
 - When UI is changed, use one focused local browser check when appropriate, rather than exhaustive exploration.
 - Keep commits scoped and descriptions concrete. Review staged files and sizes before pushing. Never force-push or rewrite published history without an explicit request.

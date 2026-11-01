@@ -1,3 +1,9 @@
+# Local singleplayer release candidate
+
+The direct timed player flow, saved settings, production-only HUD, versioned payload and current verification are recorded in [SINGLEPLAYER_ACCEPTANCE.md](SINGLEPLAYER_ACCEPTANCE.md). No deployment has been performed. Historical gate and gameplay notes below retain their original verification scope.
+
+---
+
 # Chassis flight fix — November 1, 2026
 
 Reproduced a physical pitch/roll drift during a continuous, driver-controlled 160-second full-field collection/shooting route with the normal 504 fuel. The route alternated neutral-zone collection at X=0 with return/shoot destinations at X=6.1 (and one wall destination at X=7.7), visiting Z=2.1, ±3.35 and 1.6. There were no resets or pose teleports during the route.

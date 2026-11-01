@@ -1,6 +1,6 @@
 # Stage 5: solo timed fuel matches
 
-Use **Practice / Timed match** beside Jamesim to choose a session. Free practice remains unlimited and starts empty. Timed mode resets the field and starts a solo blue-robot fuel match, with a selectable preload and event fuel targets. WASD/J/L, Shift, Space and Q retain their normal meanings during both AUTO and teleop. R restarts the whole timed match; it remains robot-only respawn in practice.
+Public v1 loads directly into a blue-alliance timed match with eight existing preloads and regional/district fuel targets. WASD/J/L, Shift, Space and Q work during both AUTO and teleop. R restarts the complete match from play, pause or results, retaining its tie seed. Settings/help pause and restore the prior running state; losing focus always requires an explicit resume. Free practice and early completion are development-only tools.
 
 The main HUD shows fuel points, phase, match time, phase time, and each hub's active/processing/inactive state. Lip lights show alliance color when active, dim when inactive, pulse before shutdown, and show a white chase on the hub selected to be inactive in Shift 1 during transition. Disabled assessment periods use purple lights. Existing follow-camera framing is unchanged.
 
@@ -21,9 +21,9 @@ The [official TU22 manual](https://firstfrc.blob.core.windows.net/frc2026/Manual
 | 163–166 s | Final assessment | Disabled outputs | Final fuel processing allowance |
 | 166 s | Results | Frozen simulation | Off |
 
-There are 160 enabled match seconds plus the two assessment gaps. Pause, focus loss, help, and session setup freeze both clock and physics. Resuming preserves the remaining phase time. A completed match cannot resume through the pause button. It can be inspected, restarted, or replaced with a fresh practice session.
+There are 160 enabled match seconds plus the two assessment gaps. Pause, focus loss, help, and settings freeze both clock and physics. Resuming preserves the remaining phase time. A completed match cannot resume through the pause button. The final field can be inspected and the match restarted with the same setup.
 
-The pause card and Debug offer **End match**. This disables outputs and assesses fuel for up to three more simulated seconds before showing an explicitly incomplete result. It does not extend the existing processing window of a hub that was already inactive.
+The development panel offers **End match**. This disables outputs and assesses fuel for up to three more simulated seconds before showing an explicitly incomplete result. It does not extend the existing processing window of a hub that was already inactive.
 
 ## Fuel scoring and hub order
 
@@ -41,9 +41,9 @@ Auto fuel totals settle before the Shift 1 order is locked. The higher-scoring a
 
 AUTO is driver-operated for simulator gameplay. No path planner, automatic preload firing, or driver lock runs during its 20 seconds. The AUTO phase still supplies the correct clock, hub state and scoring interval. The three-second assessment gaps retain disabled outputs.
 
-Choose zero to eight preloaded balls. They are taken from existing neutral-zone IDs after reset, so the complete field supply stays at 504. Stored positions follow the hopper's stow/deploy travel, keeping preloads supported in the starting configuration. Cargo mass is included normally.
+Public v1 uses eight preloaded balls; the simulation supports zero to eight for development. They are taken from existing neutral-zone IDs after reset, so the complete field supply stays at 504. Stored positions follow the hopper's stow/deploy travel, keeping preloads supported in the starting configuration. Cargo mass is included normally.
 
-During disabled assessment periods, wheel motors and mechanism actuation stop. Passive tire/spring support and physical field/fuel motion continue; launched balls can finish their flight. The flywheel coasts. Match restarts restore initial fuel, preloads, robot, clocks, hit counters, and scores. Practice-only teleport, pose, probe and tuning controls are unavailable during a timed run; inspection cameras and collision layers remain available.
+During disabled assessment periods, wheel motors and mechanism actuation stop. Passive tire/spring support and physical field/fuel motion continue; launched balls can finish their flight. The flywheel coasts. Match restarts restore initial fuel, preloads, robot, clocks, hit counters, and scores. Practice-only teleport, pose, probe and tuning controls are unavailable during a timed run; inspection cameras and collision layers are development-only.
 
 ## Profiles and results
 
