@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-01T00:38:15.447Z",
+  "scenario": "Official field, 504 fuel; intake 1.5 s, robot-only respawn, shoot 5 s",
+  "collected": 24,
+  "launched": 24,
+  "lanesUsed": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "remainingCargo": 0,
+  "finalMassKg": 55.999996185302734,
+  "counts": {
+    "total": 504,
+    "loose": 504,
+    "transferring": 0,
+    "stored": 0,
+    "feeding": 0,
+    "airborne": 0
+  },
+  "peakAirborne": 9,
+  "stepMs": {
+    "mean": 3.6426084099999865,
+    "p95": 5.203207999999904,
+    "max": 9.13037499999973
+  },
+  "notes": "Headless wall time per 120 Hz simulation step, including aim selection and field/fuel physics. No rendering; local load and warmup affect timing. Launch counts are not scored hub entries."
+}

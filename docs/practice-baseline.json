@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-01T01:17:09.170Z",
+  "scenario": "Official field, 504 fuel; intake 1.5 s, robot-only respawn, shoot 5 s",
+  "collected": 24,
+  "launched": 24,
+  "lanesUsed": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "remainingCargo": 0,
+  "finalMassKg": 55.999996185302734,
+  "counts": {
+    "total": 504,
+    "loose": 504,
+    "transferring": 0,
+    "stored": 0,
+    "feeding": 0,
+    "airborne": 0,
+    "hubTransit": 0
+  },
+  "peakAirborne": 2,
+  "hubs": {
+    "enabled": true,
+    "blue": {
+      "hits": 24,
+      "returned": 24,
+      "queued": 0,
+      "blocked": 0
+    },
+    "red": {
+      "hits": 0,
+      "returned": 0,
+      "queued": 0,
+      "blocked": 0
+    },
+    "inTransit": 0,
+    "returned": 24
+  },
+  "stepMs": {
+    "mean": 3.1026669383333334,
+    "p95": 5.474249999999756,
+    "max": 11.978209000000334
+  },
+  "notes": "Headless wall time per 120 Hz simulation step, including aim selection and field/fuel physics. No rendering; local load and warmup affect timing. Launch counts are not scored hub entries."
+}

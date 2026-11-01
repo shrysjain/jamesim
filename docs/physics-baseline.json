@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-30",
+  "runtime": "v26.5.0",
+  "scenario": "504 fuel, 18 static colliders, 120 Hz; 1 s warmup + 7 s sample, Node headless",
+  "p50StepMs": 0.081,
+  "p95StepMs": 0.152,
+  "maxStepMs": 0.538,
+  "fuel": 504,
+  "belowFloor": 0,
+  "awakeAtEnd": 0
+}

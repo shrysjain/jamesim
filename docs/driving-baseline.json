@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-30",
+  "runtime": "v26.5.0",
+  "scenario": "One 56 kg swerve chassis, 504 fuel, official field; 8 s at 120 Hz. 2 s precision forward, 2 s reverse, 4 s settling. Node headless, no warmup exclusion.",
+  "p50StepMs": 1.247,
+  "p95StepMs": 2.59,
+  "maxStepMs": 70.464,
+  "peakAwake": 505,
+  "maxTiltDegrees": 0.787,
+  "fuel": 504,
+  "displacedFuel": 143,
+  "belowFloor": 0
+}
