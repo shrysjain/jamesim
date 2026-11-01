@@ -9,6 +9,7 @@ Jamesim is an independent browser simulator. Public source availability does not
 | Team 2910 Java references | `assets/source/robots/2910-reblitz/CODE-LICENSE` (MIT); preserved reference files, not an inferred CAD/media license |
 | Cheesy Arena sound samples | `assets/source/audio/CHEESY_ARENA_LICENSE.txt` and `manifest.json`; unmodified WAV payloads included by that decision; license review pending |
 | Orbit 1690 Kepler CAD | [Team release](https://www.chiefdelphi.com/t/frc-orbit-1690-2026-robot-cad-release/520673); CAD-derived mesh exports from [TylerHandel/rebuilt-sim-2026](https://github.com/TylerHandel/rebuilt-sim-2026/tree/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots). Source chain and hashes: `assets/kepler-cad-sources.json`, `docs/KEPLER.md`. Redistribution review pending; no clearance inferred from public CAD access. Local review addition. |
+| Team 6328 Darwin CAD | Official `Mechanical-Advantage/RobotCode2026Public` visualization exports of the linked Onshape document; full source chain and hashes: `assets/robots/6328-darwin/sources.json`. Pending CAD rights review under the owner-authorized v1 policy; code licensing does not establish CAD clearance. |
 | Barlow / Barlow Condensed fonts | SIL Open Font License, notices under `public/fonts/`; included with their notices |
 | Application dependencies | Exact versions in `pnpm-lock.yaml`; their respective package licenses apply |
 

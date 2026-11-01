@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "robotId": "6328-darwin",
+  "season": 2026,
+  "revision": "6328-26C-0000 Darwin official visualization exports",
+  "onshape": "https://novalabsrobotics.onshape.com/documents/2da573df9d139d7a1e0f08a8/w/5266e52966df9f56fcb472f0/e/15a6a42133f059b818ad5264",
+  "repository": "https://github.com/Mechanical-Advantage/RobotCode2026Public",
+  "commit": "559fa65be991303fec81d03c3de21e82a219da7c",
+  "documentEvidence": "The published extraction recipe at TylerHandel/rebuilt-sim-2026@344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/6328.json identifies these official AdvantageScope models as exports of document 2da573df9d139d7a1e0f08a8. All runtime geometry here comes from the official models, not another simulator implementation. The live workspace is inaccessible here.",
+  "redistribution": {
+    "status": "pending",
+    "evidence": [],
+    "note": "CAD rights remain pending under docs/V1_PUBLICATION.md; code license is not inferred as CAD clearance."
+  },
+  "files": [
+    {
+      "file": "model.glb",
+      "url": "https://raw.githubusercontent.com/Mechanical-Advantage/RobotCode2026Public/559fa65be991303fec81d03c3de21e82a219da7c/ascope_assets/Robot_Darwin/model.glb",
+      "bytes": 31340724,
+      "sha256": "fe05efdfb387f9472cff2f454154e5c9ee4c9da0336af5f6123586ce3dbedf8b"
+    },
+    {
+      "file": "model_0.glb",
+      "url": "https://raw.githubusercontent.com/Mechanical-Advantage/RobotCode2026Public/559fa65be991303fec81d03c3de21e82a219da7c/ascope_assets/Robot_Darwin/model_0.glb",
+      "bytes": 1481496,
+      "sha256": "4dc57beb2de96e876fdd0ecb216d090907741ddd8c909cdb3a1b36b850d5c2b5"
+    },
+    {
+      "file": "model_1.glb",
+      "url": "https://raw.githubusercontent.com/Mechanical-Advantage/RobotCode2026Public/559fa65be991303fec81d03c3de21e82a219da7c/ascope_assets/Robot_Darwin/model_1.glb",
+      "bytes": 1987276,
+      "sha256": "cf6fe623823cf8907a81b87803c0feeacfc6a852c375c009fd298509fea035b4"
+    },
+    {
+      "file": "model_2.glb",
+      "url": "https://raw.githubusercontent.com/Mechanical-Advantage/RobotCode2026Public/559fa65be991303fec81d03c3de21e82a219da7c/ascope_assets/Robot_Darwin/model_2.glb",
+      "bytes": 529716,
+      "sha256": "9677048a49ffd61caa43ad686af22f601f3a0670d893ec12112ab887532062b3"
+    },
+    {
+      "file": "model_3.glb",
+      "url": "https://raw.githubusercontent.com/Mechanical-Advantage/RobotCode2026Public/559fa65be991303fec81d03c3de21e82a219da7c/ascope_assets/Robot_Darwin/model_3.glb",
+      "bytes": 1852456,
+      "sha256": "86ee93d901b0cd4032044b1071e48189c3469af4f4fdb7af66078d05483b08e9"
+    },
+    {
+      "file": "config.json",
+      "url": "https://raw.githubusercontent.com/Mechanical-Advantage/RobotCode2026Public/559fa65be991303fec81d03c3de21e82a219da7c/ascope_assets/Robot_Darwin/config.json",
+      "bytes": 2890,
+      "sha256": "4eb62876e458028dbe216435c676103c6aaa06b375db65a5692c439fa4b9e59c"
+    }
+  ]
+}
