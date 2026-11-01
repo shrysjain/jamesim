@@ -10,3 +10,11 @@ export function partTransform(definition: RobotDefinition, part: RobotPart, pose
 }
 
 export const STARTING_POSE: RobotPose = { intake: 0, hopper: 0, hood: 0 };
+
+/** A definition-owned linkage maps the shared intake actuator to the actual hopper slide. */
+export function linkedHopperExtension(definition: RobotDefinition, intake: number): number {
+  const curve = definition.hopper.intakeCurve;
+  if (!curve) return intake;
+  const t = Math.max(0, Math.min(1, intake)) * (curve.length - 1), i = Math.min(curve.length - 2, Math.floor(t));
+  return curve[i] + (curve[i + 1] - curve[i]) * (t - i);
+}

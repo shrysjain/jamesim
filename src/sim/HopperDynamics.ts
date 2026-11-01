@@ -79,7 +79,7 @@ export class HopperDynamics {
       }
     }
   }
-  front(pose: RobotPose) { return this.volume.frontX + this.volume.frontTravel*(1-pose.intake); }
+  front(pose: RobotPose) { return this.volume.frontX + this.volume.frontTravel*(1-(this.definition.hopper.intakeCurve ? pose.hopper : pose.intake)); }
   floor(x: number) { return this.volume.floorY + (this.volume.floorSlope ?? 0)*x; }
   private constrain(p: Vector, front: number, width: number) {
     p.x = Math.max(front+FUEL_RADIUS, Math.min(this.volume.backX-FUEL_RADIUS, p.x));
