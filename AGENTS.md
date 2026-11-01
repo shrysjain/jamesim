@@ -8,6 +8,7 @@ Jamesim is a browser-only FRC 2026 REBUILT simulator. Read `docs/STAGE_19_5.md` 
 - Use the pinned pnpm version in `package.json`. `pnpm dev` serves localhost on port 5173; do not stop an existing user-owned server.
 - Browser testing is local. Use Safari or an isolated in-app browser; leave the user's Chrome profiles alone unless explicitly requested.
 - Do not create subagents unless the user explicitly requests delegation.
+- Develop directly on `main` unless the user explicitly requests a different branch. Push only `main`; do not push `codex/` branches.
 - Follow the user's latest scope, testing preference and accepted changes. In particular, do not turn a planning request into an unrequested product rewrite or deployment.
 
 ## Architecture and invariants
