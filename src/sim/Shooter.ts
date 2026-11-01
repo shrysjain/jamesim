@@ -40,6 +40,13 @@ export function flightPosition(position: Vector, velocity: Vector, seconds: numb
 export class Shooter {
   turretYaw = 0;
   get geometry() { return this.chassis.definition.shooterGeometry ?? DEFAULT_GEOMETRY; }
+  private get minElevation() { return this.geometry.minElevation ?? SHOOTER.minElevation; }
+  private get maxElevation() { return this.geometry.maxElevation ?? SHOOTER.maxElevation; }
+  /** Rotate every point about the bearing axis, including an offset flywheel axle. */
+  private turretPoint(offset: Vector) {
+    const pivot = v3(...this.geometry.pivot), axis = v3(...(this.geometry.turretPivot ?? this.geometry.pivot));
+    return add(axis, this.turretRotate(add(sub(pivot, axis), offset)));
+  }
   private get speedPerRpm() { return 2 * Math.PI * this.geometry.drumRadius / 60 * SHOOTER.slip; }
   private get mechanism() { return this.chassis.definition.mechanisms; }
   private turretRotate(p: Vector) { const c = Math.cos(this.turretYaw), s = Math.sin(this.turretYaw); return v3(p.x*c+p.z*s, p.y, -p.x*s+p.z*c); }
@@ -70,13 +77,13 @@ export class Shooter {
     this.feedOrder = [...this.laneOrder];
   }
 
-  constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem, private owner: string, private payloadChanged: () => void) { this.laneState = this.makeLanes(); }
-  get hood() { return (SHOOTER.maxElevation - this.elevation) / (SHOOTER.maxElevation - SHOOTER.minElevation); }
+  constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem, private owner: string, private payloadChanged: () => void) { this.laneState = this.makeLanes(); this.elevation = this.maxElevation; }
+  get hood() { return (this.maxElevation - this.elevation) / (this.maxElevation - this.minElevation); }
   /** Measured drum tangent plus 155 mm of guide clearance; not the bumper edge. */
   muzzleLocal(elevation: number, z: number) {
     const radius = this.geometry.drumRadius + FUEL_RADIUS + 0.004;
-    return add(v3(...this.geometry.pivot), this.turretRotate(v3(-Math.sin(elevation) * radius + Math.cos(elevation) * this.geometry.guideLength,
-      Math.cos(elevation) * radius + Math.sin(elevation) * this.geometry.guideLength, z)));
+    return this.turretPoint(v3(-Math.sin(elevation) * radius + Math.cos(elevation) * this.geometry.guideLength,
+      Math.cos(elevation) * radius + Math.sin(elevation) * this.geometry.guideLength, z));
   }
   muzzle(z = 0, elevation = this.elevation) { return add(this.chassis.body.translation(), rotate(this.muzzleLocal(elevation, z), this.chassis.renderRotation)); }
 
@@ -93,7 +100,7 @@ export class Shooter {
       elevation = Math.atan2(local.y, Math.hypot(local.x, local.z));
     }
     const speed = Math.hypot(relative.x, relative.y, relative.z);
-    if (elevation < SHOOTER.minElevation || elevation > SHOOTER.maxElevation || speed < SHOOTER.minSpeed || speed > SHOOTER.maxSpeed) return null;
+    if (elevation < this.minElevation || elevation > this.maxElevation || speed < SHOOTER.minSpeed || speed > SHOOTER.maxSpeed) return null;
     const muzzle = this.muzzle(0, elevation), launch = add(body.velocityAtPoint(muzzle), relative);
     const verticalAtTarget = launch.y * Math.exp(-FUEL_LINEAR_DAMPING * t) - 9.81 / FUEL_LINEAR_DAMPING * (1 - Math.exp(-FUEL_LINEAR_DAMPING * t));
     if (verticalAtTarget > -1) return null; // Require descending entry/landing.
@@ -147,7 +154,7 @@ export class Shooter {
   }
   private clearExit(z: number, elevation = this.elevation) {
     const body = this.chassis.body, q = this.chassis.renderRotation;
-    const breech = add(body.translation(), rotate(add(v3(...this.geometry.pivot), this.turretRotate(v3(-.062575, -.06325, z))), q));
+    const breech = add(body.translation(), rotate(this.turretPoint(v3(-.062575, -.06325, z)), q));
     // Check the managed-to-physical handoff too: the exit point can lie above a trench roof.
     return !this.world.castShape(breech, q, sub(this.muzzle(z, elevation), breech), new RAPIER.Ball(FUEL_RADIUS + 0.002), 0, 1, true,
       RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
@@ -164,7 +171,7 @@ export class Shooter {
     this.blocked = !!this.solution?.obstructed;
     const targetRpm = this.solution ? this.solution.speed / this.speedPerRpm : 0;
     this.rpm = approach(this.rpm, targetRpm, dt * (targetRpm > this.rpm ? SHOOTER.rpmPerSecond : SHOOTER.coastPerSecond));
-    if (powered) this.elevation = approach(this.elevation, this.solution?.elevation ?? SHOOTER.maxElevation, dt * SHOOTER.hoodRadiansPerSecond);
+    if (powered) this.elevation = approach(this.elevation, this.solution?.elevation ?? this.maxElevation, dt * SHOOTER.hoodRadiansPerSecond);
     this.drumAngle = (this.drumAngle + this.rpm * 2 * Math.PI / 60 * dt) % (2 * Math.PI);
     if (this.laneState.some(l => l.id !== null)) this.feederAngle += 40 * dt;
     if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) return undefined;
@@ -206,7 +213,7 @@ export class Shooter {
       if (!f) continue;
       lane.age = clamp(lane.age + (requested ? dt : -dt), 0, lane.duration);
       const t = lane.age / lane.duration, z = lane.z + lane.offset;
-      const end = this.muzzleLocal(this.elevation, z), control = add(v3(...this.geometry.pivot), this.turretRotate(v3(-.102575, -.13325, z)));
+      const end = this.muzzleLocal(this.elevation, z), control = this.turretPoint(v3(-.102575, -.13325, z));
       f.local = lerp(lerp(lane.start, control, t), lerp(control, end, t), t);
       if (!requested && lane.age === 0) { f.state = 'stored'; lane.id = null; continue; }
       if (t < 1 || !this.ready || !requested || !this.solution || this.fuel.time < this.nextLaunchAt || this.fuel.time < lane.lastShotAt + (this.mechanism.turret ? 1 / this.mechanism.fireRate : SHOOTER.laneInterval) - 1e-7) continue;
@@ -241,7 +248,7 @@ export class Shooter {
       lane.id = null; lane.age = lane.availableAt = 0; lane.lastShotAt = -Infinity;
     }
     this.turretYaw = 0;
-    this.rpm = this.drumAngle = this.feederAngle = 0; this.elevation = SHOOTER.maxElevation;
+    this.rpm = this.drumAngle = this.feederAngle = 0; this.elevation = this.maxElevation;
     this.solution = null; this.selection = null; this.active = this.blocked = false;
     this.feedOrder = []; this.laneOrder = []; this.nextFeedAt = this.nextLaunchAt = 0;
     this.randomState = 29102026;

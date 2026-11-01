@@ -1,0 +1,67 @@
+{
+  "officialOnshape": "https://orbit1690.onshape.com/documents/d09a47dbfc1b125f63a78ac7/w/d71d2275472653904f9b717a/e/03166dd8363262636c9f6b66",
+  "officialRelease": "https://www.chiefdelphi.com/t/frc-orbit-1690-2026-robot-cad-release/520673",
+  "mirrorCommit": "344501f464477cb93517a7b5344b43d7ee9474a7",
+  "files": [
+    {
+      "part": "body",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-body.glb",
+      "sha256": "b3285b63f5bd43e136a4a92a4d18eb26d406667dc6f11abc08a702773ec3f98f",
+      "bytes": 4630180
+    },
+    {
+      "part": "carriage",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-carriage.glb",
+      "sha256": "ee8750dce35047cbb8c70de6110acc69dac4eed1eb604d670e1f6977f92dbba5",
+      "bytes": 398276
+    },
+    {
+      "part": "fork",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-fork.glb",
+      "sha256": "ee232b727f13c00a397a883188a92c1f4b76072afa44bca907ef29cca1aced90",
+      "bytes": 105800
+    },
+    {
+      "part": "hood",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-hood.glb",
+      "sha256": "6ea1134ef07e5f9859ecf45f8abde9ff6e7515eed9b25541095cd241634f4584",
+      "bytes": 625944
+    },
+    {
+      "part": "kick",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-kick.glb",
+      "sha256": "c9de01266781f6a69e8acd5e0c03028563002de16fa4be0fa56752ffca784e27",
+      "bytes": 15700
+    },
+    {
+      "part": "panels",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-panels.glb",
+      "sha256": "45b77683f2f5fb3a3f9f38a992819e96a05a6db52a9aa054f0c394b49ada7742",
+      "bytes": 34992
+    },
+    {
+      "part": "pinions",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-pinions.glb",
+      "sha256": "6ee88d0cfb1f3317b4918e95ed9e26de8bfdc52054e96213be65bd0fde8648fc",
+      "bytes": 46540
+    },
+    {
+      "part": "top",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-top.glb",
+      "sha256": "d7b751f67d2dac57a81fb004b2dc012d06d73676cca22658605dcf540df696a2",
+      "bytes": 55544
+    },
+    {
+      "part": "turret",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-turret.glb",
+      "sha256": "26b4c7286e88bd2e88a5d9e73fae060da3a1398b1fc9de54f4fe726979789569",
+      "bytes": 737176
+    },
+    {
+      "part": "wheel",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1690-wheel.glb",
+      "sha256": "12033691f66a3b039c918e29e4202c4da901bd4ff7512500c06a642cb43de31e",
+      "bytes": 51216
+    }
+  ]
+}

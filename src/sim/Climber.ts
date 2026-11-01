@@ -52,9 +52,10 @@ export class Climber {
       this.joint = this.world.createImpulseJoint(RAPIER.JointData.fixed(zero, q, unrotate(sub(attachment, p), this.chassis.body.rotation()), q), this.anchor, this.chassis.body, true);
     }
     if (!this.anchor) return;
-    this.status = lower ? 'Lowering' : raise && this.lift < 1.14 ? 'Raising' : 'Holding';
+    const maxLift = this.chassis.definition.climb?.maxLift ?? 1.14, rate = this.chassis.definition.climb?.rate ?? .3;
+    this.status = lower ? 'Lowering' : raise && this.lift < maxLift ? 'Raising' : 'Holding';
     // Keep the managed support below the top of the 1.831 m tower uprights.
-    this.lift = Math.max(0, Math.min(1.14, this.lift + (lower ? -1 : raise ? 1 : 0) * dt * 0.3));
+    this.lift = Math.max(0, Math.min(maxLift, this.lift + (lower ? -1 : raise ? 1 : 0) * dt * rate));
     const a = this.anchor.translation();
     this.anchor.setNextKinematicTranslation({ x: a.x, y: this.baseY + this.lift, z: a.z });
     if (lower && this.lift === 0) { this.reset(); this.status = 'Lowered and released'; }

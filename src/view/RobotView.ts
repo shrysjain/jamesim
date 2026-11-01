@@ -3,7 +3,7 @@ import { runtimeAsset } from '../runtimeAssets';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import type { SwerveChassis } from '../sim/SwerveChassis';
-import { REBLITZ, partTransform } from '../robot/RobotDefinition';
+import { REBLITZ, ROBOTS, partTransform } from '../robot/RobotDefinition';
 import type { RobotDefinition, RobotPart } from '../robot/RobotDefinition';
 import type { RobotSimulation } from '../sim/RobotSimulation';
 import { rotate, unrotate, sub, v3 } from '../sim/vector';
@@ -14,16 +14,28 @@ export class RobotView {
   readonly contacts = import.meta.env.DEV ? new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: '#7cf3c9', depthTest: false })) : null;
   private model: THREE.Group | null = null;
   private nodes = new Map<string, THREE.Object3D>();
+  private models = new Map<string, THREE.Group>();
+  private activeId = '';
   private wheelRotation = [0, 0, 0, 0];
   private disposed = false;
+  // A visible support tether for the managed tower constraint; not an invented CAD winch assembly.
+  private towerSupport = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: 0xaeb6c0 }));
 
-  constructor() { if (this.contacts) { this.contacts.frustumCulled = false; this.contacts.renderOrder = 22; this.contacts.visible = false; } }
+  constructor() { this.towerSupport.visible = false; this.group.add(this.towerSupport); if (this.contacts) { this.contacts.frustumCulled = false; this.contacts.renderOrder = 22; this.contacts.visible = false; } }
 
   private badges = new THREE.Group();
   private procedural = new THREE.Group();
   private proceduralId = '';
   setDefinition(definition: RobotDefinition) {
-    if (this.model) this.model.visible = !!definition.model;
+    if (this.activeId !== definition.id) {
+      this.activeId = definition.id;
+      this.model = this.models.get(definition.id) ?? null;
+      this.nodes.clear();
+      for (const [id, model] of this.models) model.visible = id === definition.id;
+      this.model?.traverse(object => { if (object.userData.mechanism) this.nodes.set(object.userData.mechanism, object); });
+      for (const badge of this.badges.children) badge.visible = badge.userData.robot === definition.id;
+      this.wheelRotation.fill(0);
+    }
     this.badges.visible = !!definition.model;
     this.procedural.visible = !definition.model;
     if (definition.model || this.proceduralId === definition.id) return;
@@ -60,31 +72,38 @@ export class RobotView {
   }
 
   async load() {
-    const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(runtimeAsset(REBLITZ.model));
-    if (this.disposed) { this.disposeObject(gltf.scene); return; }
-    this.model = gltf.scene;
-    this.model.traverse(object => {
-      if (object.userData.mechanism) this.nodes.set(object.userData.mechanism, object);
-      if (object instanceof THREE.Mesh) { object.castShadow = true; object.receiveShadow = true; }
-    });
-    for (const name of ['chassis', 'intake', 'hopper', 'hood']) if (!this.nodes.has(name)) throw new Error(`Robot model missing ${name} assembly.`);
-    this.group.add(this.model);
+    await Promise.all(Object.values(ROBOTS).filter(d => d.model).map(async definition => {
+      const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(runtimeAsset(definition.model));
+      if (this.disposed) { this.disposeObject(gltf.scene); return; }
+      const names = new Set<string>();
+      gltf.scene.traverse(object => {
+        if (object.userData.mechanism) names.add(object.userData.mechanism);
+        if (object instanceof THREE.Mesh) { object.castShadow = true; object.receiveShadow = true; }
+      });
+      const required = definition.id === REBLITZ.id ? ['chassis', 'intake', 'hopper', 'hood'] : ['chassis', 'intake', 'turret', 'turret-hood', 'passive-kicker'];
+      for (const name of required) if (!names.has(name)) throw new Error(`${definition.name}: missing ${name} assembly.`);
+      gltf.scene.visible = false; this.models.set(definition.id, gltf.scene); this.group.add(gltf.scene);
+    }));
     await document.fonts.load('italic 800 80px "Barlow Condensed"');
     if (this.disposed) return;
-    const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 144;
-    const ctx = canvas.getContext('2d')!;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'italic 800 114px "Barlow Condensed", sans-serif';
-    ctx.lineWidth = 3; ctx.strokeStyle = '#103b7a'; ctx.strokeText('2910', 256, 78);
-    ctx.fillStyle = '#ffffff'; ctx.fillText('2910', 256, 78);
-    const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
-    const material = new THREE.MeshStandardMaterial({ map: texture, transparent: true, alphaTest: 0.15, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
     this.group.add(this.badges);
-    const geometry = new THREE.PlaneGeometry(0.295, 0.083);
-    for (const sign of [-1, 1]) {
-      const end = new THREE.Mesh(geometry, material); end.position.set(sign * (REBLITZ.length / 2 + 0.0015), REBLITZ.bumperCenterY, 0); end.rotation.y = sign * Math.PI / 2; this.badges.add(end);
-      const side = new THREE.Mesh(geometry, material); side.position.set(0, REBLITZ.bumperCenterY, sign * (REBLITZ.width / 2 + 0.0015)); side.rotation.y = sign > 0 ? 0 : Math.PI; this.badges.add(side);
+    for (const definition of Object.values(ROBOTS).filter(d => d.model)) {
+      const number = definition.id.split('-')[0];
+      const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 144;
+      const ctx = canvas.getContext('2d')!;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'italic 800 114px "Barlow Condensed", sans-serif';
+      ctx.lineWidth = 3; ctx.strokeStyle = '#103b7a'; ctx.strokeText(number, 256, 78);
+      ctx.fillStyle = '#ffffff'; ctx.fillText(number, 256, 78);
+      const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
+      const material = new THREE.MeshStandardMaterial({ map: texture, transparent: true, alphaTest: 0.15, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
+      const geometry = new THREE.PlaneGeometry(0.295, 0.083);
+      for (const sign of [-1, 1]) {
+        const end = new THREE.Mesh(geometry, material); end.position.set(sign * (definition.length / 2 + 0.0015), definition.bumperCenterY, 0); end.rotation.y = sign * Math.PI / 2; end.userData.robot = definition.id; this.badges.add(end);
+        const side = new THREE.Mesh(geometry, material); side.position.set(0, definition.bumperCenterY, sign * (definition.width / 2 + 0.0015)); side.rotation.y = sign > 0 ? 0 : Math.PI; side.userData.robot = definition.id; this.badges.add(side);
+      }
     }
+    this.setDefinition(REBLITZ);
   }
 
   update(robot: SwerveChassis, dt: number, mechanisms: RobotSimulation | null = null) {
@@ -92,14 +111,20 @@ export class RobotView {
     this.group.position.set(p.x, p.y, p.z); this.group.quaternion.set(q.x, q.y, q.z, q.w);
     for (const part of ['intake', 'hopper', 'hood'] as RobotPart[]) {
       const node = this.nodes.get(part); if (!node) continue;
-      const { angle, pivot, shift } = partTransform(d, part, robot.pose);
-      node.position.set(pivot[0] + shift, pivot[1], pivot[2]); node.rotation.z = angle;
+      const { angle, pivot, shift, rise } = partTransform(d, part, robot.pose);
+      node.position.set(pivot[0] + shift, pivot[1] + rise, pivot[2]); node.rotation.z = angle;
     }
     if (mechanisms) for (const [name, node] of this.nodes) {
-      if (name.startsWith('intake-roller-')) node.rotation.z = mechanisms.rollerAngle;
-      else if (name.startsWith('feeder-roller-')) node.rotation.z = mechanisms.rollerAngle * 0.7 + mechanisms.shooter.feederAngle;
+      const axis: 'x' | 'y' | 'z' = node.userData.spinAxis ?? 'z';
+      if (name.startsWith('intake-roller-')) node.rotation[axis] = mechanisms.rollerAngle;
+      else if (name.startsWith('feeder-roller-')) node.rotation[axis] = mechanisms.rollerAngle * 0.7 + mechanisms.shooter.feederAngle;
       else if (name === 'shooter-drum' || name.startsWith('hood-roller-')) node.rotation.z = -mechanisms.shooter.drumAngle;
       else if (name === 'shooter-flywheel') node.rotation.z = -mechanisms.shooter.drumAngle * 6.7;
+    }
+    if (mechanisms) {
+      const turret = this.nodes.get('turret'); if (turret) turret.rotation.y = mechanisms.shooter.turretYaw;
+      const hood = this.nodes.get('turret-hood'); if (hood) hood.rotation.z = mechanisms.shooter.elevation - (d.shooterGeometry?.maxElevation ?? 0);
+      const kicker = this.nodes.get('passive-kicker'); if (kicker) kicker.rotation.z = mechanisms.kickerDeployment * 163 * Math.PI / 180;
     }
     const intakeShift = (d.intake.stowTravel ?? 0) * (1 - robot.pose.intake);
     const hopperShift = d.hopper.stowTravel * (1 - robot.pose.hopper);
@@ -128,6 +153,12 @@ export class RobotView {
         mast.position.set(.28, (local.y - .05) / 2, local.z); mast.scale.y = Math.max(.1, (local.y + .05) / .6);
       } else { hook.position.set(.6, .55, -.27); hook.scale.set(1, 1, 1); mast.position.set(.28, .25, -.27); mast.scale.set(1, 1, 1); }
     }
+    const attachment = mechanisms?.climber.telemetry.attachment;
+    this.towerSupport.visible = !!d.model && !!attachment;
+    if (this.towerSupport.visible && attachment) {
+      const local = unrotate(sub(attachment, p), q);
+      this.towerSupport.geometry.setFromPoints([new THREE.Vector3(.27, .2, 0), new THREE.Vector3(local.x, local.y, local.z)]);
+    }
     const points: number[] = [];
     robot.modules.forEach((m, i) => {
       const id = d.modules[i].name;
@@ -155,5 +186,5 @@ export class RobotView {
     object.traverse(o => { if (o instanceof THREE.Mesh) { geometries.add(o.geometry); (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => materials.add(m)); } });
     geometries.forEach(g => g.dispose()); materials.forEach(m => { if ('map' in m) (m.map as THREE.Texture | null)?.dispose(); m.dispose(); });
   }
-  dispose() { this.disposed = true; this.disposeObject(this.group); this.contacts?.geometry.dispose(); (this.contacts?.material as THREE.Material | undefined)?.dispose(); }
+  dispose() { this.disposed = true; this.disposeObject(this.group); this.towerSupport.geometry.dispose(); (this.towerSupport.material as THREE.Material).dispose(); this.contacts?.geometry.dispose(); (this.contacts?.material as THREE.Material | undefined)?.dispose(); }
 }

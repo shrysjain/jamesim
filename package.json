@@ -20,7 +20,8 @@
     "assets:check:release": "node scripts/check-assets.mjs --release",
     "build:release": "pnpm assets:check && pnpm build && pnpm check:build",
     "build:local": "pnpm assets:check && pnpm build && pnpm check:build",
-    "check:build": "node scripts/check-build.mjs"
+    "check:build": "node scripts/check-build.mjs",
+    "assets:kepler": "node scripts/prepare-kepler.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",

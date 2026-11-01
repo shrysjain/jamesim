@@ -19,6 +19,7 @@ public/audio/**/*.wav
 !public/assets/field-manifest.json
 !public/assets/field-collisions.json
 !public/assets/robots/2910-reblitz/robot.glb
+!public/assets/robots/1690-kepler/robot.glb
 !public/audio/frc/start.wav
 !public/audio/frc/end.wav
 !public/audio/frc/resume.wav

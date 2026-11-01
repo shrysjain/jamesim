@@ -111,10 +111,10 @@ export class SwerveChassis {
     if (this.poseInitialized && next.intake === this.pose.intake && next.hopper === this.pose.hopper && next.hood === this.pose.hood) return;
     this.poseInitialized = true; this.pose = next;
     for (const { collider, definition: shape } of this.mechanismColliders) {
-      const { angle, pivot, shift } = partTransform(this.definition, shape.part, this.pose);
+      const { angle, pivot, shift, rise } = partTransform(this.definition, shape.part, this.pose);
       const x = shape.center[0] - pivot[0], y = shape.center[1] - pivot[1];
       collider.setTranslationWrtParent(vec(pivot[0] + Math.cos(angle) * x - Math.sin(angle) * y + shift,
-        pivot[1] + Math.sin(angle) * x + Math.cos(angle) * y, shape.center[2]));
+        pivot[1] + Math.sin(angle) * x + Math.cos(angle) * y + rise, shape.center[2]));
       collider.setRotationWrtParent({ x: 0, y: 0, z: Math.sin(angle / 2), w: Math.cos(angle / 2) });
     }
     // Refresh attached collider world transforms even when inspection is paused.
