@@ -10,6 +10,7 @@ export class Climber {
   private joint: RAPIER.ImpulseJoint | null = null;
   private lift = 0;
   private baseY = 0;
+  private status = 'Approach your tower';
   constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fieldElements: Map<number, string>) {}
   get attached() { return this.joint !== null; }
   get level(): 0 | 1 | 2 | 3 {
@@ -30,15 +31,20 @@ export class Climber {
     return bottom > 1.143 + .021082 ? 3 : bottom > .6858 + .021082 ? 2 : wheelBottom > .01 ? 1 : 0;
   }
   step(dt: number, raise: boolean, lower: boolean, enabled: boolean, alliance: Alliance) {
-    if (!enabled || !this.chassis.definition.mechanisms.climb) return;
+    if (!this.chassis.definition.mechanisms.climb) { this.status = 'This robot has no climber'; return; }
+    if (!enabled) { this.status = 'Disabled for assessment'; return; }
     const p = this.chassis.body.translation(), sign = alliance === 'blue' ? 1 : -1;
-    if (!this.attached && raise && p.x * sign > 6.35 && p.x * sign < 7.05 && Math.abs(p.z + sign * 0.288925) < 0.32 && this.chassis.telemetry.speed < 0.2 && this.chassis.telemetry.grounded >= 3) {
-      if (Math.cos(this.chassis.telemetry.heading) * sign < .85) return;
+    if (!this.attached) {
+      if (!(p.x * sign > 6.35 && p.x * sign < 7.05 && Math.abs(p.z + sign * 0.288925) < .32)) { this.status = 'Approach your own tower'; return; }
+      if (this.chassis.telemetry.speed >= .2 || this.chassis.telemetry.grounded < 3) { this.status = 'Stop before attaching'; return; }
+      if (Math.cos(this.chassis.telemetry.heading) * sign < .85) { this.status = 'Turn toward the tower'; return; }
+      this.status = 'Hold Climb to attach';
+      if (!raise) return;
       const origin = v3(p.x, .6858, p.z);
       const hit = this.world.castRay(new RAPIER.Ray(origin, v3(sign, 0, 0)), 1.5, true,
         RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC, undefined, undefined, this.chassis.body,
         collider => this.fieldElements.get(collider.handle)?.startsWith('tower') ?? false);
-      if (!hit) return;
+      if (!hit) { this.status = 'No rung within reach'; return; }
       const attachment = v3(origin.x + sign * hit.timeOfImpact, origin.y, origin.z);
       this.baseY = attachment.y; this.lift = 0; this.chassis.stopDrive();
       this.anchor = this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(attachment.x, attachment.y, attachment.z).setRotation(this.chassis.body.rotation()));
@@ -46,15 +52,16 @@ export class Climber {
       this.joint = this.world.createImpulseJoint(RAPIER.JointData.fixed(zero, q, unrotate(sub(attachment, p), this.chassis.body.rotation()), q), this.anchor, this.chassis.body, true);
     }
     if (!this.anchor) return;
+    this.status = lower ? 'Lowering' : raise && this.lift < 1.14 ? 'Raising' : 'Holding';
     // Keep the managed support below the top of the 1.831 m tower uprights.
     this.lift = Math.max(0, Math.min(1.14, this.lift + (lower ? -1 : raise ? 1 : 0) * dt * 0.3));
     const a = this.anchor.translation();
     this.anchor.setNextKinematicTranslation({ x: a.x, y: this.baseY + this.lift, z: a.z });
-    if (lower && this.lift === 0) this.reset();
+    if (lower && this.lift === 0) { this.reset(); this.status = 'Lowered and released'; }
   }
   reset() {
     if (this.anchor) this.world.removeRigidBody(this.anchor);
-    this.anchor = null; this.joint = null; this.lift = 0;
+    this.anchor = null; this.joint = null; this.lift = 0; this.status = 'Approach your own tower';
   }
-  get telemetry() { return { attached: this.attached, level: this.level, lift: this.lift, attachment: this.anchor ? { ...this.anchor.translation() } : null }; }
+  get telemetry() { return { status: this.status, attached: this.attached, level: this.level, lift: this.lift, attachment: this.anchor ? { ...this.anchor.translation() } : null }; }
 }

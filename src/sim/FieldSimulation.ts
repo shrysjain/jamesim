@@ -116,7 +116,7 @@ export class FieldSimulation {
           const velocity = robot.chassis.body.linvel(), spin = robot.chassis.body.angvel();
           const atRest = Math.hypot(velocity.x, velocity.y, velocity.z) < .05 && Math.hypot(spin.x, spin.y, spin.z) < .05;
           if (atRest || this.match.telemetry.phaseRemaining <= STEP + 1e-7) {
-            const autoOnly = this.match.telemetry.endedEarly && this.match.elapsed < 23;
+            const autoOnly = this.match.telemetry.endedAt !== null && this.match.telemetry.endedAt < 23;
             if (!autoOnly || !this.autoTowerAssessed) this.match.assessTower(robot.shooter.alliance, robot.climber.level, autoOnly ? 'auto' : 'teleop');
             this.finalTowerAssessed = true;
           }
@@ -159,7 +159,7 @@ export class FieldSimulation {
     const r = this.robotController; if (!r) return;
     const sign = config.alliance === 'red' ? -1 : 1;
     r.shooter.alliance = config.alliance === 'red' ? 'red' : 'blue';
-    r.chassis.teleport([sign * 6.1, 0.26, sign * (config.spawn === 'left' ? -2.1 : config.spawn === 'center' ? -0.288925 : 2.1)], sign === 1 ? 0 : Math.PI);
+    r.chassis.teleport([sign * 6.1, 0.26, sign * (config.spawn === 'right' ? -2.1 : config.spawn === 'center' ? -0.288925 : 2.1)], sign === 1 ? 0 : Math.PI);
   }
   restartMatch() { this.startMatch({ ...this.match.config }); }
 

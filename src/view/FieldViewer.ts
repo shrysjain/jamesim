@@ -282,7 +282,7 @@ export class FieldViewer {
     this.readDriveInput();
     const driverWasEnabled = this.sim.match.driverEnabled;
     this.sim.update(delta);
-    if (driverWasEnabled && !this.sim.match.driverEnabled) this.clearInput();
+    if (driverWasEnabled !== this.sim.match.driverEnabled) this.clearInput();
     if (this.sim.running) this.syncFuel();
     if (this.sim.robot) this.robotView.update(this.sim.robot, this.sim.running ? delta : 0, this.sim.robotController);
     this.moveCamera(delta);
@@ -527,7 +527,7 @@ export class FieldViewer {
     this.pauseHeld = !!padActions.pause;
     if (!this.sim.running || !this.sim.match.driverEnabled) return;
     if ((a.intake || a.reverse || a.shoot) && this.sim.robotController?.inspectionPose) this.resumeMechanisms();
-    if (this.sim.robotController) this.sim.robotController.input = { intake: !!a.intake, reverse: !!a.reverse, shoot: !!a.shoot, climb: !!a.climb, lower: !!a.lower, supply: !!a.supply };
+    if (this.sim.robotController) this.sim.robotController.input = { intake: !!a.intake, reverse: !!a.reverse, shoot: !!a.shoot, toggleIntake: this.gamepadArmed && !!padActions.toggleIntake, climb: !!a.climb, lower: !!a.lower, supply: !!a.supply };
     const sign = this.sim.robotController?.shooter.alliance === 'red' && this.driveFrame === 'field' ? -1 : 1;
     this.sim.robot.input = toRobotInput({ forward: sign * (a.forward - a.backward), strafe: sign * (a.right - a.left), turn: a.turnLeft - a.turnRight, slow: false, brake: false }, this.sim.robot.telemetry.heading, this.driveFrame);
   }
@@ -558,18 +558,18 @@ export class FieldViewer {
   }
 
   reset() { if (!import.meta.env.DEV) return; this.matchAudio.reset(); this.clearInput(); this.sim.reset(); this.syncFuel(); this.setMode('follow'); if (this.options.colliders) this.updateDebug(); }
-  startMatch(config: MatchConfig) { this.matchAudio.reset(true); this.clearInput(); this.sim.startMatch(config); this.sessionConfig = { ...config }; this.syncFuel(); this.setMode('follow'); }
-  startPractice() { this.matchAudio.reset(); this.clearInput(); this.sim.startPractice(); this.syncFuel(); this.setMode('follow'); }
+  startMatch(config: MatchConfig) { this.sessionPractice = false; this.matchAudio.reset(true); this.clearInput(); this.sim.startMatch(config); this.sessionConfig = { ...config }; this.syncFuel(); this.setMode('follow'); }
+  startPractice() { this.startSession(this.sessionConfig, true); }
   restartMatch() { this.startSession(this.sessionConfig, this.sessionPractice); }
   startSession(config: MatchConfig, practice = false) {
-    this.sessionConfig = { ...config }; this.sessionPractice = practice;
-    this.startMatch(config);
+    this.sessionConfig = { ...config };
+    this.startMatch(config); this.sessionPractice = practice;
     if (practice) { const applied = { ...this.sim.match.config }; this.sim.match.reset(); this.sim.match.config = applied; }
     this.robotView.setDefinition(this.sim.robot!.definition);
     this.syncFuel();
   }
   applySettings(settings: Settings) {
-    this.playerControls = settings.controls; this.clearInput();
+    if (this.playerControls !== settings.controls) { this.playerControls = settings.controls; this.clearInput(); }
     this.matchAudio.setLevel(settings.volume, settings.muted);
     const preset = GRAPHICS[settings.graphics], shadows = preset.shadowSize > 0;
     const changed = this.renderer.shadowMap.enabled !== shadows;
@@ -646,10 +646,12 @@ export class FieldViewer {
     this.camera.quaternion.setFromEuler(euler);
   };
   private onKeyDown = (e: KeyboardEvent) => {
+    if (e.repeat) return;
     if ((e.target as HTMLElement).closest('input, select, textarea, [role="dialog"]') || e.ctrlKey || e.metaKey || e.altKey || !this.driveEnabled) return;
-    if ([...Object.values(this.playerControls.keys).flat(), 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'KeyJ', 'KeyL', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight'].includes(e.code)) {
+    if ([...Object.values(this.playerControls.keys).flat(), ...(import.meta.env.DEV && this.mode === 'fly' ? ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ShiftLeft', 'ShiftRight'] : [])].includes(e.code)) {
       if (e.code === 'Space' && (e.target as HTMLElement).closest('button')) return;
 
+      if (this.playerControls.keys.toggleIntake.includes(e.code) && this.sim?.running && this.sim.match.driverEnabled) this.sim.robotController?.requestIntakeToggle();
       this.keys.add(e.code); e.preventDefault();
     }
     if (e.code === 'Escape') { this.keys.clear(); this.flyDragging = false; }

@@ -25,3 +25,12 @@ The remaining implementation pass replaced the 24-fuel placeholder with the bind
 The full Node 26 regression suite now passes 98 tests across 13 files. All nine session-feature cases passed again after the final climb travel limit/attachment animation update. The final release build passes asset, TypeScript and production payload checks. The remaining accuracy gap is exact FRSim numeric tuning and original 4414 CAD; the team-binder-based model is explicitly approximate. Opponent/tournament rules still require a multiplayer/opponent model and are outside supported solo assessment.
 
 Follow-up browser check: the rebuilt production app loaded, selected 4414 Ripcurrent free practice and reached the pause UI. Live WebGL screenshot capture exceeded its 30-second timeout under software rendering; no screenshot or performance acceptance is claimed. The isolated browser was closed in a finally block. The preview server remains available on port 4173.
+
+
+## Player-reported defects
+
+The later player report supersedes the earlier readiness claims. See
+[the issue audit](PLAYER_ISSUE_AUDIT.md) for reproduced failures, targeted fixes,
+input/button verification and remaining fidelity gaps. High Tide now has a
+rebindable V intake toggle, coupled sliding assembly and collision proxies;
+its travel/rates/model remain approximate. An accurate 4414 model is unresolved.

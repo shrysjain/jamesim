@@ -169,7 +169,8 @@ export class SwerveChassis {
     // A shared, level suspension platform rides the actual bump mesh. Only bump
     // contacts are assisted; walls, trench posts and overhead beams stay solid.
     let terrain = 0;
-    if (position.y < 0.8) for (const x of [-this.definition.length / 2 - 0.06 - 0.2 * this.pose.intake, 0, this.definition.length / 2 + 0.06]) {
+    const rearReach = this.definition.pickup ? Math.abs(this.definition.pickup.ejectX) - (this.definition.intake.stowTravel ?? 0) * (1 - this.pose.intake) : this.definition.length / 2 + .06 + .2 * this.pose.intake;
+    if (position.y < 0.8) for (const x of [-rearReach, 0, this.definition.length / 2 + 0.06]) {
       for (const z of [-this.definition.width / 2, 0, this.definition.width / 2]) {
         const sample = add(position, rotate(vec(x, 0, z), q));
         const hit = this.world.castRay(new RAPIER.Ray(vec(sample.x, 0.5, sample.z), vec(0, -1, 0)), 0.5, false,

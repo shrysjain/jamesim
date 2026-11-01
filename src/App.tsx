@@ -32,6 +32,9 @@ export function App() {
   const match = stats.match;
   const showResults = !!match?.complete && !resultsDismissed && !modal && !error;
   const blocked = !!modal || showResults || !!error;
+  const activeRobot = ROBOTS[match?.config.robot ?? '2910-reblitz'];
+  const sessionName = match?.mode === 'practice' ? 'practice' : 'match';
+  const restartLabel = settings.controls.keys.restart.map(keyLabel).join(' / ');
 
   useEffect(() => {
     if (!viewport.current || unsupported) return;
@@ -56,7 +59,7 @@ export function App() {
     return () => { cancelled = true; engine?.dispose(); viewer.current = null; };
   }, [unsupported]);
   useEffect(() => { saveSettings(settings); viewer.current?.applySettings(settings); }, [settings]);
-  useEffect(() => { if (viewer.current) { viewer.current.driveEnabled = !modal && !error; viewer.current.clearInput(); } }, [blocked]);
+  useEffect(() => { if (viewer.current) { viewer.current.driveEnabled = !modal && !error; viewer.current.clearInput(); } }, [modal, error]);
 
   const focus = () => viewer.current?.focusCanvas();
   const sync = () => { const engine = viewer.current; if (engine?.sim) setStats(engine.snapshot()); };
@@ -69,7 +72,7 @@ export function App() {
   };
   const closeModal = () => {
     modalRef.current = null; setModal(null);
-    if (viewer.current) viewer.current.driveEnabled = viewer.current.sim?.match.phase !== 'Complete';
+    if (viewer.current) viewer.current.driveEnabled = !error;
     const resume = resumeAfterModal.current && !document.hidden && document.hasFocus();
     resumeAfterModal.current = false;
     if (resume) viewer.current?.setRunning(true);
@@ -100,7 +103,7 @@ export function App() {
       // Results are a valid restart context; handle R before other modal locks.
       if (settingsRef.current.controls.keys.restart.includes(e.code) && manifest) { e.preventDefault(); restart(); return; }
       if (showResults || error || !manifest) return;
-      if (e.code === 'KeyH' || e.key === '?') { e.preventDefault(); openModal('help'); }
+      if (e.code === 'KeyH' || (e.key === '?' && !Object.values(settingsRef.current.controls.keys).some(keys => keys.includes('Slash')))) { e.preventDefault(); openModal('help'); }
       if ((e.code === 'Enter' || settingsRef.current.controls.keys.pause.includes(e.code)) && !target.closest('button') && manifest) { e.preventDefault(); togglePause(); }
       if (import.meta.env.DEV && e.code === 'Backquote' && manifest) { e.preventDefault(); togglePanel(); }
     };
@@ -109,23 +112,29 @@ export function App() {
   }, [manifest, showResults, panel, error]);
 
   const fuel = stats.mechanisms, shooter = fuel?.shooter;
-  const fuelStatus = shooter?.active && fuel && fuel.intake < 0.98 && fuel.count > 0 ? 'Compressing' : fuel?.mode ?? 'Holding';
+  const fuelStatus = fuel?.mode ?? 'Holding';
   return <div className={`app ${panel ? 'with-debug' : ''}`}>
     <div className="game-shell" inert={!!modal || showResults}>
       <main className="stage" aria-label="Jamesim solo fuel match">
         <div ref={viewport} className="viewport" />
         {manifest && <>
           <div className="inventory-hud" aria-label="Robot fuel and status">
-            <div className="robot-label"><span />{ROBOTS[match?.config.robot ?? '2910-reblitz'].name}</div>
+            <div className="robot-label"><span />{activeRobot.name}</div>
             <div className={`fuel-readout ${fuelStatus === 'Full' ? 'full' : ''}`} aria-label={`${fuel?.count ?? 0} of ${fuel?.capacity ?? 55} fuel. ${fuelStatus}`}><i /><strong>{fuel?.count ?? 0}<small> / {fuel?.capacity ?? 55}</small></strong><span>FUEL<b>{fuelStatus}</b></span></div>
+            {activeRobot.intake.stowTravel && <div className="shooter-readout" aria-label="Intake extension"><span>Intake</span><strong>{fuel?.intakeStatus ?? 'Retracted'}</strong></div>}
+            {activeRobot.mechanisms.climb && <div className="shooter-readout" aria-label="Climber status"><span>Climber</span><strong>{fuel?.climb.status ?? 'Approach your own tower'}</strong></div>}
             {match?.config.humanSupply && <div className="shooter-readout" aria-label="Outpost supply"><span>Outpost · {match.config.alliance ?? 'blue'}</span><strong>{stats.humanPlayer?.[match.config.alliance ?? 'blue'] ?? 0} fuel{stats.humanPlayer?.blocked ? ' · outlet blocked' : ''}</strong></div>}
             {shooter?.active && <div className="shooter-readout" aria-label={`Shooter: ${shooter.mode}`}><span>{shooter.target ?? 'Shooter'}</span><strong>{shooter.mode}</strong></div>}
           </div>
-          {settings.showHints && <div className="drive-hints">{(['forward', 'intake', 'shoot', 'climb', 'restart'] as const).map(action => <span key={action}><kbd>{settings.controls.keys[action].map(keyLabel).join('/')}</kbd>{ACTION_LABELS[action]}</span>)}</div>}
+          {settings.showHints && <div className="drive-hints">
+            <span><kbd>{(['forward', 'left', 'backward', 'right'] as const).map(action => keyLabel(settings.controls.keys[action][0])).join(' ')}</kbd>Move</span>
+            <span><kbd>{settings.controls.keys.turnLeft.map(keyLabel).join('/')} / {settings.controls.keys.turnRight.map(keyLabel).join('/')}</kbd>Turn</span>
+            {(['intake', 'shoot', 'reverse', ...(activeRobot.intake.stowTravel ? ['toggleIntake'] as const : []), ...(activeRobot.mechanisms.climb ? ['climb', 'lower'] as const : []), ...(match?.config.humanSupply ? ['supply'] as const : []), 'restart'] as const).map(action => <span key={action}><kbd>{keyLabel(settings.controls.keys[action][0])}</kbd>{ACTION_LABELS[action]}</span>)}
+          </div>}
           {fuel?.climb.attached && <div className="match-notice">Tower attached · level {fuel.climb.level} · release climb to hold, lower to descend</div>}
           {import.meta.env.DEV && cameraMode !== 'follow' && <div className="camera-notice"><span>Inspection camera</span><button onClick={() => { viewer.current?.setMode('follow'); focus(); }}>Follow robot</button></div>}
           {match?.mode === 'match' && stats.running && !match.driverEnabled && !match.complete && <div className="match-notice">Processing final fuel · driving resumes with the next period</div>}
-          {!stats.running && !blocked && !panel && !match?.complete && <div className="pause-shade"><section className="pause-card"><span className="eyebrow">MATCH PAUSED</span><h1>Ready when you are.</h1><p>Your robot, fuel and match clock stay in place.</p><button className="primary-button" onClick={() => setRunning(true)}><Icon name="play" size={16} />Resume match <kbd>↵</kbd></button><button className="end-match" onClick={restart}>Restart match <kbd>{settings.controls.keys.restart.map(keyLabel).join(' / ')}</kbd></button></section></div>}
+          {!stats.running && !blocked && !panel && !match?.complete && <div className="pause-shade"><section className="pause-card"><span className="eyebrow">{sessionName.toUpperCase()} PAUSED</span><h1>Ready when you are.</h1><p>Your robot, fuel and session stay in place.</p><button className="primary-button" onClick={() => setRunning(true)}><Icon name="play" size={16} />Resume {sessionName} <kbd>↵</kbd></button><button className="end-match" onClick={restart}>Restart {sessionName} <kbd>{settings.controls.keys.restart.map(keyLabel).join(' / ')}</kbd></button></section></div>}
         </>}
         {(!manifest || error || unsupported) && <div className="loading-screen" role={error ? 'alert' : 'status'}>
           <div className="loading-orbit"><Icon name="cube" size={28} /></div>
@@ -141,8 +150,8 @@ export function App() {
         {manifest && match?.mode === 'match' && <MatchScoreboard match={match} />}
         <div className="play-actions">
           <button aria-label={settings.muted ? 'Enable match sounds' : 'Mute match sounds'} aria-pressed={!settings.muted} title="Match sounds" onClick={() => { setSettings(s => ({ ...s, muted: !s.muted })); focus(); }}><Icon name={settings.muted ? 'muted' : 'sound'} /></button>
-          <button aria-label={stats.running ? 'Pause match' : 'Resume match'} title="Pause / resume (Enter)" disabled={!manifest || match?.complete} onClick={togglePause}><Icon name={stats.running ? 'pause' : 'play'} /></button>
-          <button aria-label="Restart match" title="Restart match (R)" disabled={!manifest} onClick={restart}><Icon name="reset" /></button>
+          <button aria-label={`${stats.running ? 'Pause' : 'Resume'} ${sessionName}`} title="Pause / resume (Enter)" disabled={!manifest || match?.complete} onClick={togglePause}><Icon name={stats.running ? 'pause' : 'play'} /></button>
+          <button aria-label={`Restart ${sessionName}`} title={`Restart ${sessionName} (${restartLabel})`} disabled={!manifest} onClick={restart}><Icon name="reset" /></button>
           {match?.complete && <button aria-label="View match results" onClick={() => setResultsDismissed(false)}><Icon name="target" /></button>}
           <button aria-label="Driving controls" title="Controls (H)" disabled={!manifest} onClick={() => openModal('help')}><Icon name="info" /></button>
           <button disabled={!manifest} onClick={() => openModal('session')}>Session</button>
@@ -154,17 +163,18 @@ export function App() {
       {import.meta.env.DEV && panel && DebugPanel && viewer.current && <Suspense fallback={null}><DebugPanel engine={viewer.current} stats={stats} onClose={togglePanel} onRestart={restart} onSync={sync} /></Suspense>}
     </div>
     {showResults && match && <MatchResults match={match} onRematch={restart} onClose={() => { setResultsDismissed(true); focus(); }} restartLabel={settings.controls.keys.restart.map(keyLabel).join(' / ')} />}
-    {modal === 'session' && <SessionDialog config={match?.config ?? DEFAULT_MATCH} onClose={closeModal} onStart={(config, practice) => { viewer.current?.startSession(config, practice); resumeAfterModal.current = false; setResultsDismissed(false); closeModal(); }} />}
+    {modal === 'session' && <SessionDialog config={match?.config ?? DEFAULT_MATCH} mode={match?.mode ?? 'match'} onClose={closeModal} onStart={(config, practice) => { viewer.current?.startSession(config, practice); resumeAfterModal.current = false; setResultsDismissed(false); closeModal(); }} />}
     {modal === 'referee' && <Dialog title="Assess a foul" eyebrow="MANUAL REFEREE ASSESSMENT" onClose={closeModal}>
+      <p role="status">Penalty points awarded: Blue {match?.blue.penalties ?? 0} · Red {match?.red.penalties ?? 0}</p>
       <p>Intent and human conduct require referee judgment. Add a minor (5) or major (15) foul to the offending alliance; points go to its opponent.</p>
       {(['blue', 'red'] as const).map(alliance => <div className="setting-row" key={alliance}><span>{alliance} committed</span>{[false, true].map(major => <button key={String(major)} onClick={() => { viewer.current?.sim.match.recordPenalty(alliance, major); sync(); }}>{major ? 'Major · 15' : 'Minor · 5'}</button>)}</div>)}
       <button className="primary-button" onClick={closeModal}>Done</button>
     </Dialog>}
     {modal === 'settings' && <SettingsDialog settings={settings} onChange={setSettings} onClose={closeModal} onAbout={() => openModal('about')} />}
     {modal === 'help' && <Dialog title="Take the wheel." eyebrow="JAMESIM · CONTROLS" onClose={closeModal}>
-      <p>You drive during AUTO and teleop. Use your mapped intake and shoot actions to collect fuel and aim at your alliance hub, or pass back into your zone. Re•Blitz must stop to fire; High Tide uses turret aiming. The Tower trainer can attach near its own tower: hold Climb to rise, release to hold, and hold Lower to descend. Enable outpost stock in Session, then hold Supply to release it.</p>
-      <dl className="controls-list">{[...ACTIONS.map(a => [settings.controls.keys[a].map(keyLabel).join(' / '), ACTION_LABELS[a]]), ['Enter', 'Pause / resume'], ['Esc', 'Pause / close a dialog'], ['H', 'Driving controls']].map(([key, label]) => <div key={key}><dt><kbd>{key}</kbd></dt><dd>{label}</dd></div>)}</dl>
-      <p>Losing focus pauses the match and clears held inputs. The hopper stays deployed; the intake compresses while shooting and extends again when you release Shoot.</p>
+      <p>You drive during AUTO and teleop. Use your mapped intake and shoot actions to collect fuel and aim at your alliance hub, or pass back into your zone. Re•Blitz must stop to fire; High Tide uses turret aiming; Toggle intake extension retracts or extends its sliding intake when cargo space permits. Intake/reverse commands extend it, and shooting compresses it as fuel empties. The Tower trainer can attach near its own tower: hold Climb to rise, release to hold, and hold Lower to descend. Enable outpost stock in Session, then hold Supply to release it.</p>
+      <dl className="controls-list">{[...ACTIONS.filter(a => !(a === 'toggleIntake' && !activeRobot.intake.stowTravel) && !(['climb', 'lower'].includes(a) && !activeRobot.mechanisms.climb) && !(a === 'supply' && !match?.config.humanSupply)).map(a => [settings.controls.keys[a].map(keyLabel).join(' / '), ACTION_LABELS[a]]), ['Enter', 'Pause / resume'], ['Esc', 'Pause / close a dialog'], ['H', 'Driving controls']].map(([key, label]) => <div key={key}><dt><kbd>{key}</kbd></dt><dd>{label}</dd></div>)}</dl>
+      <p>Losing focus pauses the match and clears held inputs. {activeRobot.intake.stowTravel ? 'The sliding hopper follows the intake. Retraction stops when the remaining cargo needs more space.' : 'The hopper stays deployed; the intake compresses while shooting and extends again when you release Shoot.'}</p>
       <button className="primary-button" onClick={closeModal}>Got it</button>
     </Dialog>}
     {modal === 'about' && <Dialog title="Jamesim" eyebrow="REBUILT · SOLO FUEL MATCH" onClose={closeModal}>

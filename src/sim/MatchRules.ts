@@ -10,7 +10,7 @@ export const EVENT_PROFILES = {
   championship: { label: 'FIRST Championship', energized: 360, supercharged: 500, traversal: 50 },
 } as const;
 export type MatchConfig = { profile: keyof typeof EVENT_PROFILES; preloads: number; seed: number; alliance?: Alliance; spawn?: 'left' | 'center' | 'right'; robot?: RobotId; humanSupply?: boolean };
-export const DEFAULT_MATCH: MatchConfig = { profile: 'regional', preloads: 8, seed: 2026 };
+export const DEFAULT_MATCH: MatchConfig = { profile: 'regional', preloads: 8, seed: 2026, spawn: 'left' };
 export type MatchPhase = 'Practice' | 'Auto' | 'Auto scoring' | 'Transition' | 'Shift 1' | 'Shift 2' | 'Shift 3' | 'Shift 4' | 'Endgame' | 'Final scoring' | 'Complete';
 const PHASES: { phase: MatchPhase; start: number; end: number; drive: boolean }[] = [
   { phase: 'Auto', start: 0, end: 20, drive: true }, { phase: 'Auto scoring', start: 20, end: 23, drive: false },
@@ -24,7 +24,7 @@ type FuelScore = { autoTower: number; teleopTower: number; penalties: number; au
 export type HubLight = { active: boolean; warning: boolean; chase: boolean; graceRemaining: number };
 export type MatchTelemetry = {
   mode: 'practice' | 'match'; phase: MatchPhase; elapsed: number; remaining: number; phaseRemaining: number;
-  driverEnabled: boolean; actuatorsEnabled: boolean; complete: boolean; endedEarly: boolean;
+  driverEnabled: boolean; actuatorsEnabled: boolean; complete: boolean; endedEarly: boolean; endedAt: number | null;
   firstInactive: Alliance | null; selectionReason: 'Auto fuel' | 'Seeded tie' | null; config: MatchConfig;
   blue: FuelScore & { total: number; energized: boolean; supercharged: boolean; traversal: boolean; fuelTotal: number; bonusRP: number };
   red: FuelScore & { total: number; energized: boolean; supercharged: boolean; traversal: boolean; fuelTotal: number; bonusRP: number };
@@ -55,7 +55,7 @@ export class MatchRules {
   get actuatorsEnabled() { return this.mode === 'practice' || this.phase === 'Auto' || this.driverEnabled; }
   start(config: MatchConfig) {
     this.reset(); this.mode = 'match';
-    this.config = { alliance: config.alliance === 'red' ? 'red' : 'blue', spawn: config.spawn === 'left' || config.spawn === 'center' ? config.spawn : 'right', humanSupply: config.humanSupply === true, robot: config.robot && Object.hasOwn(ROBOTS, config.robot) ? config.robot : '2910-reblitz', profile: Object.hasOwn(EVENT_PROFILES, config.profile) ? config.profile : 'regional',
+    this.config = { alliance: config.alliance === 'red' ? 'red' : 'blue', spawn: config.spawn === 'right' || config.spawn === 'center' ? config.spawn : 'left', humanSupply: config.humanSupply === true, robot: config.robot && Object.hasOwn(ROBOTS, config.robot) ? config.robot : '2910-reblitz', profile: Object.hasOwn(EVENT_PROFILES, config.profile) ? config.profile : 'regional',
       preloads: Number.isFinite(config.preloads) ? Math.max(0, Math.min(8, Math.floor(config.preloads))) : 8, seed: config.seed >>> 0 };
   }
   reset() {
@@ -129,7 +129,7 @@ export class MatchRules {
       energized: score.auto + score.teleop >= profile.energized, supercharged: score.auto + score.teleop >= profile.supercharged });
     return { mode: this.mode, phase, elapsed: time, remaining: phase === 'Auto' ? 20 - time : this.driverEnabled && this.mode === 'match' ? 163 - time : 0,
       phaseRemaining: this.mode === 'practice' || phase === 'Complete' ? 0 : this.stoppedAt !== null ? this.finishAt - time : PHASES.find(p => p.phase === phase)!.end - time,
-      driverEnabled: this.driverEnabled, actuatorsEnabled: this.actuatorsEnabled, complete: phase === 'Complete', endedEarly: this.stoppedAt !== null,
+      driverEnabled: this.driverEnabled, actuatorsEnabled: this.actuatorsEnabled, complete: phase === 'Complete', endedEarly: this.stoppedAt !== null, endedAt: this.stoppedAt,
       firstInactive: this.firstInactive, selectionReason: this.selectionReason, config: { ...this.config }, blue: read(this.scores.blue), red: read(this.scores.red),
       lights: { blue: this.light('blue'), red: this.light('red') } };
   }

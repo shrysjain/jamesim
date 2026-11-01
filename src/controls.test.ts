@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONTROLS, axisValue, bindKey, bindButton, readActions, validateControls } from './controls';
 describe('player controls', () => {
+  it('preserves a saved key when a newly added action has the same default', () => {
+    const before = structuredClone(DEFAULT_CONTROLS); before.keys.forward = ['KeyV'];
+    const saved = JSON.parse(JSON.stringify(before)); delete saved.keys.toggleIntake;
+    const restored = validateControls(saved);
+    expect(restored.keys.forward).toEqual(['KeyV']); expect(restored.keys.toggleIntake).toEqual([]);
+    const rebound = bindKey(restored, 'toggleIntake', 'KeyV');
+    expect(rebound.keys.toggleIntake).toEqual(['KeyV']); expect(rebound.keys.forward).toEqual([]);
+  });
   it('swaps controller button conflicts', () => {
     const c = bindButton(DEFAULT_CONTROLS, 'shoot', 0);
     expect(c.buttons.shoot).toBe(0); expect(c.buttons.climb).toBe(7);

@@ -12,7 +12,7 @@ import { Shooter } from './Shooter';
 import type { ShooterTelemetry } from './Shooter';
 import { GameplayContacts } from './GameplayContacts';
 
-export type MechanismInput = { intake: boolean; reverse: boolean; shoot?: boolean; climb?: boolean; lower?: boolean; supply?: boolean };
+export type MechanismInput = { intake: boolean; reverse: boolean; shoot?: boolean; toggleIntake?: boolean; climb?: boolean; lower?: boolean; supply?: boolean };
 export const NEUTRAL_MECHANISMS: MechanismInput = { intake: false, reverse: false, shoot: false };
 /** Close-packed 150 mm fuel: 54 in three staggered layers plus one feeder pocket.
  * The managed packing uses 151 mm center spacing; no smaller rendered balls. */
@@ -26,11 +26,12 @@ export const FEEDER_POCKET = STORAGE_SLOTS.length;
 STORAGE_SLOTS.push(v3(0.13, 0.04, 0));
 export const INTAKE = { capacity: STORAGE_SLOTS.length, deploySeconds: 0.18, compressSeconds: 0.45, transferSeconds: 0.3, capturePerSecond: 50, ejectPerSecond: 12 };
 /** Eight balls fit with the mechanism fully in; excess cargo limits compression. */
-export const cargoExtension = (count: number) => Math.max(0, Math.min(1, (count - 8) / (INTAKE.capacity - 8)));
+export const cargoExtension = (count: number, capacity = INTAKE.capacity) => Math.max(0, Math.min(1, (count - 8) / Math.max(1, capacity - 8)));
 export type MechanismTelemetry = {
   count: number; capacity: number; transferring: number; stored: number; loose: number;
   mode: 'Stowed' | 'Deployed' | 'Deploying' | 'Compressing' | 'Intaking' | 'Holding' | 'Full' | 'Reversing' | 'Outlet blocked' | 'Spilling' | 'Pose preview';
-  climb: { attached: boolean; level: number; lift: number; attachment: Vector | null };
+  climb: { status: string; attached: boolean; level: number; lift: number; attachment: Vector | null };
+  intakeStatus: 'Retracted' | 'Extended' | 'Extending' | 'Retracting' | 'Cargo limited';
   mass: number; intake: number; hopper: number; hood: number; preview: boolean;
   feeding: number; airborne: number; shooter: ShooterTelemetry;
 };
@@ -49,6 +50,10 @@ export class RobotSimulation {
   rollerAngle = 0;
   actuatorsEnabled = true;
   private deployed = false;
+  private intakeOut = true;
+  private toggleHeld = false;
+  private intakeTarget = 0;
+  private pendingIntakeToggles = 0;
   private captureCredit = 0;
   private ejectCredit = 0;
   private overturnedFor = 0;
@@ -83,14 +88,14 @@ export class RobotSimulation {
     }
     this.updatePayload();
   }
-  clearInput() { this.input = { ...NEUTRAL_MECHANISMS }; this.captureCredit = this.ejectCredit = 0; this.shooter.stopRequest(); }
+  clearInput() { this.input = { ...NEUTRAL_MECHANISMS }; this.toggleHeld = false; this.pendingIntakeToggles = 0; this.captureCredit = this.ejectCredit = 0; this.shooter.stopRequest(); }
   inspect(pose: RobotPose | null) {
     this.clearInput(); this.inspectionPose = pose ? { ...pose } : null;
     if (pose) this.chassis.setPose(pose);
   }
   reset() {
     this.climber.reset();
-    this.clearInput(); this.deployed = false; this.inspectionPose = null; this.actuatorsEnabled = true;
+    this.clearInput(); this.deployed = false; this.intakeOut = true; this.intakeTarget = 0; this.inspectionPose = null; this.actuatorsEnabled = true;
     this.overturnedFor = 0; this.outletBlocked = false; this.rollerAngle = 0;
     this.chassis.reset(); this.chassis.setPose(STARTING_POSE); this.updatePayload();
     this.shooter.reset();
@@ -104,16 +109,23 @@ export class RobotSimulation {
     this.shooter.reset(false);
     this.updatePayload();
   }
+  requestIntakeToggle() { if (this.chassis.definition.intake.stowTravel) this.pendingIntakeToggles++; }
   preStep(dt: number) {
+    if (this.actuatorsEnabled && !this.inspectionPose && this.pendingIntakeToggles % 2 === 1) this.intakeOut = !this.intakeOut;
+    this.pendingIntakeToggles = 0;
+    if (this.actuatorsEnabled && !this.inspectionPose && this.chassis.definition.intake.stowTravel && this.input.toggleIntake && !this.toggleHeld) this.intakeOut = !this.intakeOut;
+    this.toggleHeld = !!this.input.toggleIntake;
     const held = this.held;
     const shoot = !!this.input.shoot && !this.input.reverse && !this.inspectionPose && this.actuatorsEnabled && !this.climber.attached;
     const aimTurn = this.inspectionPose ? undefined : this.shooter.preStep(dt, shoot, this.actuatorsEnabled);
     if (!this.inspectionPose && this.actuatorsEnabled) {
       const demand = this.input.reverse || (this.input.intake && !shoot);
       const approach = (v: number, target: number, seconds: number) => v + Math.max(-dt / seconds, Math.min(dt / seconds, target - v));
-      const hopper = approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
-      const target = this.mechanism.compress && this.deployed && shoot ? cargoExtension(held.length) : 1;
+      const compress = shoot || (!!this.chassis.definition.intake.stowTravel && !this.intakeOut && !this.input.intake && !this.input.reverse);
+      const target = this.mechanism.compress && this.deployed && compress ? cargoExtension(held.length, this.capacity) : 1;
+      this.intakeTarget = target;
       const intake = approach(this.chassis.pose.intake, target, target < this.chassis.pose.intake ? INTAKE.compressSeconds : INTAKE.deploySeconds);
+      const hopper = this.chassis.definition.intake.stowTravel ? intake : approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
       if (hopper === 1 && intake === 1) this.deployed = true;
       this.chassis.setPose({ intake, hopper, hood: this.shooter.hood });
       if (demand) this.rollerAngle += (this.input.reverse ? -1 : 1) * 32 * dt;
@@ -236,9 +248,12 @@ export class RobotSimulation {
   get telemetry(): MechanismTelemetry {
     const held = this.held, counts = this.fuel.counts;
     const mode = this.inspectionPose ? 'Pose preview' : this.overturnedFor > 0.25 ? 'Spilling' : this.outletBlocked ? 'Outlet blocked'
-      : this.input.reverse ? 'Reversing' : !this.deployed ? 'Deploying' : this.input.shoot && this.chassis.pose.intake > cargoExtension(held.length) + 0.01 ? 'Compressing'
+      : this.input.reverse ? 'Reversing' : !this.deployed ? 'Deploying' : this.mechanism.compress && this.input.shoot && this.chassis.pose.intake > cargoExtension(held.length, this.capacity) + 0.01 ? 'Compressing'
       : this.input.intake ? this.chassis.pose.intake < 0.92 ? 'Deploying' : held.length === this.capacity ? 'Full' : 'Intaking' : held.length ? 'Holding' : this.chassis.pose.intake > 0.92 ? 'Deployed' : 'Stowed';
-    return { climb: this.climber.telemetry, count: held.length, capacity: this.capacity, transferring: counts.transferring, stored: counts.stored, loose: counts.loose,
+    const wantsIn = this.mechanism.compress && (!!this.input.shoot || (!!this.chassis.definition.intake.stowTravel && !this.intakeOut && !this.input.intake && !this.input.reverse));
+    const intakeStatus = wantsIn && this.intakeTarget > .02 && Math.abs(this.chassis.pose.intake - this.intakeTarget) < .02 ? 'Cargo limited'
+      : this.chassis.pose.intake < .02 ? 'Retracted' : this.chassis.pose.intake > .98 ? 'Extended' : this.intakeTarget > this.chassis.pose.intake ? 'Extending' : 'Retracting';
+    return { intakeStatus, climb: this.climber.telemetry, count: held.length, capacity: this.capacity, transferring: counts.transferring, stored: counts.stored, loose: counts.loose,
       mode, mass: this.chassis.totalMass, intake: this.chassis.pose.intake, hopper: this.chassis.pose.hopper, hood: this.chassis.pose.hood, preview: !!this.inspectionPose,
       feeding: counts.feeding, airborne: counts.airborne, shooter: this.shooter.telemetry };
   }

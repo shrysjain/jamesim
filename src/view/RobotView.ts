@@ -101,6 +101,15 @@ export class RobotView {
       else if (name === 'shooter-drum' || name.startsWith('hood-roller-')) node.rotation.z = -mechanisms.shooter.drumAngle;
       else if (name === 'shooter-flywheel') node.rotation.z = -mechanisms.shooter.drumAngle * 6.7;
     }
+    const intakeShift = (d.intake.stowTravel ?? 0) * (1 - robot.pose.intake);
+    const hopperShift = d.hopper.stowTravel * (1 - robot.pose.hopper);
+    if (d.cargoSlots) {
+      for (const sign of [-1, 1]) {
+        const side = this.procedural.getObjectByName(`hopper-side-${sign}`); if (side) { side.position.x = (-.96 + .25) / 2 + hopperShift / 2; side.scale.x = (1.21 - hopperShift) / 1.21; }
+      }
+      const rear = this.procedural.getObjectByName('hopper-rear'); if (rear) rear.position.x = -.96 + hopperShift;
+      const roller = this.procedural.getObjectByName('pickup-roller'); if (roller) roller.position.x = -1.04 + intakeShift;
+    }
     const turret = this.procedural.getObjectByName('turret');
     if (turret && mechanisms) turret.rotation.y = mechanisms.shooter.turretYaw;
     const hood = this.procedural.getObjectByName('turret-hood');
@@ -108,7 +117,7 @@ export class RobotView {
     const rotor = this.procedural.getObjectByName('rotor');
     if (rotor && mechanisms) rotor.rotation.y = mechanisms.shooter.feederAngle + mechanisms.rollerAngle * .1;
     const intake = this.procedural.getObjectByName('pickup-roller');
-    if (intake && mechanisms) intake.rotation.y = mechanisms.rollerAngle;
+    if (intake && mechanisms) intake.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), mechanisms.rollerAngle));
     const mast = this.procedural.getObjectByName('climber-mast');
     const hook = this.procedural.getObjectByName('climber-hook');
     if (mast && hook && mechanisms) {

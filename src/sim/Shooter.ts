@@ -157,7 +157,8 @@ export class Shooter {
     this.active = requested; this.blocked = false;
     this.solution = requested ? this.solve() : null;
     if (this.mechanism.turret && powered && this.solution) {
-      this.turretYaw += clamp(this.solution.yawError, -dt * this.geometry.turretRadiansPerSecond, dt * this.geometry.turretRadiansPerSecond);
+      const predictedError = this.solution.yawError + (this.solution.trackingRate - this.chassis.body.angvel().y) * dt;
+      this.turretYaw += clamp(predictedError, -dt * this.geometry.turretRadiansPerSecond, dt * this.geometry.turretRadiansPerSecond);
       this.solution = this.solve();
     }
     this.blocked = !!this.solution?.obstructed;
@@ -177,7 +178,7 @@ export class Shooter {
     return up.y > 0.965 && this.chassis.telemetry.grounded >= 3;
   }
   private get ready() {
-    return !!this.solution && !this.solution.obstructed && this.stable && Math.abs(this.solution.yawError) < SHOOTER.yawTolerance && Math.abs(this.chassis.body.angvel().y) < 0.3
+    return !!this.solution && !this.solution.obstructed && this.stable && Math.abs(this.solution.yawError) < SHOOTER.yawTolerance && (this.mechanism.turret || Math.abs(this.chassis.body.angvel().y) < 0.3)
       && Math.abs(this.elevation - this.solution.elevation) < SHOOTER.hoodTolerance
       && (this.mechanism.movingShots || this.chassis.telemetry.speed < SHOOTER.movingThreshold)
       && Math.abs(this.rpm * this.speedPerRpm - this.solution.speed) < Math.max(0.12, this.solution.speed * 0.02);
@@ -250,7 +251,7 @@ export class Shooter {
   get telemetry(): ShooterTelemetry {
     const solution = this.solution, feeding = this.laneState.filter(l => l.id !== null).length;
     const mode = !this.active ? 'Idle' : !this.fuel.ownedBy(this.owner).length ? 'Empty' : !solution ? 'Out of range' : !this.stable ? 'Unstable'
-      : this.blocked ? 'Blocked' : Math.abs(solution.yawError) >= SHOOTER.yawTolerance || Math.abs(this.chassis.body.angvel().y) >= 0.3 ? 'Aiming'
+      : this.blocked ? 'Blocked' : Math.abs(solution.yawError) >= SHOOTER.yawTolerance || (!this.mechanism.turret && Math.abs(this.chassis.body.angvel().y) >= 0.3) ? 'Aiming'
       : !this.mechanism.movingShots && this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? 'Waiting to stop'
       : Math.abs(this.elevation - solution.elevation) >= SHOOTER.hoodTolerance ? 'Adjusting hood'
       : !this.ready ? 'Spinning up' : feeding ? 'Feeding' : 'Ready';

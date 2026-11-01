@@ -173,3 +173,7 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .binding-row button { padding: 6px; font-size: 12px; }
 .setting-row select, .setting-row input[type=number], .binding-row select { max-width: 220px; color: #e2edf6; background: #102030; padding: 6px; border: 1px solid #7992a560; border-radius: 4px; }
 .setting-row input[type=number] { width: 60px; }
+
+.drive-hints { max-width: calc(100% - 340px); flex-wrap: wrap; justify-content: center; white-space: normal; gap: 8px 12px; left: auto; right: 20px; transform: none; }
+@media (max-width: 1100px) and (min-width: 761px) { .drive-hints { max-width: calc(100% - 40px); left: 50%; right: auto; transform: translateX(-50%); } }
+.binding-row button[aria-pressed=true] { outline: 2px solid #8ecfff; background: #294c66; }
