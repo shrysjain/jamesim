@@ -17,6 +17,11 @@ import { HUBS, mouthVertices } from '../field/hubs';
 import { HubLights } from './HubLights';
 import type { MatchConfig, MatchTelemetry } from '../sim/MatchRules';
 import { MatchAudio } from './MatchAudio';
+import { DEFAULT_MATCH } from '../sim/MatchRules';
+import { GRAPHICS } from '../settings';
+import type { Settings } from '../settings';
+import { runtimeAsset } from '../runtimeAssets';
+import { unpackCollisions } from '../field/collisionAsset';
 
 export type CameraMode = 'follow' | 'orbit' | 'fly';
 export type CameraPreset = 'overview' | 'overhead' | 'blue' | 'red';
@@ -27,6 +32,8 @@ type Callbacks = {
   ready: (manifest: FieldManifest) => void;
   selection: (element: FieldElement | null) => void;
   stats: (stats: ViewerStats) => void;
+  focusLost: () => void;
+  error: (message: string) => void;
   camera: (preset: CameraPreset | null, mode: CameraMode) => void;
 };
 
@@ -34,7 +41,7 @@ export class FieldViewer {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(48, 1, 0.04, 180);
-  readonly controls: OrbitControls;
+  readonly controls!: OrbitControls;
   manifest!: FieldManifest;
   sim!: FieldSimulation;
   mode: CameraMode = 'follow';
@@ -45,7 +52,8 @@ export class FieldViewer {
   selected: FieldElement | null = null;
   private model = new THREE.Group();
   private fuelMesh!: THREE.InstancedMesh;
-  private probeMesh: THREE.Mesh;
+  private probeMesh!: THREE.Mesh;
+  private sun = new THREE.DirectionalLight(0xfff6e6, 3);
   private robotView = new RobotView();
   private hubLights = new HubLights();
   private matchAudio = new MatchAudio();
@@ -53,20 +61,20 @@ export class FieldViewer {
   private followTarget = new THREE.Vector3();
   private fieldMeshes = new Map<string, THREE.Mesh[]>();
   private cameraOccluders = new Map<THREE.Mesh, { original: THREE.Material | THREE.Material[]; faded: THREE.Material[]; opacity: number }>();
-  private labels = new THREE.Group();
-  private grid: THREE.GridHelper;
-  private debug = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true, opacity: 0.8 }));
-  private staticDebug = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true, opacity: 0.7 }));
+  private labels!: THREE.Group;
+  private grid!: THREE.GridHelper;
+  private debug!: THREE.LineSegments;
+  private staticDebug!: THREE.LineSegments;
   private staticDebugReady = false;
-  private highlight = new THREE.Box3Helper(new THREE.Box3(), 0xf4bc42);
+  private highlight!: THREE.Box3Helper;
   private lastFrameTime = 0;
   private resizeObserver: ResizeObserver;
   private disposed = false;
   private raf = 0;
   private keys = new Set<string>();
   private flyDragging = false;
-  private pointerStart = new THREE.Vector2();
-  private raycaster = new THREE.Raycaster();
+  private pointerStart!: THREE.Vector2;
+  private raycaster!: THREE.Raycaster;
   private dummy = new THREE.Object3D();
   private debugElapsed = 0;
   private statElapsed = 0;
@@ -82,12 +90,12 @@ export class FieldViewer {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.domElement.tabIndex = 0;
-    this.renderer.domElement.setAttribute('aria-label', 'Jamesim driving view. WASD move, J and L turn, Shift intake, Q reverse intake, Space auto-align and shoot or pass when stopped, R respawn.');
+    this.renderer.domElement.setAttribute('aria-label', 'Jamesim driving view. WASD move, J and L turn, Shift intake, Q reverse intake, Space auto-align and shoot or pass when stopped, R restart match.');
     container.append(this.renderer.domElement);
     this.scene.background = new THREE.Color('#272e38');
     this.scene.fog = new THREE.Fog('#272e38', 38, 85);
     this.scene.add(new THREE.HemisphereLight(0xe6f0ff, 0x758195, 2.4));
-    const sun = new THREE.DirectionalLight(0xfff6e6, 3);
+    const sun = this.sun;
     sun.position.set(-7, 16, 8);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
@@ -100,44 +108,56 @@ export class FieldViewer {
     ground.position.y = -0.065;
     ground.receiveShadow = true;
     this.scene.add(ground);
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enabled = false;
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.09;
-    this.controls.minDistance = 0.25;
-    this.controls.maxDistance = 45;
-    this.controls.maxPolarAngle = Math.PI * 0.495;
-    this.controls.target.set(0, 0.4, 0);
-    this.controls.addEventListener('start', this.onControlStart);
-    this.camera.position.set(14, 14, 15);
-    this.controls.update();
-    this.grid = new THREE.GridHelper(24, 48, 0x99c0dc, 0x8195a8);
-    this.grid.position.y = 0.008;
-    this.grid.material.transparent = true;
-    this.grid.material.opacity = 0.25;
-    this.grid.visible = false;
-    this.scene.add(this.grid, this.debug, this.staticDebug, this.highlight, this.labels, this.robotView.group, this.robotView.contacts);
-    this.debug.visible = false;
-    this.debug.renderOrder = 20;
-    this.debug.frustumCulled = false;
-    this.staticDebug.visible = false;
-    this.staticDebug.renderOrder = 19;
-    this.staticDebug.frustumCulled = false;
-    this.highlight.visible = false;
-    this.highlight.renderOrder = 21;
-    (this.highlight.material as THREE.LineBasicMaterial).depthTest = false;
-    this.labels.visible = false;
-    this.probeMesh = new THREE.Mesh(new THREE.SphereGeometry(FUEL_RADIUS, 20, 12), new THREE.MeshStandardMaterial({ color: '#ff7139', emissive: '#431200', roughness: 0.5 }));
-    this.probeMesh.visible = false;
-    this.probeMesh.castShadow = true;
-    this.scene.add(this.probeMesh);
+    this.scene.add(this.robotView.group);
+    if (import.meta.env.DEV) {
+      this.pointerStart = new THREE.Vector2();
+      this.raycaster = new THREE.Raycaster();
+      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+      this.controls.enabled = false;
+      this.controls.enableDamping = true;
+      this.controls.dampingFactor = 0.09;
+      this.controls.minDistance = 0.25;
+      this.controls.maxDistance = 45;
+      this.controls.maxPolarAngle = Math.PI * 0.495;
+      this.controls.target.set(0, 0.4, 0);
+      this.controls.addEventListener('start', this.onControlStart);
+      this.camera.position.set(14, 14, 15);
+      this.controls.update();
+      this.labels = new THREE.Group();
+      this.debug = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true, opacity: 0.8 }));
+      this.staticDebug = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true, opacity: 0.7 }));
+      this.highlight = new THREE.Box3Helper(new THREE.Box3(), 0xf4bc42);
+      this.grid = new THREE.GridHelper(24, 48, 0x99c0dc, 0x8195a8);
+      this.grid.position.y = 0.008;
+      this.grid.material.transparent = true;
+      this.grid.material.opacity = 0.25;
+      this.grid.visible = false;
+      this.scene.add(this.grid, this.debug, this.staticDebug, this.highlight, this.labels, this.robotView.contacts!);
+      this.debug.visible = false;
+      this.debug.renderOrder = 20;
+      this.debug.frustumCulled = false;
+      this.staticDebug.visible = false;
+      this.staticDebug.renderOrder = 19;
+      this.staticDebug.frustumCulled = false;
+      this.highlight.visible = false;
+      this.highlight.renderOrder = 21;
+      (this.highlight.material as THREE.LineBasicMaterial).depthTest = false;
+      this.labels.visible = false;
+      this.probeMesh = new THREE.Mesh(new THREE.SphereGeometry(FUEL_RADIUS, 20, 12), new THREE.MeshStandardMaterial({ color: '#ff7139', emissive: '#431200', roughness: 0.5 }));
+      this.probeMesh.visible = false;
+      this.probeMesh.castShadow = true;
+      this.scene.add(this.probeMesh);
+    }
     this.resizeObserver = new ResizeObserver(this.resize);
     this.resizeObserver.observe(container);
     const canvas = this.renderer.domElement;
     canvas.addEventListener('pointerdown', this.onPointerDown);
-    canvas.addEventListener('pointerup', this.onPointerUp);
-    canvas.addEventListener('pointermove', this.onPointerMove);
-    canvas.addEventListener('contextmenu', this.onContextMenu);
+    canvas.addEventListener('webglcontextlost', this.onContextLost);
+    if (import.meta.env.DEV) {
+      canvas.addEventListener('pointerup', this.onPointerUp);
+      canvas.addEventListener('pointermove', this.onPointerMove);
+      canvas.addEventListener('contextmenu', this.onContextMenu);
+    }
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('pointerdown', this.matchAudio.unlock);
     window.addEventListener('keydown', this.matchAudio.unlock);
@@ -148,16 +168,17 @@ export class FieldViewer {
 
   async load() {
     this.callbacks.progress('Loading the official field assembly…');
-    const response = await fetch('/assets/field-manifest.json');
+    const response = await fetch(runtimeAsset('/assets/field-manifest.json'));
     if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
       throw new Error('The prepared field asset is missing. Check the local setup instructions, then try again.');
     }
     this.manifest = await response.json() as FieldManifest;
     const [gltf, collisionResponse] = await Promise.all([
-      new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(this.manifest.model).catch((cause: Error) => { throw new Error(`Field model: ${cause.message}`, { cause }); }), fetch(this.manifest.collisions), this.robotView.load(),
+      new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(runtimeAsset(this.manifest.model)).catch((cause: Error) => { throw new Error(`Field model: ${cause.message}`, { cause }); }), fetch(runtimeAsset(this.manifest.collisions)), this.robotView.load(), this.matchAudio.prepare(), document.fonts.ready,
     ]);
     if (!collisionResponse.ok) throw new Error('Collision geometry could not be loaded.');
-    const asset: CollisionAsset = await collisionResponse.json();
+    const asset: CollisionAsset = runtimeAsset(this.manifest.collisions).endsWith('.bin')
+      ? unpackCollisions(await collisionResponse.arrayBuffer()) : await collisionResponse.json();
     if (this.disposed) return;
     this.callbacks.progress('Preparing collisions and 504 fuel balls…');
     this.sim = await FieldSimulation.create(asset, this.manifest.fuel, true).catch((cause: Error) => { throw new Error(`Physics initialization: ${cause.message}`, { cause }); });
@@ -222,12 +243,15 @@ export class FieldViewer {
     this.fuelMesh.receiveShadow = true;
     this.scene.add(this.fuelMesh);
     this.syncFuel();
-    this.makeLabels();
+    if (import.meta.env.DEV) this.makeLabels();
     this.updateOptions(this.options);
     this.resize();
     this.setMode('follow');
-    this.sim.setRunning(true);
+    this.callbacks.progress('Starting your timed match…');
+    this.startMatch({ ...DEFAULT_MATCH, seed: Math.floor(Math.random() * 0x100000000) });
+    if (document.hidden || !document.hasFocus()) this.setRunning(false);
     this.callbacks.ready(this.manifest);
+    this.callbacks.stats(this.snapshot());
     this.lastFrameTime = performance.now();
     this.frame();
   }
@@ -252,15 +276,15 @@ export class FieldViewer {
     if (this.sim.running) this.syncFuel();
     if (this.sim.robot) this.robotView.update(this.sim.robot, this.sim.running ? delta : 0, this.sim.robotController);
     this.moveCamera(delta);
-    if (this.mode === 'orbit') this.controls.update();
-    if (this.labels.visible) {
+    if (import.meta.env.DEV && this.mode === 'orbit') this.controls.update();
+    if (import.meta.env.DEV && this.labels.visible) {
       const metersPerPixel = 2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) / this.container.clientHeight;
       for (const label of this.labels.children) {
         const width = Math.min(1.55, 160 * metersPerPixel * this.camera.position.distanceTo(label.position));
         label.scale.set(width, width * 80 / 384, 1);
       }
     }
-    if (this.options.colliders && this.sim.running) {
+    if (import.meta.env.DEV && this.options.colliders && this.sim.running) {
       this.debugElapsed += delta;
       if (this.debugElapsed > 0.1) { this.updateDebug(); this.debugElapsed = 0; }
     }
@@ -270,10 +294,7 @@ export class FieldViewer {
     this.statElapsed += delta;
     this.statFrames++;
     if (this.statElapsed >= 0.1) {
-      this.callbacks.stats({ fps: Math.round(this.statFrames / this.statElapsed),
-        drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles,
-        colliders: this.sim.world.colliders.len(), awake: this.sim.awakeBodies,
-        physicsMs: this.sim.running ? this.sim.physicsMs : 0, running: this.sim.running, robot: this.sim.robot?.telemetry ?? null, mechanisms: this.sim.robotController?.telemetry ?? null, hubs: this.sim.hubs.telemetry, match: this.sim.match.telemetry });
+      this.callbacks.stats(this.snapshot(Math.round(this.statFrames / this.statElapsed)));
       this.statElapsed = 0;
       this.statFrames = 0;
     }
@@ -291,12 +312,15 @@ export class FieldViewer {
     });
     this.fuelMesh.instanceMatrix.needsUpdate = true;
     this.fuelMesh.computeBoundingSphere();
-    this.probeMesh.visible = this.sim.probeVisible;
-    const p = this.sim.probe.translation();
-    this.probeMesh.position.set(p.x, p.y, p.z);
+    if (import.meta.env.DEV) {
+      this.probeMesh.visible = this.sim.probeVisible;
+      const p = this.sim.probe.translation();
+      this.probeMesh.position.set(p.x, p.y, p.z);
+    }
   }
 
   updateOptions(options: ViewerOptions) {
+    if (!import.meta.env.DEV) return;
     this.options = options;
     this.model.visible = options.visuals;
     if (this.fuelMesh) this.fuelMesh.visible = options.fuel;
@@ -304,11 +328,12 @@ export class FieldViewer {
     this.staticDebug.visible = options.colliders;
     this.grid.visible = options.grid;
     this.labels.visible = options.labels;
-    this.robotView.contacts.visible = options.colliders;
+    if (this.robotView.contacts) this.robotView.contacts.visible = options.colliders;
     if (options.colliders && this.sim) this.updateDebug();
   }
 
   private updateDebug() {
+    if (!import.meta.env.DEV) return;
     if (!this.staticDebugReady) {
       const fixed = this.sim.world.debugRender(QueryFilterFlags.EXCLUDE_DYNAMIC);
       const positions = Array.from(fixed.vertices), colors = Array.from(fixed.colors);
@@ -331,14 +356,15 @@ export class FieldViewer {
   }
 
   setMode(mode: CameraMode) {
+    if (!import.meta.env.DEV && mode !== 'follow') return;
     this.mode = mode;
     if (mode !== 'follow') this.restoreCameraOccluders();
     this.animation = null;
     this.keys.clear();
     this.flyDragging = false;
-    this.controls.enabled = mode === 'orbit';
+    if (import.meta.env.DEV) this.controls.enabled = mode === 'orbit';
     this.renderer.domElement.style.cursor = mode === 'fly' ? 'crosshair' : 'grab';
-    if (mode === 'orbit') {
+    if (import.meta.env.DEV && mode === 'orbit') {
       const forward = this.camera.getWorldDirection(new THREE.Vector3());
       this.controls.target.copy(this.camera.position).addScaledVector(forward, 4);
       this.controls.update();
@@ -348,6 +374,7 @@ export class FieldViewer {
   }
 
   setPreset(preset: CameraPreset, animate = true) {
+    if (!import.meta.env.DEV) return;
     if (this.mode !== 'orbit') this.setMode('orbit');
     let position: Vec3, target: Vec3;
     const distance = Math.max(1, 1.4 / this.camera.aspect);
@@ -360,6 +387,7 @@ export class FieldViewer {
   }
 
   select(element: FieldElement | null) {
+    if (!import.meta.env.DEV) return;
     this.selected = element;
     this.highlight.visible = !!element;
     if (element) {
@@ -370,6 +398,7 @@ export class FieldViewer {
   }
 
   focusSelected() {
+    if (!import.meta.env.DEV) return;
     if (this.mode !== 'orbit') this.setMode('orbit');
     if (!this.selected) { this.setPreset('overview'); return; }
     const { bounds } = this.selected;
@@ -384,6 +413,7 @@ export class FieldViewer {
   }
 
   private goTo(to: THREE.Vector3, target: THREE.Vector3, animate: boolean) {
+    if (!import.meta.env.DEV) return;
     if (this.mode !== 'orbit') { this.mode = 'orbit'; this.controls.enabled = true; }
     if (animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       this.animation = { from: this.camera.position.clone(), targetFrom: this.controls.target.clone(), to, target, t: 0 };
@@ -392,6 +422,7 @@ export class FieldViewer {
 
   private moveCamera(delta: number) {
     if (this.mode === 'follow') { this.followCamera(delta); return; }
+    if (!import.meta.env.DEV) return;
     if (this.animation) {
       this.animation.t = Math.min(this.animation.t + delta / 0.55, 1);
       const { from, targetFrom, to, target, t } = this.animation;
@@ -429,7 +460,7 @@ export class FieldViewer {
     // Spectator camera: field contacts must never collapse its distance to the robot.
     this.camera.position.copy(this.followPosition);
     this.camera.lookAt(this.followTarget);
-    this.controls.target.copy(this.followTarget);
+    if (import.meta.env.DEV) this.controls.target.copy(this.followTarget);
     this.updateCameraOcclusion(delta, snap, forward);
   }
 
@@ -488,14 +519,15 @@ export class FieldViewer {
     }, this.sim.robot.telemetry.heading, this.driveFrame);
   }
 
-  setRobotPose(pose: RobotPose) { if (this.sim.match.mode === 'match') return; this.sim?.robotController?.inspect(pose); this.syncFuel(); if (this.sim?.robot) this.robotView.update(this.sim.robot, 0, this.sim.robotController); if (this.options.colliders) this.updateDebug(); }
-  resumeMechanisms() { this.sim?.robotController?.inspect(null); }
+  setRobotPose(pose: RobotPose) { if (!import.meta.env.DEV) return; if (this.sim.match.mode === 'match') return; this.sim?.robotController?.inspect(pose); this.syncFuel(); if (this.sim?.robot) this.robotView.update(this.sim.robot, 0, this.sim.robotController); if (this.options.colliders) this.updateDebug(); }
+  resumeMechanisms() { if (!import.meta.env.DEV) return; this.sim?.robotController?.inspect(null); }
 
-  setDriveFrame(frame: DriveFrame) { this.driveFrame = frame; this.clearInput(); }
+  setDriveFrame(frame: DriveFrame) { if (!import.meta.env.DEV) return; this.driveFrame = frame; this.clearInput(); }
 
   clearInput() { this.keys.clear(); if (this.sim?.robot) this.sim.robot.input = { ...NEUTRAL_INPUT }; this.sim?.robotController?.clearInput(); }
   setRunning(running: boolean) { this.clearInput(); this.sim?.setRunning(running); }
   respawn(spawn: DriveSpawn = 'practice') {
+    if (!import.meta.env.DEV) return;
     if (this.sim.match.mode === 'match') return;
     this.clearInput(); this.sim.robotController?.respawn(spawn); this.syncFuel(); this.setMode('follow');
     if (this.options.colliders) this.updateDebug();
@@ -503,6 +535,7 @@ export class FieldViewer {
   focusCanvas() { this.renderer.domElement.focus({ preventScroll: true }); }
 
   dropProbe() {
+    if (!import.meta.env.DEV) return;
     if (this.sim.match.mode === 'match') return;
     const center = this.selected?.center ?? [0, 0, 0];
     const top = this.selected?.bounds.max[1] ?? 0;
@@ -511,13 +544,36 @@ export class FieldViewer {
     this.updateDebug();
   }
 
-  reset() { this.matchAudio.reset(); this.clearInput(); this.sim.reset(); this.syncFuel(); this.setMode('follow'); if (this.options.colliders) this.updateDebug(); }
-  startMatch(config: MatchConfig) { this.matchAudio.unlock(); this.matchAudio.reset(true); this.clearInput(); this.sim.startMatch(config); this.syncFuel(); this.setMode('follow'); }
-  startPractice() { this.matchAudio.reset(); this.clearInput(); this.sim.startPractice(); this.syncFuel(); this.setMode('follow'); }
-  restartMatch() { this.startMatch({ ...this.sim.match.config }); }
-  setSoundEnabled(enabled: boolean) { this.matchAudio.setEnabled(enabled); }
+  reset() { if (!import.meta.env.DEV) return; this.matchAudio.reset(); this.clearInput(); this.sim.reset(); this.syncFuel(); this.setMode('follow'); if (this.options.colliders) this.updateDebug(); }
+  startMatch(config: MatchConfig) { this.matchAudio.reset(true); this.clearInput(); this.sim.startMatch(config); this.syncFuel(); this.setMode('follow'); }
+  startPractice() { if (!import.meta.env.DEV) return; this.matchAudio.reset(); this.clearInput(); this.sim.startPractice(); this.syncFuel(); this.setMode('follow'); }
+  restartMatch() { this.startMatch({ ...(this.sim.match.mode === 'match' ? this.sim.match.config : DEFAULT_MATCH) }); }
+  applySettings(settings: Settings) {
+    this.matchAudio.setLevel(settings.volume, settings.muted);
+    const preset = GRAPHICS[settings.graphics], shadows = preset.shadowSize > 0;
+    const changed = this.renderer.shadowMap.enabled !== shadows;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, preset.pixelRatio));
+    this.renderer.shadowMap.enabled = shadows;
+    if (shadows && this.sun.shadow.mapSize.x !== preset.shadowSize) {
+      this.sun.shadow.map?.dispose(); this.sun.shadow.map = null;
+      this.sun.shadow.mapSize.set(preset.shadowSize, preset.shadowSize);
+    }
+    if (changed) this.scene.traverse(o => {
+      if (o instanceof THREE.Mesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.needsUpdate = true; });
+    });
+    this.renderer.shadowMap.needsUpdate = true;
+    this.resize();
+  }
+  snapshot(fps = 0): ViewerStats {
+    return { fps, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles,
+      colliders: import.meta.env.DEV ? this.sim.world.colliders.len() : 0,
+      awake: import.meta.env.DEV ? this.sim.awakeBodies : 0, physicsMs: this.sim.running ? this.sim.physicsMs : 0,
+      running: this.sim.running, robot: this.sim.robot?.telemetry ?? null,
+      mechanisms: this.sim.robotController?.telemetry ?? null, hubs: this.sim.hubs.telemetry, match: this.sim.match.telemetry };
+  }
 
   private makeLabels() {
+    if (!import.meta.env.DEV) return;
     for (const element of this.manifest.elements.filter((e) => ['hub', 'tower', 'outpost', 'depot', 'bump', 'trench'].includes(e.kind))) {
       const canvas = document.createElement('canvas');
       canvas.width = 384; canvas.height = 80;
@@ -538,6 +594,7 @@ export class FieldViewer {
   private onContextMenu = (e: Event) => e.preventDefault();
   private onPointerDown = (e: PointerEvent) => {
     this.renderer.domElement.focus({ preventScroll: true });
+    if (!import.meta.env.DEV) return;
     this.pointerStart.set(e.clientX, e.clientY);
     if (this.mode === 'fly' && e.button === 2) {
       this.flyDragging = true;
@@ -545,6 +602,7 @@ export class FieldViewer {
     }
   };
   private onPointerUp = (e: PointerEvent) => {
+    if (!import.meta.env.DEV) return;
     this.flyDragging = false;
     if (this.renderer.domElement.hasPointerCapture(e.pointerId)) this.renderer.domElement.releasePointerCapture(e.pointerId);
     if (e.button !== 0 || this.pointerStart.distanceTo(new THREE.Vector2(e.clientX, e.clientY)) > 5) return;
@@ -559,6 +617,7 @@ export class FieldViewer {
     this.select(this.manifest.elements.find((element) => element.id === id) ?? null);
   };
   private onPointerMove = (e: PointerEvent) => {
+    if (!import.meta.env.DEV) return;
     if (this.mode !== 'fly' || !this.flyDragging) return;
     const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
     euler.y -= e.movementX * 0.003;
@@ -578,15 +637,17 @@ export class FieldViewer {
     this.keys.delete(e.code);
     if (!e.shiftKey) { this.keys.delete('ShiftLeft'); this.keys.delete('ShiftRight'); }
   };
-  private onBlur = () => { this.keys.clear(); this.flyDragging = false; this.sim?.setRunning(false); };
+  private onBlur = () => { this.clearInput(); this.flyDragging = false; this.setRunning(false); this.callbacks.focusLost(); if (this.sim) this.callbacks.stats(this.snapshot()); };
+  private onContextLost = (e: Event) => { e.preventDefault(); this.onBlur(); cancelAnimationFrame(this.raf); this.callbacks.error('The graphics context was lost. Close other graphics-heavy tabs, then try again.'); };
   private onVisibility = () => { if (document.hidden) this.onBlur(); };
 
   dispose() {
     this.disposed = true;
     cancelAnimationFrame(this.raf);
     this.resizeObserver.disconnect();
-    this.controls.dispose();
+    if (import.meta.env.DEV) this.controls.dispose();
     const canvas = this.renderer.domElement;
+    canvas.removeEventListener('webglcontextlost', this.onContextLost);
     canvas.removeEventListener('pointerdown', this.onPointerDown);
     canvas.removeEventListener('pointerup', this.onPointerUp);
     canvas.removeEventListener('pointermove', this.onPointerMove);
@@ -600,7 +661,7 @@ export class FieldViewer {
     document.removeEventListener('visibilitychange', this.onVisibility);
     this.restoreCameraOccluders();
     this.cameraOccluders.forEach((state) => state.faded.forEach((material) => material.dispose()));
-    this.robotView.group.removeFromParent(); this.robotView.contacts.removeFromParent();
+    this.robotView.group.removeFromParent(); this.robotView.contacts?.removeFromParent();
     this.robotView.dispose();
     this.scene.traverse((object) => {
       if (object instanceof THREE.Mesh || object instanceof THREE.Line || object instanceof THREE.Sprite) {

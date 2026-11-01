@@ -14,11 +14,13 @@
     "benchmark:drive": "node scripts/benchmark-drive.mjs",
     "benchmark:shoot": "node scripts/benchmark-shooter.mjs",
     "benchmark:practice": "node scripts/benchmark-shooter.mjs --practice",
-    "test:unit": "vitest run src/sim/MatchRules.test.ts src/sim/MatchCues.test.ts",
+    "test:unit": "vitest run src/sim/MatchRules.test.ts src/sim/MatchCues.test.ts src/settings.test.ts src/field/collisionAsset.test.ts src/view/MatchAudio.test.ts",
     "test:sim": "pnpm assets:check && vitest run --maxWorkers=1 --testTimeout=30000",
     "assets:check": "node scripts/check-assets.mjs",
     "assets:check:release": "node scripts/check-assets.mjs --release",
-    "build:release": "pnpm assets:check:release && pnpm build"
+    "build:release": "pnpm assets:check:release && pnpm build && pnpm check:build",
+    "build:local": "pnpm assets:check && pnpm build && pnpm check:build",
+    "check:build": "node scripts/check-build.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",

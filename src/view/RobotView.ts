@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { runtimeAsset } from '../runtimeAssets';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import type { SwerveChassis } from '../sim/SwerveChassis';
@@ -10,16 +11,16 @@ import { rotate, unrotate, v3 } from '../sim/vector';
 /** Prepared team CAD, batched around explicit mechanism frames offline. */
 export class RobotView {
   readonly group = new THREE.Group();
-  readonly contacts = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: '#7cf3c9', depthTest: false }));
+  readonly contacts = import.meta.env.DEV ? new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: '#7cf3c9', depthTest: false })) : null;
   private model: THREE.Group | null = null;
   private nodes = new Map<string, THREE.Object3D>();
   private wheelRotation = [0, 0, 0, 0];
   private disposed = false;
 
-  constructor() { this.contacts.frustumCulled = false; this.contacts.renderOrder = 22; this.contacts.visible = false; }
+  constructor() { if (this.contacts) { this.contacts.frustumCulled = false; this.contacts.renderOrder = 22; this.contacts.visible = false; } }
 
   async load() {
-    const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(REBLITZ.model);
+    const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(runtimeAsset(REBLITZ.model));
     if (this.disposed) { this.disposeObject(gltf.scene); return; }
     this.model = gltf.scene;
     this.model.traverse(object => {
@@ -71,18 +72,18 @@ export class RobotView {
         if (suffix === 'wheel') steer.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), this.wheelRotation[i]));
         node.quaternion.copy(steer);
       }
-      if (this.contacts.visible && m.grounded) {
+      if (this.contacts?.visible && m.grounded) {
         const mount = new THREE.Vector3(m.x, d.mountY, m.z).applyQuaternion(new THREE.Quaternion(physicalRotation.x, physicalRotation.y, physicalRotation.z, physicalRotation.w)).add(this.group.position);
         points.push(mount.x, mount.y, mount.z, m.point.x, m.point.y, m.point.z,
           m.point.x, m.point.y, m.point.z, m.point.x + m.force.x * 0.001, m.point.y + m.force.y * 0.001, m.point.z + m.force.z * 0.001);
       }
     });
-    if (this.contacts.visible) this.contacts.geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    if (this.contacts?.visible) this.contacts.geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
   }
   private disposeObject(object: THREE.Object3D) {
     const geometries = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>();
     object.traverse(o => { if (o instanceof THREE.Mesh) { geometries.add(o.geometry); (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => materials.add(m)); } });
     geometries.forEach(g => g.dispose()); materials.forEach(m => { if ('map' in m) (m.map as THREE.Texture | null)?.dispose(); m.dispose(); });
   }
-  dispose() { this.disposed = true; this.disposeObject(this.group); this.contacts.geometry.dispose(); (this.contacts.material as THREE.Material).dispose(); }
+  dispose() { this.disposed = true; this.disposeObject(this.group); this.contacts?.geometry.dispose(); (this.contacts?.material as THREE.Material | undefined)?.dispose(); }
 }

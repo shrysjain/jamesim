@@ -21,5 +21,5 @@ export type FieldManifest = {
 };
 export type CollisionAsset = {
   boxes: { element: string; center: Vec3; halfExtents: Vec3 }[];
-  meshes: { element: string; vertices: number[]; indices: number[] }[];
+  meshes: { element: string; vertices: number[] | Float32Array; indices: number[] | Uint32Array }[];
 };
