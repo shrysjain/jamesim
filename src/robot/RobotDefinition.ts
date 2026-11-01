@@ -14,13 +14,13 @@ export type RobotDefinition = {
   drive?: { maxSpeed: number; acceleration: number; grip: number };
   modules: { name: string; x: number; z: number }[];
   intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean };
-  hopper: { stowTravel: number; volume?: HopperVolume };
+  hopper: { stowTravel: number; volume?: HopperVolume; fixedSlot?: number };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
-  climb?: { maxLift: number; rate: number };
+  climb?: { maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };
   cargoSlots?: Vec3[];
   pickup?: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
-  shooterGeometry?: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number };
+  shooterGeometry?: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number; feedPath?: Vec3[] };
   mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; movingShots: boolean; simultaneousIntake?: boolean; climb: boolean };
 };
 
@@ -39,7 +39,7 @@ export const REBLITZ: RobotDefinition = {
     { name: 'module-rear-right', x: -0.282575, z: 0.276225 },
   ],
   intake: { pivot: [-0.27305, -0.0467875, 0], stowedAngle: -114 * Math.PI / 180 },
-  hopper: { stowTravel: 0.29845, volume: { frontX: -.63897, backX: .30, halfWidth: .34845, floorY: -.10, ceilingY: .327, frontTravel: .29845, slopedFront: true } }, // measured between collecting and starting CAD configurations
+  hopper: { stowTravel: 0.29845, fixedSlot: 54, volume: { frontX: -.63897, backX: .30, halfWidth: .34845, floorY: -.10, ceilingY: .327, frontTravel: .29845, slopedFront: true } }, // measured between collecting and starting CAD configurations
   hood: { pivot: [0.282575, 0.25325, 0], maxAngle: 37 * Math.PI / 180 },
   colliders: [
     // Bumpers match the CAD envelope; contact surfaces use rounded edges.
@@ -71,33 +71,6 @@ export function partTransform(definition: RobotDefinition, part: RobotPart, pose
 
 export const STARTING_POSE: RobotPose = { intake: 0, hopper: 0, hood: 0 };
 
-/** Provisional gameplay model; replace estimates after verifying the FRSim card.
- * Procedural geometry is original and does not claim to reproduce team CAD. */
-export const HIGH_TIDE: RobotDefinition = {
-  ...REBLITZ, id: '4414-high-tide', name: '4414 High Tide · Ripcurrent', model: '',
-  mass: 54, inertia: [3, 5.8, 3.2],
-  mechanisms: { capacity: 85, intakeRate: 20, compress: true, lanes: [0], fireRate: 8, turret: true, movingShots: true, climb: false },
-  // 25 × 32 in frame, plus approximate 3 in bumper allowance on each edge.
-  length: 38 * 0.0254, width: 31 * 0.0254,
-  modules: REBLITZ.modules.map(m => ({ ...m, x: Math.sign(m.x) * .33, z: Math.sign(m.z) * .23 })),
-  cargoSlots: Array.from({ length: 85 }, (_, i): Vec3 => {
-    const layer = Math.floor(i / 30), row = Math.floor(i % 30 / 5), column = i % 5;
-    return [-.85 + row * .151 + (column % 2) * .151 / 2 + (layer % 2) * .151 / 2, -.022 + layer * .151 * Math.sqrt(2 / 3), (column - 2) * .151 * Math.sqrt(3) / 2 + (layer % 2) * .151 * Math.sqrt(3) / 6];
-  }),
-  pickup: { minX: -1.15, maxX: -.88, halfWidth: .29, mouthX: -.94, ejectX: -1.14 },
-  shooterGeometry: { pivot: [.12, .25325, 0], drumRadius: .0381, guideLength: .155, turretRadiansPerSecond: 3 },
-  hopper: { stowTravel: .45, volume: { frontX: -.95, backX: .25, halfWidth: .334, floorY: -.10, ceilingY: .328, frontTravel: .45 } }, intake: { pivot: [-0.27305, -0.0467875, 0], stowedAngle: 0, stowTravel: .45 },
-  colliders: [
-    ...[-1, 1].flatMap((sign): RobotCollider[] => [
-      { part: 'chassis', center: [sign * .4445, -.12616, 0], halfExtents: [.0381, .05715, .3937], radius: .008 },
-      { part: 'chassis', center: [0, -.12616, sign * .3556], halfExtents: [.4064, .05715, .0381], radius: .008 },
-    ]),
-    { part: 'chassis', center: [0, -.18215, 0], halfExtents: [.4, .002, .31], radius: .006 },
-    ...[-1, 1].map((sign): RobotCollider => ({ part: 'hopper', center: [-.59, .114, sign * .34], halfExtents: [.36, .214, .008] })),
-    { part: 'intake', center: [-1.04, -.10, 0], halfExtents: [.035, .035, .32], radius: .008 },
-    { part: 'hopper', center: [-.96, .114, 0], halfExtents: [.008, .214, .34] },
-  ],
-};
 /** Team release CAD; dimensions/frames measured from the closed/open exports.
  * Gameplay performance follows the user-supplied FRSim card; CAD mass remains estimated (docs/KEPLER.md). */
 export const KEPLER: RobotDefinition = {
@@ -108,9 +81,9 @@ export const KEPLER: RobotDefinition = {
   modules: REBLITZ.modules.map(m => ({ ...m, x: Math.sign(m.x) * .2505, z: Math.sign(m.z) * .3013 })),
   intake: { pivot: [0, 0, 0], stowedAngle: 0, stowTravel: .312, stowRise: .0691, manualRetraction: true, passiveKicker: true },
   hopper: { stowTravel: 0, volume: { frontX: -.617, backX: .3175, halfWidth: .358, floorY: -.085, ceilingY: .328, frontTravel: .312, floorSlope: -.08 } }, hood: { pivot: [.204, .241, .1872], maxAngle: (82.47 - 35) * Math.PI / 180 },
-  shooterGeometry: { pivot: [.204, .241, .1872], turretPivot: [.134, -.223, .1872], drumRadius: .0502, guideLength: .155, turretRadiansPerSecond: 4, minElevation: 35 * Math.PI / 180, maxElevation: 82.47 * Math.PI / 180, passRange: 32 * .3048, movingAccuracy: .95 },
-  climb: { maxLift: .212, rate: .15 },
-  mechanisms: { capacity: 50, intakeRate: 40, compress: false, lanes: [0], fireRate: 13, feedSeconds: .05, turret: true, movingShots: true, simultaneousIntake: true, climb: true },
+  shooterGeometry: { pivot: [.204, .241, .1872], turretPivot: [.134, -.223, .1872], drumRadius: .0502, guideLength: .155, turretRadiansPerSecond: 4, minElevation: 35 * Math.PI / 180, maxElevation: 82.47 * Math.PI / 180, passRange: 32 * .3048, movingAccuracy: .95, feedPath: [[.06, -.005, 0], [.134, .005, .14], [.134, .16, .1872]] },
+  climb: { maxLift: .212, rate: .30, deploySeconds: .55, travel: .30, hook: [.2675, .251, -.02155] },
+  mechanisms: { capacity: 50, intakeRate: 40, compress: true, lanes: [0], fireRate: 13, feedSeconds: .25, turret: true, movingShots: true, simultaneousIntake: true, climb: true },
   cargoSlots: Array.from({ length: 50 }, (_, i): Vec3 => {
     const layer = Math.floor(i / 20), row = Math.floor(i % 20 / 5), column = i % 5;
     return [-.39 + row * .151 + (column % 2) * .0755 + (layer % 2) * .0755,
@@ -129,6 +102,5 @@ export const KEPLER: RobotDefinition = {
     { part: 'intake', center: [-.5593, -.062, 0], halfExtents: [.021, .021, .3235], radius: .004 },
   ],
 };
-export const TOWER_TRAINER: RobotDefinition = { ...HIGH_TIDE, id: 'tower-trainer', name: 'Tower trainer (original)', cargoSlots: undefined, pickup: undefined, hopper: { stowTravel: 0, volume: { frontX: -.64, backX: .25, halfWidth: .334, floorY: -.10, ceilingY: .328, frontTravel: 0 } }, intake: { ...REBLITZ.intake, stowedAngle: 0 }, length: REBLITZ.length, width: REBLITZ.width, modules: REBLITZ.modules, colliders: REBLITZ.colliders.filter(c => c.part === 'chassis' && c.center[1] < 0), mechanisms: { ...HIGH_TIDE.mechanisms, capacity: 24, climb: true } };
-export const ROBOTS = { '2910-reblitz': REBLITZ, '1690-kepler': KEPLER, '4414-high-tide': HIGH_TIDE, 'tower-trainer': TOWER_TRAINER };
+export const ROBOTS = { '2910-reblitz': REBLITZ, '1690-kepler': KEPLER };
 export type RobotId = keyof typeof ROBOTS;

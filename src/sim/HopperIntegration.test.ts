@@ -23,7 +23,7 @@ describe('hopper physics with shared fuel ownership',()=>{
   const positions=[];
   for(const rate of [30,60,144]){
    const s=await FieldSimulation.create(floor,Array.from({length:8},(_,i):[number,number,number]=>[0,.08,i*.16]),true);
-   try{s.startMatch({...DEFAULT_MATCH,robot:'4414-high-tide'});for(let i=0;i<rate*2;i++)s.update(1/rate);expect(s.fuelSystem.time, `render rate ${rate}`).toBeCloseTo(2,10);positions.push(s.robotController!.held.map(f=>({...f.local})));}finally{s.dispose();}
+   try{s.startMatch({...DEFAULT_MATCH,robot:'1690-kepler'});for(let i=0;i<rate*2;i++)s.update(1/rate);expect(s.fuelSystem.time, `render rate ${rate}`).toBeCloseTo(2,10);positions.push(s.robotController!.held.map(f=>({...f.local})));}finally{s.dispose();}
   }
   for(const frame of positions)for(let i=0;i<frame.length;i++){expect(frame[i].x).toBeCloseTo(positions[0][i].x,5);expect(frame[i].y).toBeCloseTo(positions[0][i].y,5);expect(frame[i].z).toBeCloseTo(positions[0][i].z,5);}
  });

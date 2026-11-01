@@ -36,6 +36,8 @@ type Callbacks = {
   selection: (element: FieldElement | null) => void;
   stats: (stats: ViewerStats) => void;
   focusLost: () => void;
+  pauseRequested: () => void;
+  restartRequested: () => void;
   error: (message: string) => void;
   camera: (preset: CameraPreset | null, mode: CameraMode) => void;
 };
@@ -257,8 +259,8 @@ export class FieldViewer {
     this.updateOptions(this.options);
     this.resize();
     this.setMode('follow');
-    this.callbacks.progress('Starting your timed match…');
-    this.startMatch({ ...DEFAULT_MATCH, seed: Math.floor(Math.random() * 0x100000000) });
+    this.callbacks.progress('Field ready');
+    this.sim.setRunning(false);
     if (document.hidden || !document.hasFocus()) this.setRunning(false);
     this.callbacks.ready(this.manifest);
     this.callbacks.stats(this.snapshot());
@@ -274,8 +276,10 @@ export class FieldViewer {
     this.camera.updateProjectionMatrix();
   };
 
+  presentationActive = true;
   private frame = () => {
     if (this.disposed) return;
+    if (!this.presentationActive) { this.lastFrameTime = performance.now(); this.raf = requestAnimationFrame(this.frame); return; }
     const now = performance.now();
     const delta = Math.min((now - this.lastFrameTime) / 1000, 0.1);
     this.lastFrameTime = now;
@@ -514,20 +518,20 @@ export class FieldViewer {
 
   private readDriveInput() {
     if (!this.sim.robot) return;
-    if (!this.driveEnabled || this.mode === 'fly') { this.sim.robot.input = { ...NEUTRAL_INPUT }; this.sim.robotController?.clearInput(); return; }
+    if (this.mode === 'fly') return;
     const pad = this.playerControls.gamepad ? Array.from(navigator.getGamepads?.() ?? []).find(p => p?.connected) : null;
     const identity = pad ? `${pad.index}:${pad.id}` : '';
     if (identity !== this.gamepadIdentity) { this.gamepadArmed = false; this.restartHeld = this.pauseHeld = false; this.gamepadIdentity = identity; }
     const padActions = readActions(new Set(), this.playerControls, pad);
     if (pad && !Object.values(padActions).some(v => Math.abs(v) > 0.01)) this.gamepadArmed = true;
     const a = readActions(this.keys, this.playerControls, this.gamepadArmed ? pad : null);
-    if (padActions.restart && this.gamepadArmed && !this.restartHeld) { this.restartHeld = true; this.restartMatch(); return; }
+    if (padActions.restart && this.gamepadArmed && !this.restartHeld) { this.restartHeld = true; this.callbacks.restartRequested(); return; }
     this.restartHeld = !!padActions.restart;
-    if (padActions.pause && this.gamepadArmed && !this.pauseHeld) { this.pauseHeld = true; this.setRunning(!this.sim.running); return; }
+    if (padActions.pause && this.gamepadArmed && !this.pauseHeld) { this.pauseHeld = true; this.callbacks.pauseRequested(); return; }
     this.pauseHeld = !!padActions.pause;
-    if (!this.sim.running || !this.sim.match.driverEnabled) return;
+    if (!this.driveEnabled || !this.sim.running || !this.sim.match.driverEnabled) return;
     if ((a.intake || a.reverse || a.shoot) && this.sim.robotController?.inspectionPose) this.resumeMechanisms();
-    if (this.sim.robotController) this.sim.robotController.input = { intake: !!a.intake, reverse: !!a.reverse, shoot: !!a.shoot, toggleIntake: this.gamepadArmed && !!padActions.toggleIntake, climb: !!a.climb, lower: !!a.lower, supply: !!a.supply };
+    if (this.sim.robotController) this.sim.robotController.input = { intake: !!a.intake, reverse: !!a.reverse, shoot: !!a.shoot, toggleIntake: this.gamepadArmed && !!padActions.toggleIntake, climb: this.gamepadArmed && !!padActions.climb, supply: !!a.supply };
     const sign = this.sim.robotController?.shooter.alliance === 'red' && this.driveFrame === 'field' ? -1 : 1;
     this.sim.robot.input = toRobotInput({ forward: sign * (a.forward - a.backward), strafe: sign * (a.right - a.left), turn: a.turnLeft - a.turnRight, slow: false, brake: false }, this.sim.robot.telemetry.heading, this.driveFrame);
   }
@@ -564,7 +568,7 @@ export class FieldViewer {
   startSession(config: MatchConfig, practice = false) {
     this.sessionConfig = { ...config };
     this.startMatch(config); this.sessionPractice = practice;
-    if (practice) { const applied = { ...this.sim.match.config }; this.sim.match.reset(); this.sim.match.config = applied; }
+    if (practice) this.sim.match.enterPractice();
     this.robotView.setDefinition(this.sim.robot!.definition);
     this.robotView.setAlliance(this.sim.robotController!.shooter.alliance);
     this.syncFuel();
@@ -652,6 +656,7 @@ export class FieldViewer {
     if ([...Object.values(this.playerControls.keys).flat(), ...(import.meta.env.DEV && this.mode === 'fly' ? ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ShiftLeft', 'ShiftRight'] : [])].includes(e.code)) {
       if (e.code === 'Space' && (e.target as HTMLElement).closest('button')) return;
 
+      if (this.playerControls.keys.climb.includes(e.code) && this.sim?.running && this.sim.match.driverEnabled) this.sim.robotController?.requestClimbToggle();
       if (this.playerControls.keys.toggleIntake.includes(e.code) && this.sim?.running && this.sim.match.driverEnabled) this.sim.robotController?.requestIntakeToggle();
       this.keys.add(e.code); e.preventDefault();
     }

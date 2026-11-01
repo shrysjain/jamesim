@@ -1,5 +1,6 @@
 /** Offline CAD adaptation. Inputs are pinned and attributed in docs/KEPLER.md.
  * Preserve source geometry/materials; build our own mechanism hierarchy in SI robot coordinates. */
+import { rigKeplerClimber } from './rig-kepler-climber.mjs';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { Document, NodeIO } from '@gltf-transform/core';
@@ -118,6 +119,7 @@ for (const [x, z, name] of [[.2505,-.3013,'front-left'],[.2505,.3013,'front-righ
   await cad(suffix, id, new Matrix4().makeRotationY(Math.PI / 2));
  }
 }
+rigKeplerClimber(doc);
 await doc.transform(weld(), prune(), meshopt({ encoder: MeshoptEncoder, level: 'high' }));
 await mkdir('public/assets/robots/1690-kepler', { recursive: true });
 const bytes = await io.writeBinary(doc); await writeFile('public/assets/robots/1690-kepler/robot.glb', bytes);

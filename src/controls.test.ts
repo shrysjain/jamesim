@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONTROLS, axisValue, bindKey, bindButton, readActions, validateControls } from './controls';
 describe('player controls', () => {
+  it('uses C for the climber and migrates the prior default without changing custom keys', () => {
+    expect(DEFAULT_CONTROLS.keys.climb).toEqual(['KeyC']);
+    expect(validateControls({ keys: { climb: ['KeyT'] } }).keys.climb).toEqual(['KeyC']);
+    expect(validateControls({ keys: { climb: ['KeyZ'] } }).keys.climb).toEqual(['KeyZ']);
+  });
   it('preserves a saved key when a newly added action has the same default', () => {
     const before = structuredClone(DEFAULT_CONTROLS); before.keys.forward = ['KeyV'];
     const saved = JSON.parse(JSON.stringify(before)); delete saved.keys.toggleIntake;

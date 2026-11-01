@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HopperDynamics } from './HopperDynamics';
-import { KEPLER, HIGH_TIDE, REBLITZ } from '../robot/RobotDefinition';
+import { KEPLER, REBLITZ } from '../robot/RobotDefinition';
 import { STORAGE_SLOTS } from './RobotSimulation';
 import { FUEL_RADIUS } from './FuelSystem';
 import { v3 } from './vector';
@@ -34,7 +34,7 @@ describe('hopper sphere dynamics', () => {
   expect(balls[0].local.x).toBeLessThan(-.03);
  });
  it('keeps full-size cargo separated and enclosed at each supported full capacity', () => {
-  for(const def of [REBLITZ,HIGH_TIDE,KEPLER]){
+  for(const def of [REBLITZ,KEPLER]){
    const h=new HopperDynamics(def), slots=def.cargoSlots?.map(([x,y,z])=>v3(x,y,z))??STORAGE_SLOTS;
    const balls=slots.map(({x,y,z},i)=>ball(i,x,y,z));
    for(let i=0;i<240;i++)h.step(1/120,balls,open,motion());

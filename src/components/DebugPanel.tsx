@@ -45,11 +45,11 @@ export default function DebugPanel({ engine, stats, onClose, onRestart, onSync }
     const key = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest('input, select, textarea, button') || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
       if (/^Digit[1-4]$/.test(e.code)) engine.setPreset(presets[Number(e.code.slice(-1)) - 1].id);
-      if (e.code === 'KeyC') toggle('colliders');
+      if (e.code === 'F6') toggle('colliders');
       if (e.code === 'KeyG') toggle('grid');
       if (e.code === 'KeyN') toggle('labels');
       if (e.code === 'KeyF') engine.focusSelected();
-      if (e.code === 'KeyV') engine.setMode('follow');
+      if (e.code === 'F7') engine.setMode('follow');
     };
     window.addEventListener('keydown', key);
     return () => {
