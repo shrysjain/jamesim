@@ -26,7 +26,7 @@ The remaining work is mainly product flow, settings, production cleanup and publ
 
 ## 0. Establish the repository and publishable asset set
 
-**Now:** initialize `main`, push scoped baseline commits, add `AGENTS.md`, document the release, and add basic CI. Preserve the working local asset pack.
+**Completed:** initialized `main`, pushed scoped baseline commits, added `AGENTS.md`, documented the release, and added basic CI. The working local asset pack remains intact.
 
 The first public push excludes pending-clearance payloads: field/robot GLBs and derived field data, match WAVs, the team binder and its full extracted text, large source exports and local QA screenshots. Font files with retained SIL OFL licenses and reference Java files with their MIT license can be included. Sources, hashes and provenance stay in Git.
 
@@ -80,7 +80,7 @@ HUD:
 2. Remove production Debug buttons/backtick bindings, inspection selection, fly/orbit/test-location shortcuts, pose sliders, probe controls, tuning and diagnostic overlays. Preserve useful tools for local development.
 3. Gate development-only resource construction in `FieldViewer`: labels, debug mesh generation, selection/highlights and development event listeners. Merely hiding the panel does not remove these code paths.
 4. Give the player shell one owner for modal/pause/restart state. Avoid a new generic state-management framework; small modules/components are sufficient.
-5. Bring README and current model docs up to date; clearly label historical gate verification. Update the older no-bump-tilt assertions to the accepted capped visual lean while retaining checks for stable collision support and no fuel beaching.
+5. Keep README and current model docs up to date; clearly label historical gate verification. The chassis-flight fix updated the older no-bump-tilt assertions to the accepted capped visual lean while retaining checks for stable collision support and no fuel beaching.
 6. Keep the latest auto-boundary yaw cancellation, faster alignment and hopper-panel fit. Add a focused regression case for each meaningful failure path when practical; do not add tests that merely mirror constants or CSS.
 
 **Done when:** a production build has no accessible inspector/tuning routes or shortcuts, normal gameplay is unaffected by development controls, and a developer can still inspect the local game.
@@ -108,7 +108,7 @@ Use checks proportional to the changes; do not repeat broad performance runs aft
 - Verify Safari and Chromium desktop behavior. User testing in Chrome is fine; automated work should respect the user's Chrome-profile preference. Check browser console, missing assets and audio unlock.
 - Verify an old/warm browser load after a new deployment does not combine incompatible model/collision versions.
 
-**Done when:** the user signs off on the complete singleplayer loop and the built deployment, rather than only the Vite development server. The latest gameplay follow-up was intentionally not tested at the user's request, so its regression coverage belongs here.
+**Done when:** the user signs off on the complete singleplayer loop and the built deployment, rather than only the Vite development server. Local simulation coverage and the focused Safari check recorded with the chassis-flight fix do not replace this production release acceptance pass.
 
 ## 6. Deploy a preview, then the public release
 

@@ -71,6 +71,31 @@ describe('swerve dynamics', () => {
     } finally { sim.dispose(); }
   });
 
+  it('removes off-axis drift without changing yaw or vertical flight', async () => {
+    const sim = await setup();
+    try {
+      const robot = sim.robot!;
+      robot.teleport([0, 1.5, 0], 0.8);
+      const q = robot.body.rotation();
+      robot.body.setRotation({ ...q, x: 0.002, z: -0.003 }, true);
+      robot.body.setAngvel({ x: 0.2, y: 1.5, z: -0.3 }, true);
+      robot.body.setLinvel({ x: 0.4, y: 2, z: -0.2 }, true);
+      robot.enforceUpright();
+      expect(robot.telemetry.heading).toBeCloseTo(0.8, 5);
+      expect(robot.body.angvel().y).toBeCloseTo(1.5);
+      expect(robot.body.linvel()).toEqual({ x: expect.closeTo(0.4), y: 2, z: expect.closeTo(-0.2) });
+      expect(robot.body.translation().y).toBe(1.5);
+      run(sim, 0.1);
+      expect(robot.body.translation().y).toBeGreaterThan(1.6);
+      expect(robot.telemetry.grounded).toBe(0);
+      expect(robot.telemetry.heading).toBeGreaterThan(0.9);
+      run(sim, 1.5);
+      expect(robot.body.rotation().x).toBe(0); expect(robot.body.rotation().z).toBe(0);
+      expect(robot.body.translation().y).toBeLessThan(0.24);
+      expect(robot.telemetry.grounded).toBe(4);
+    } finally { sim.dispose(); }
+  });
+
   it('gives equivalent motion at different render update rates', async () => {
     const positions = [];
     for (const rate of [30, 60, 144]) {
@@ -121,7 +146,7 @@ describe('chassis on the official field', () => {
     } finally { sim.dispose(); }
   }, 30_000);
 
-  it.each([-1, 1])('crosses both bump lanes on alliance side %i without tipping', async (side) => {
+  it.each([-1, 1])('crosses both bump lanes on alliance side %i with bounded visual lean and level physics', async (side) => {
     for (const z of [-1.65, 1.65]) {
       const sim = await setup(field, [side * 5.35, 0.26, z], side > 0 ? Math.PI : 0);
       try {
@@ -129,9 +154,10 @@ describe('chassis on the official field', () => {
         sim.robot!.input = { ...NEUTRAL_INPUT, forward: 1, slow: true };
         for (let i = 0; i < 120 * 3; i++) {
           sim.update(1 / 120); maxHeight = Math.max(maxHeight, sim.robot!.body.translation().y); maxTilt = Math.max(maxTilt, sim.robot!.telemetry.tilt);
+          expect(sim.robot!.body.rotation().x).toBe(0); expect(sim.robot!.body.rotation().z).toBe(0);
         }
         expect(maxHeight).toBeGreaterThan(0.32); expect(maxHeight).toBeLessThan(0.65);
-        expect(maxTilt).toBeLessThan(0.01);
+        expect(maxTilt).toBeGreaterThan(3); expect(maxTilt).toBeLessThan(15.1);
         expect(sim.robot!.body.translation().x * side).toBeLessThan(3);
         expect(sim.robot!.body.translation().y).toBeGreaterThan(0.18);
       } finally { sim.dispose(); }
@@ -161,10 +187,11 @@ describe('chassis on the official field', () => {
         sim.update(1 / 120);
         maxHeight = Math.max(maxHeight, sim.robot!.body.translation().y);
         maxTilt = Math.max(maxTilt, sim.robot!.telemetry.tilt);
+        expect(sim.robot!.body.rotation().x).toBe(0); expect(sim.robot!.body.rotation().z).toBe(0);
       }
       expect(sim.robot!.body.translation().x).toBeLessThan(2.6);
       expect(maxHeight).toBeGreaterThan(0.33); expect(maxHeight).toBeLessThan(0.9);
-      expect(maxTilt).toBeLessThan(0.01);
+      expect(maxTilt).toBeGreaterThan(3); expect(maxTilt).toBeLessThan(15.1);
       expect(sim.robot!.body.translation().y).toBeGreaterThan(0.18);
     } finally { sim.dispose(); }
   }, 30_000);

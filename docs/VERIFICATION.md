@@ -1,3 +1,19 @@
+# Chassis flight fix — November 1, 2026
+
+Reproduced a physical pitch/roll drift during a continuous, driver-controlled 160-second full-field collection/shooting route with the normal 504 fuel. The route alternated neutral-zone collection at X=0 with return/shoot destinations at X=6.1 (and one wall destination at X=7.7), visiting Z=2.1, ±3.35 and 1.6. There were no resets or pose teleports during the route.
+
+Before the fix, the first recorded off-axis quaternion error exceeded 0.001 after about 47 seconds. By 145 seconds the physical body exceeded 0.65 m height, mechanism colliders were supporting it against the floor, and all four wheel loads were zero. This reproduces the flying/stuck-above-carpet failure family; it does not establish every detail of the user's unrecorded play session or an upstream Rapier defect.
+
+The physical chassis now explicitly retains yaw only, removing pitch/roll drift and off-axis angular velocity before suspension queries and after world integration. Yaw, translation, linear velocity, gravity, suspension and the separate bump-only visual lean remain active. No height clamp was added.
+
+- The identical route completed all 160 seconds after the fix, fired 140 fuel, peaked at 0.454 m over terrain, and finished at 0.223 m ride height. No off-axis error above 0.001 or height above 0.65 m occurred.
+- Focused driving/cargo checks passed 33/33. A regression seeds off-axis rotation/velocity, verifies yaw and upward linear motion survive correction, then verifies normal landing/support. A loaded-cargo case verifies recovery without losing fuel IDs. Bump checks now require visible, bounded terrain lean alongside exactly upright physical rotation, superseding their earlier no-visual-lean expectation.
+- Integration checks also exposed an empty-shooter status priority error: an empty robot with Space held could report Aiming even though the aim controller correctly yielded yaw. Empty now takes priority, and the reverse/cancel check verifies manual turning still works with empty Space held.
+- The complete eight-suite run passed 78/79 checks before that status correction. After the correction, the affected shooter suite passed 11/11; the other seven suites had passed unchanged. There are 79 current checks in total.
+- TypeScript and production compilation passed. Safari was refreshed locally and keyboard driving reached 3.0 m/s with normal field-relative support. This was a focused smoke check, not a complete release acceptance pass.
+
+---
+
 # Jamesim gameplay revision verification
 
 Verified locally November 1, 2026. `GAMEPLAY_TUNING.md` records the selected FRSim baseline, latest user actuation correction and model limits.

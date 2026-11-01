@@ -103,6 +103,9 @@ describe('Jamesim shooter bench', () => {
       expect(r.shooter.shotsFired).toBe(0); expect(r.held).toHaveLength(0); conserved(s);
       const shots = r.shooter.shotsFired; r.input = { intake: false, reverse: false, shoot: true }; run(s, 1);
       expect(r.shooter.shotsFired).toBe(shots); expect(r.shooter.telemetry.mode).toBe('Empty');
+      s.robot!.input = { ...NEUTRAL_INPUT, turn: 0.5 }; run(s, 0.4);
+      expect(s.robot!.telemetry.turnRate).toBeGreaterThan(0.8);
+      expect(r.shooter.telemetry.mode).toBe('Empty');
       s.reset(); expect(r.shooter.rpm).toBe(0); expect(r.shooter.shotsFired).toBe(0); conserved(s);
     } finally { s.dispose(); }
   });

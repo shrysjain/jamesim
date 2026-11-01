@@ -165,13 +165,16 @@ describe('Jamesim intake, storage and reverse', () => {
     } finally { s.dispose(); }
   });
 
-  it('releases cargo physically after overturning without losing fuel IDs', async () => {
+  it('retains cargo and recovers ground support after off-axis rotation drift', async () => {
     const s = await setup();
     try {
       fill(s, 4); s.robotController!.clearInput();
-      s.robot!.body.setTranslation({ x: 0, y: 1.5, z: 0 }, true); s.robot!.body.setGravityScale(0, true);
-      s.robot!.body.setRotation({ x: 0, y: 0, z: Math.SQRT1_2, w: Math.SQRT1_2 }, true); run(s, 1.2);
-      expect(s.robotController!.held).toHaveLength(0); conserved(s);
+      s.robot!.body.setRotation({ x: 0.02, y: 0.4, z: -0.03, w: Math.sqrt(1 - 0.4 ** 2 - 0.02 ** 2 - 0.03 ** 2) }, true);
+      s.robot!.body.setAngvel({ x: 0.2, y: 1.5, z: -0.3 }, true); run(s, 1.2);
+      expect(s.robot!.body.rotation().x).toBe(0); expect(s.robot!.body.rotation().z).toBe(0);
+      expect(s.robot!.body.translation().y).toBeLessThan(0.24);
+      expect(s.robot!.telemetry.grounded).toBe(4);
+      expect(s.robotController!.held).toHaveLength(4); conserved(s);
     } finally { s.dispose(); }
   });
 

@@ -236,10 +236,10 @@ export class Shooter {
   stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; }
   get telemetry(): ShooterTelemetry {
     const solution = this.solution, feeding = this.laneState.filter(l => l.id !== null).length;
-    const mode = !this.active ? 'Idle' : !solution ? 'Out of range' : !this.stable ? 'Unstable'
+    const mode = !this.active ? 'Idle' : !this.fuel.ownedBy(this.owner).length ? 'Empty' : !solution ? 'Out of range' : !this.stable ? 'Unstable'
       : this.blocked ? 'Blocked' : Math.abs(solution.yawError) >= SHOOTER.yawTolerance || Math.abs(this.chassis.body.angvel().y) >= 0.3 ? 'Aiming'
       : this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? 'Waiting to stop'
-      : !this.fuel.ownedBy(this.owner).length ? 'Empty' : Math.abs(this.elevation - solution.elevation) >= SHOOTER.hoodTolerance ? 'Adjusting hood'
+      : Math.abs(this.elevation - solution.elevation) >= SHOOTER.hoodTolerance ? 'Adjusting hood'
       : !this.ready ? 'Spinning up' : feeding ? 'Feeding' : 'Ready';
     return { active: this.active, mode, target: solution?.target.kind ?? null, rpm: this.rpm, targetRpm: solution ? solution.speed / speedPerRpm : 0,
       elevation: this.elevation / DEG, yawError: (solution?.yawError ?? 0) / DEG, shots: this.shotsFired, feeding,

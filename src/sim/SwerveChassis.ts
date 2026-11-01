@@ -63,8 +63,23 @@ export class SwerveChassis {
   stopDrive() {
     this.input = { ...NEUTRAL_INPUT };
     this.modules.forEach(m => { m.speed = 0; });
-    const angular = this.body.angvel();
-    this.body.setAngvel({ x: angular.x, y: 0, z: angular.z }, true);
+    this.body.setAngvel(vec(), true);
+  }
+
+  /** Keep the physical frame upright; terrain lean belongs only to rendering. */
+  enforceUpright() {
+    const q = this.body.rotation(), angular = this.body.angvel();
+    // Axis locks alone allowed small off-axis errors to accumulate during
+    // loaded driving. Eventually the mechanism colliders became floor supports
+    // and the tilted wheel rays lost the carpet. Preserve yaw, not that drift.
+    if (q.x !== 0 || q.z !== 0) {
+      const length = Math.hypot(q.y, q.w);
+      this.body.setRotation({ x: 0, y: length ? q.y / length : 0, z: 0, w: length ? q.w / length : 1 }, true);
+      this.world.propagateModifiedBodyPositionsToColliders();
+    }
+    if (angular.x !== 0 || angular.z !== 0) {
+      this.body.setAngvel(vec(0, angular.y, 0), true);
+    }
   }
 
   constructor(private world: RAPIER.World, readonly definition: RobotDefinition = REBLITZ,
@@ -147,6 +162,7 @@ export class SwerveChassis {
   }
 
   step(dt: number, turnOverride = this.input.turn, powered = true) {
+    this.enforceUpright();
     this.body.resetForces(false); this.body.resetTorques(false);
     const q = this.body.rotation(), position = this.body.translation();
     const up = rotate(vec(0, 1, 0), q), down = mul(up, -1);

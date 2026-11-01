@@ -88,6 +88,9 @@ export class FieldSimulation {
       this.robotController?.contacts.displaceFuel();
       this.hubs.beforeStep();
       this.world.step();
+      // Contacts and cargo impulses must never turn physical pitch/roll drift
+      // into vertical fuel displacement or next-frame suspension forces.
+      this.robot?.enforceUpright();
       this.robotController?.contacts.displaceFuel();
       this.fuelSystem.postStep(STEP);
       this.hubs.postStep(STEP);

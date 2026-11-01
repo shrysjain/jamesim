@@ -23,7 +23,9 @@ Eight or fewer balls allow full intake compression. Required extension increases
 
 ## Forgiving contacts
 
-Pitch and roll are locked; yaw and vertical suspension remain physical. Bump triangles provide a level, damped support platform sampled over the robot footprint. The modules visually reach toward their individual ramp surfaces. This avoids bellypan/intake beaching while preserving the bump's height change. The remaining field geometry still blocks the chassis normally.
+Pitch and roll are locked; yaw and vertical suspension remain physical. The simulation also projects physical rotation and angular velocity onto yaw before suspension queries and after each world step. Rotation locks alone allowed small off-axis errors to accumulate during loaded driving until the mechanism colliders supported the robot above the floor. This correction preserves linear velocity, height and yaw; it is not a height clamp or automatic respawn.
+
+Bump triangles provide a level, damped support platform sampled over the robot footprint. The modules visually reach toward their individual ramp surfaces. This avoids bellypan/intake beaching while preserving the bump's height change. The remaining field geometry still blocks the chassis normally.
 
 Low fuel is displaced horizontally by the bumper footprint, including when landing on it. Sweeps prevent displacement through the static field. A trapped ball may briefly overlap the underside until space opens; it cannot provide vertical chassis support. Fuel-to-fuel, carpet and field physics, airborne contacts and stable IDs remain active.
 
