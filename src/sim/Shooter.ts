@@ -37,6 +37,9 @@ export function flightPosition(position: Vector, velocity: Vector, seconds: numb
 
 /** Four managed feed lanes, one shared flywheel and a real, force-driven chassis aim controller. */
 export class Shooter {
+  turretYaw = 0;
+  private get mechanism() { return this.chassis.definition.mechanisms; }
+  private turretRotate(p: Vector) { const c = Math.cos(this.turretYaw), s = Math.sin(this.turretYaw); return v3(p.x*c+p.z*s, p.y, -p.x*s+p.z*c); }
   alliance: Alliance = 'blue';
   rpm = 0;
   elevation = SHOOTER.maxElevation;
@@ -53,23 +56,24 @@ export class Shooter {
   private laneOrder: number[] = [];
   private nextFeedAt = 0;
   private nextLaunchAt = 0;
-  private laneState = SHOOTER.lanes.map(z => ({ z, id: null as number | null, age: 0, duration: SHOOTER.feedSeconds, offset: 0, availableAt: 0, lastShotAt: -Infinity, start: v3() }));
+  private laneState: { z: number; id: number | null; age: number; duration: number; offset: number; availableAt: number; lastShotAt: number; start: Vector }[] = [];
+  private makeLanes() { return this.mechanism.lanes.map(z => ({ z, id: null as number | null, age: 0, duration: SHOOTER.feedSeconds, offset: 0, availableAt: 0, lastShotAt: -Infinity, start: v3() })); }
   private random() { this.randomState = (Math.imul(this.randomState, 1664525) + 1013904223) >>> 0; return this.randomState / 0x100000000; }
   private refillOrder() {
     if (!this.laneOrder.length) {
-      this.laneOrder = [0, 1, 2, 3];
-      for (let i = 3; i > 0; i--) { const j = Math.floor(this.random() * (i + 1)); [this.laneOrder[i], this.laneOrder[j]] = [this.laneOrder[j], this.laneOrder[i]]; }
+      this.laneOrder = this.laneState.map((_, i) => i);
+      for (let i = this.laneOrder.length - 1; i > 0; i--) { const j = Math.floor(this.random() * (i + 1)); [this.laneOrder[i], this.laneOrder[j]] = [this.laneOrder[j], this.laneOrder[i]]; }
     }
     this.feedOrder = [...this.laneOrder];
   }
 
-  constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem, private owner: string, private payloadChanged: () => void) {}
+  constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem, private owner: string, private payloadChanged: () => void) { this.laneState = this.makeLanes(); }
   get hood() { return (SHOOTER.maxElevation - this.elevation) / (SHOOTER.maxElevation - SHOOTER.minElevation); }
   /** Measured drum tangent plus 155 mm of guide clearance; not the bumper edge. */
   muzzleLocal(elevation: number, z: number) {
     const radius = SHOOTER.drumRadius + FUEL_RADIUS + 0.004;
-    return v3(0.282575 - Math.sin(elevation) * radius + Math.cos(elevation) * 0.155,
-      0.25325 + Math.cos(elevation) * radius + Math.sin(elevation) * 0.155, z);
+    return this.turretRotate(v3(0.282575 - Math.sin(elevation) * radius + Math.cos(elevation) * 0.155,
+      0.25325 + Math.cos(elevation) * radius + Math.sin(elevation) * 0.155, z));
   }
   muzzle(z = 0, elevation = this.elevation) { return add(this.chassis.body.translation(), rotate(this.muzzleLocal(elevation, z), this.chassis.renderRotation)); }
 
@@ -93,7 +97,7 @@ export class Shooter {
     const preferred = (target.kind === 'Hub' ? 64 : 52) * DEG;
     const local = unrotate(relative, q), dx = relative.x * a, dz = relative.z * a, velocity = body.linvel();
     const trackingRate = clamp((dx * velocity.z - dz * velocity.x) / (dx * dx + dz * dz), -2, 2);
-    const solution: AimSolution = { target, speed, elevation, yawError: Math.atan2(-local.z, local.x), trackingRate, time: t, obstructed: false };
+    const solution: AimSolution = { target, speed, elevation, yawError: Math.atan2(Math.sin(Math.atan2(-local.z, local.x) - this.turretYaw), Math.cos(Math.atan2(-local.z, local.x) - this.turretYaw)), trackingRate, time: t, obstructed: false };
     return { solution, cost: Math.abs(elevation - preferred) + speed * 0.004, muzzle, launch };
   }
 
@@ -149,6 +153,10 @@ export class Shooter {
   preStep(dt: number, requested: boolean, powered = true) {
     this.active = requested; this.blocked = false;
     this.solution = requested ? this.solve() : null;
+    if (this.mechanism.turret && powered && this.solution) {
+      this.turretYaw += clamp(this.solution.yawError, -dt * 3, dt * 3);
+      this.solution = this.solve();
+    }
     this.blocked = !!this.solution?.obstructed;
     const targetRpm = this.solution ? this.solution.speed / speedPerRpm : 0;
     this.rpm = approach(this.rpm, targetRpm, dt * (targetRpm > this.rpm ? SHOOTER.rpmPerSecond : SHOOTER.coastPerSecond));
@@ -157,6 +165,7 @@ export class Shooter {
     if (this.laneState.some(l => l.id !== null)) this.feederAngle += 40 * dt;
     if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) return undefined;
     // Own yaw only while requested. Translation and tire/traction limits remain in SwerveChassis.
+    if (this.mechanism.turret) return undefined;
     return clamp((9 * this.solution.yawError + 1.8 * this.solution.trackingRate - 0.8 * this.chassis.body.angvel().y) / 4.8, -0.75, 0.75);
   }
 
@@ -167,7 +176,7 @@ export class Shooter {
   private get ready() {
     return !!this.solution && !this.solution.obstructed && this.stable && Math.abs(this.solution.yawError) < SHOOTER.yawTolerance && Math.abs(this.chassis.body.angvel().y) < 0.3
       && Math.abs(this.elevation - this.solution.elevation) < SHOOTER.hoodTolerance
-      && this.chassis.telemetry.speed < SHOOTER.movingThreshold
+      && (this.mechanism.movingShots || this.chassis.telemetry.speed < SHOOTER.movingThreshold)
       && Math.abs(this.rpm * speedPerRpm - this.solution.speed) < Math.max(0.12, this.solution.speed * 0.02);
   }
 
@@ -186,7 +195,7 @@ export class Shooter {
           lane.id = f.id; lane.age = 0; lane.start = { ...f.local }; f.state = 'feeding';
           lane.duration = SHOOTER.feedSeconds + (this.random() - 0.5) * 0.024;
           lane.offset = (this.random() - 0.5) * 0.016;
-          this.nextFeedAt = Math.max(this.nextFeedAt, this.fuel.time - dt) + (0.8 + this.random() * 0.4) / SHOOTER.fireRate;
+          this.nextFeedAt = Math.max(this.nextFeedAt, this.fuel.time - dt) + (0.8 + this.random() * 0.4) / this.mechanism.fireRate;
           this.feedOrder.shift();
         }
       }
@@ -198,7 +207,7 @@ export class Shooter {
       if (!requested && lane.age === 0) { f.state = 'stored'; lane.id = null; continue; }
       if (t < 1 || !this.ready || !requested || !this.solution || this.fuel.time < this.nextLaunchAt || this.fuel.time < lane.lastShotAt + SHOOTER.laneInterval - 1e-7) continue;
       const position = this.muzzle(z), q = this.chassis.renderRotation;
-      const relative = rotate(v3(Math.cos(this.elevation), Math.sin(this.elevation), 0), q);
+      const relative = rotate(this.turretRotate(v3(Math.cos(this.elevation), Math.sin(this.elevation), 0)), q);
       // Include own proxies and other loose balls: never create a projectile in solid geometry.
       const sweepStart = position;
       const hit = this.world.castShape(sweepStart, q, scale(relative, 0.25), new RAPIER.Ball(FUEL_RADIUS + 0.002), 0, 1, true,
@@ -208,13 +217,13 @@ export class Shooter {
       // ruler-straight rows while retaining the physical aiming solution.
       const elevation = this.elevation + (this.random() - 0.5) * 0.008;
       const yaw = (this.random() - 0.5) * 0.009;
-      const exit = rotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
-        this.rpm * speedPerRpm * (0.996 + this.random() * 0.008)), q);
+      const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
+        this.rpm * speedPerRpm * (0.996 + this.random() * 0.008))), q);
       const velocity = add(this.chassis.body.velocityAtPoint(position), exit);
       if (!this.fuel.release(f, position, velocity, true)) continue;
       this.payloadChanged();
       this.chassis.body.applyImpulseAtPoint(scale(exit, -FUEL_MASS), position, true);
-      this.shotsFired++; this.shots.push({ id: f.id, lane: SHOOTER.lanes.indexOf(lane.z), time: this.fuel.time, position, velocity, target: this.solution.target, flightTime: this.solution.time });
+      this.shotsFired++; this.shots.push({ id: f.id, lane: this.mechanism.lanes.indexOf(lane.z), time: this.fuel.time, position, velocity, target: this.solution.target, flightTime: this.solution.time });
       if (this.shots.length > 64) this.shots.shift();
       this.rpm = Math.max(0, this.rpm - SHOOTER.rpmDropPerBall);
       this.nextLaunchAt = this.fuel.time + 0.016;
@@ -227,6 +236,7 @@ export class Shooter {
       if (lane.id !== null) { const f = this.fuel.records[lane.id]; if (f.owner === this.owner && f.state === 'feeding') { f.state = 'stored'; f.local = { ...lane.start }; } }
       lane.id = null; lane.age = lane.availableAt = 0; lane.lastShotAt = -Infinity;
     }
+    this.turretYaw = 0;
     this.rpm = this.drumAngle = this.feederAngle = 0; this.elevation = SHOOTER.maxElevation;
     this.solution = null; this.selection = null; this.active = this.blocked = false;
     this.feedOrder = []; this.laneOrder = []; this.nextFeedAt = this.nextLaunchAt = 0;
@@ -238,7 +248,7 @@ export class Shooter {
     const solution = this.solution, feeding = this.laneState.filter(l => l.id !== null).length;
     const mode = !this.active ? 'Idle' : !this.fuel.ownedBy(this.owner).length ? 'Empty' : !solution ? 'Out of range' : !this.stable ? 'Unstable'
       : this.blocked ? 'Blocked' : Math.abs(solution.yawError) >= SHOOTER.yawTolerance || Math.abs(this.chassis.body.angvel().y) >= 0.3 ? 'Aiming'
-      : this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? 'Waiting to stop'
+      : !this.mechanism.movingShots && this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? 'Waiting to stop'
       : Math.abs(this.elevation - solution.elevation) >= SHOOTER.hoodTolerance ? 'Adjusting hood'
       : !this.ready ? 'Spinning up' : feeding ? 'Feeding' : 'Ready';
     return { active: this.active, mode, target: solution?.target.kind ?? null, rpm: this.rpm, targetRpm: solution ? solution.speed / speedPerRpm : 0,

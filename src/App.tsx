@@ -1,3 +1,7 @@
+import { SessionDialog } from './components/SessionDialog';
+import { ACTIONS, ACTION_LABELS, keyLabel } from './controls';
+import { ROBOTS } from './robot/RobotDefinition';
+import { DEFAULT_MATCH } from './sim/MatchRules';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { FieldViewer, ViewerStats } from './view/FieldViewer';
 import type { FieldManifest } from './field/types';
@@ -9,7 +13,7 @@ import { readSettings, saveSettings } from './settings';
 
 const DebugPanel = import.meta.env.DEV ? lazy(() => import('./components/DebugPanel')) : null;
 const initialStats: ViewerStats = { fps: 0, drawCalls: 0, triangles: 0, colliders: 0, awake: 0, physicsMs: 0, running: false, robot: null, mechanisms: null, hubs: null, match: null };
-type Modal = 'settings' | 'help' | 'about' | null;
+type Modal = 'settings' | 'help' | 'about' | 'session' | 'referee' | null;
 
 export function App() {
   const viewport = useRef<HTMLDivElement>(null), viewer = useRef<FieldViewer | null>(null);
@@ -52,7 +56,7 @@ export function App() {
     return () => { cancelled = true; engine?.dispose(); viewer.current = null; };
   }, [unsupported]);
   useEffect(() => { saveSettings(settings); viewer.current?.applySettings(settings); }, [settings]);
-  useEffect(() => { if (viewer.current) { viewer.current.driveEnabled = !blocked; viewer.current.clearInput(); } }, [blocked]);
+  useEffect(() => { if (viewer.current) { viewer.current.driveEnabled = !modal && !error; viewer.current.clearInput(); } }, [blocked]);
 
   const focus = () => viewer.current?.focusCanvas();
   const sync = () => { const engine = viewer.current; if (engine?.sim) setStats(engine.snapshot()); };
@@ -94,10 +98,10 @@ export function App() {
       if (target.closest('input, select, textarea, [contenteditable="true"]')) return;
       if (modalRef.current) return;
       // Results are a valid restart context; handle R before other modal locks.
-      if (e.code === 'KeyR' && manifest) { e.preventDefault(); restart(); return; }
+      if (settingsRef.current.controls.keys.restart.includes(e.code) && manifest) { e.preventDefault(); restart(); return; }
       if (showResults || error || !manifest) return;
       if (e.code === 'KeyH' || e.key === '?') { e.preventDefault(); openModal('help'); }
-      if (e.code === 'Enter' && !target.closest('button') && manifest) { e.preventDefault(); togglePause(); }
+      if ((e.code === 'Enter' || settingsRef.current.controls.keys.pause.includes(e.code)) && !target.closest('button') && manifest) { e.preventDefault(); togglePause(); }
       if (import.meta.env.DEV && e.code === 'Backquote' && manifest) { e.preventDefault(); togglePanel(); }
     };
     window.addEventListener('keydown', handler);
@@ -112,11 +116,12 @@ export function App() {
         <div ref={viewport} className="viewport" />
         {manifest && <>
           <div className="inventory-hud" aria-label="Robot fuel and status">
-            <div className="robot-label"><span />2910 RE•BLITZ</div>
+            <div className="robot-label"><span />{ROBOTS[match?.config.robot ?? '2910-reblitz'].name}</div>
             <div className={`fuel-readout ${fuelStatus === 'Full' ? 'full' : ''}`} aria-label={`${fuel?.count ?? 0} of ${fuel?.capacity ?? 55} fuel. ${fuelStatus}`}><i /><strong>{fuel?.count ?? 0}<small> / {fuel?.capacity ?? 55}</small></strong><span>FUEL<b>{fuelStatus}</b></span></div>
             {shooter?.active && <div className="shooter-readout" aria-label={`Shooter: ${shooter.mode}`}><span>{shooter.target ?? 'Shooter'}</span><strong>{shooter.mode}</strong></div>}
           </div>
-          {settings.showHints && <div className="drive-hints"><span><kbd>WASD</kbd> Move</span><span><kbd>J</kbd><kbd>L</kbd> Turn</span><span><kbd>Shift</kbd> Intake</span><span><kbd>Space</kbd> Aim + shoot</span><span><kbd>Q</kbd> Reverse</span><span><kbd>R</kbd> Restart</span></div>}
+          {settings.showHints && <div className="drive-hints">{(['forward', 'intake', 'shoot', 'climb', 'restart'] as const).map(action => <span key={action}><kbd>{settings.controls.keys[action].map(keyLabel).join('/')}</kbd>{ACTION_LABELS[action]}</span>)}</div>}
+          {fuel?.climb.attached && <div className="match-notice">Tower attached · level {fuel.climb.level} · release climb to hold, lower to descend</div>}
           {import.meta.env.DEV && cameraMode !== 'follow' && <div className="camera-notice"><span>Inspection camera</span><button onClick={() => { viewer.current?.setMode('follow'); focus(); }}>Follow robot</button></div>}
           {match?.mode === 'match' && stats.running && !match.driverEnabled && !match.complete && <div className="match-notice">Processing final fuel · driving resumes with the next period</div>}
           {!stats.running && !blocked && !panel && !match?.complete && <div className="pause-shade"><section className="pause-card"><span className="eyebrow">MATCH PAUSED</span><h1>Ready when you are.</h1><p>Your robot, fuel and match clock stay in place.</p><button className="primary-button" onClick={() => setRunning(true)}><Icon name="play" size={16} />Resume match <kbd>↵</kbd></button><button className="end-match" onClick={restart}>Restart match <kbd>R</kbd></button></section></div>}
@@ -139,6 +144,8 @@ export function App() {
           <button aria-label="Restart match" title="Restart match (R)" disabled={!manifest} onClick={restart}><Icon name="reset" /></button>
           {match?.complete && <button aria-label="View match results" onClick={() => setResultsDismissed(false)}><Icon name="target" /></button>}
           <button aria-label="Driving controls" title="Controls (H)" disabled={!manifest} onClick={() => openModal('help')}><Icon name="info" /></button>
+          <button disabled={!manifest} onClick={() => openModal('session')}>Session</button>
+          <button disabled={!manifest || match?.mode !== 'match' || !match.driverEnabled} onClick={() => openModal('referee')}>Assess foul</button>
           <button aria-label="Settings" title="Settings" disabled={!manifest} onClick={() => openModal('settings')}><Icon name="settings" /></button>
           {import.meta.env.DEV && <button className="debug-toggle" aria-label={panel ? 'Close debug panel' : 'Open debug panel'} aria-expanded={panel} disabled={!manifest} onClick={togglePanel}><Icon name="cube" /><span>Debug</span><kbd>`</kbd></button>}
         </div>
@@ -146,15 +153,21 @@ export function App() {
       {import.meta.env.DEV && panel && DebugPanel && viewer.current && <Suspense fallback={null}><DebugPanel engine={viewer.current} stats={stats} onClose={togglePanel} onRestart={restart} onSync={sync} /></Suspense>}
     </div>
     {showResults && match && <MatchResults match={match} onRematch={restart} onClose={() => { setResultsDismissed(true); focus(); }} />}
+    {modal === 'session' && <SessionDialog config={match?.config ?? DEFAULT_MATCH} onClose={closeModal} onStart={(config, practice) => { viewer.current?.startSession(config, practice); resumeAfterModal.current = false; setResultsDismissed(false); closeModal(); }} />}
+    {modal === 'referee' && <Dialog title="Assess a foul" eyebrow="MANUAL REFEREE ASSESSMENT" onClose={closeModal}>
+      <p>Intent and human conduct require referee judgment. Add a minor (5) or major (15) foul to the offending alliance; points go to its opponent.</p>
+      {(['blue', 'red'] as const).map(alliance => <div className="setting-row" key={alliance}><span>{alliance} committed</span>{[false, true].map(major => <button key={String(major)} onClick={() => { viewer.current?.sim.match.recordPenalty(alliance, major); sync(); }}>{major ? 'Major · 15' : 'Minor · 5'}</button>)}</div>)}
+      <button className="primary-button" onClick={closeModal}>Done</button>
+    </Dialog>}
     {modal === 'settings' && <SettingsDialog settings={settings} onChange={setSettings} onClose={closeModal} onAbout={() => openModal('about')} />}
     {modal === 'help' && <Dialog title="Take the wheel." eyebrow="JAMESIM · CONTROLS" onClose={closeModal}>
-      <p>You drive during AUTO and teleop. Hold Shift to collect fuel. Hold Space to turn toward the blue hub and shoot; outside your alliance zone, it aims a pass back into it. Settle to a stop before firing.</p>
-      <dl className="controls-list">{[['WASD', 'Move across the field'], ['J / L', 'Turn left / right'], ['Shift', 'Hold to intake'], ['Space', 'Hold to align and shoot / pass'], ['Q', 'Hold to reverse and eject'], ['R', 'Restart the timed match'], ['Enter', 'Pause / resume'], ['Esc', 'Pause / close a dialog'], ['H', 'Driving controls']].map(([key, label]) => <div key={key}><dt><kbd>{key}</kbd></dt><dd>{label}</dd></div>)}</dl>
+      <p>You drive during AUTO and teleop. Use your mapped intake and shoot actions to collect fuel and aim at your alliance hub, or pass back into your zone. Re•Blitz must stop to fire; High Tide uses turret aiming. The Tower trainer can attach near its own tower: hold Climb to rise, release to hold, and hold Lower to descend. Enable outpost stock in Session, then hold Supply to release it.</p>
+      <dl className="controls-list">{[...ACTIONS.map(a => [settings.controls.keys[a].map(keyLabel).join(' / '), ACTION_LABELS[a]]), ['Enter', 'Pause / resume'], ['Esc', 'Pause / close a dialog'], ['H', 'Driving controls']].map(([key, label]) => <div key={key}><dt><kbd>{key}</kbd></dt><dd>{label}</dd></div>)}</dl>
       <p>Losing focus pauses the match and clears held inputs. The hopper stays deployed; the intake compresses while shooting and extends again when you release Space.</p>
       <button className="primary-button" onClick={closeModal}>Got it</button>
     </Dialog>}
     {modal === 'about' && <Dialog title="Jamesim" eyebrow="REBUILT · SOLO FUEL MATCH" onClose={closeModal}>
-      <p>A browser simulator for driving Team 2910 Re•Blitz on the 2026 REBUILT field. Both match periods are driver-operated. This v1 models fuel scoring; climbing, penalties and opponents are outside its scope.</p>
+      <p>A browser simulator for driving Team 2910 Re•Blitz on the 2026 REBUILT field. Both match periods are driver-operated. This v1 models fuel scoring; optional robot selection, tower climbing and solo score assessment are available. Opponent interactions remain outside the solo simulation.</p>
       <div className="credits-list"><p>Field geometry · <a href="https://www.firstinspires.org/resources/library/frc/playing-field" target="_blank" rel="noreferrer">FIRST</a></p><p>Robot CAD · <a href="https://www.chiefdelphi.com/t/2910-cad-and-tech-binder-release-2026/521705" target="_blank" rel="noreferrer">Team 2910 Jack in the Bot</a></p><p>Match audio · <a href="https://github.com/Team254/cheesy-arena" target="_blank" rel="noreferrer">Team 254 Cheesy Arena</a></p><p>Barlow fonts · Jeremy Tribby, SIL Open Font License</p><p>Built with React, Three.js and Rapier.</p></div>
       <p className="source-note">An independent fan project, inspired by FRSim and MoSimulator. Not affiliated with or endorsed by FIRST or the teams. Robot behavior is tuned for gameplay.</p>
       <a href="https://github.com/shrysjain/jamesim" target="_blank" rel="noreferrer">Source and asset attribution ↗</a>

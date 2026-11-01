@@ -8,6 +8,10 @@ The local release candidate opens directly into a timed solo fuel match with R r
 
 The prepared runtime field, robot and audio pack is included for the owner-authorized noncommercial v1 release. A clean clone can build the complete game. Raw CAD, binders and preparation reports remain excluded. Source records, hashes and attribution are retained; the owner's publication decision does not reclassify pending third-party license reviews. See [runtime assets](docs/ASSETS.md) and [Vercel import instructions](docs/V1_PUBLICATION.md).
 
+## Player extensions branch
+
+Optional **Session** setup now exposes alliance, spawn, preloads, event profiles, free practice and robot selection. Settings include saved key/controller mappings and stick deadzones. 4414 High Tide has a provisional procedural turret model; its exact FRSim tuning remains unverified. The separate original Tower trainer exercises climbing and tower scoring. Optional outpost supply conserves fuel, and manual foul assessment adds penalty points. See [implementation scope and accuracy limits](docs/PLAYER_EXTENSIONS.md). The older release descriptions below describe the previous v1 baseline.
+
 ## Run locally
 
 ```sh

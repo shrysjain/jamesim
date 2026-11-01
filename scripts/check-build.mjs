@@ -32,7 +32,7 @@ for (const path of runtime) {
 for (const path of files) {
   const name = relative(dist, path);
   if (/asset-report|PROVENANCE|\.map$|\.step$|\.pdf$|\.env|DebugPanel|debug\.css/.test(name)) throw Error(`Preparation/development file in output: ${name}`);
-  if (path.endsWith('.js') && /Drive testing|Inspection layers|Scene diagnostics|Choose your session|Free practice/.test(await readFile(path, 'utf8'))) throw Error(`Development interface in output: ${name}`);
+  if (path.endsWith('.js') && /Drive testing|Inspection layers|Scene diagnostics|Choose your session/.test(await readFile(path, 'utf8'))) throw Error(`Development interface in output: ${name}`);
 }
 for (const file of ['index.html', 'favicon.svg', 'social-card.png', 'licenses/dependencies.md', 'licenses/CHEESY_ARENA_LICENSE.txt', 'licenses/THIRD_PARTY_NOTICES.md']) {
   if (!files.includes(resolve(dist, file))) throw Error(`Missing release file: ${file}`);

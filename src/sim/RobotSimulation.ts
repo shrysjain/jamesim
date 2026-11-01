@@ -1,17 +1,18 @@
+import { Climber } from './Climber';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { SwerveChassis } from './SwerveChassis';
 import type { DriveSpawn } from './SwerveChassis';
 import { FuelSystem, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { Fuel } from './FuelSystem';
-import type { RobotPose } from '../robot/RobotDefinition';
-import { STARTING_POSE } from '../robot/RobotDefinition';
+import type { RobotDefinition, RobotPose } from '../robot/RobotDefinition';
+import { REBLITZ, STARTING_POSE } from '../robot/RobotDefinition';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
 import { Shooter } from './Shooter';
 import type { ShooterTelemetry } from './Shooter';
 import { GameplayContacts } from './GameplayContacts';
 
-export type MechanismInput = { intake: boolean; reverse: boolean; shoot?: boolean };
+export type MechanismInput = { intake: boolean; reverse: boolean; shoot?: boolean; climb?: boolean; lower?: boolean; supply?: boolean };
 export const NEUTRAL_MECHANISMS: MechanismInput = { intake: false, reverse: false, shoot: false };
 /** Close-packed 150 mm fuel: 54 in three staggered layers plus one feeder pocket.
  * The managed packing uses 151 mm center spacing; no smaller rendered balls. */
@@ -29,6 +30,7 @@ export const cargoExtension = (count: number) => Math.max(0, Math.min(1, (count 
 export type MechanismTelemetry = {
   count: number; capacity: number; transferring: number; stored: number; loose: number;
   mode: 'Stowed' | 'Deployed' | 'Deploying' | 'Compressing' | 'Intaking' | 'Holding' | 'Full' | 'Reversing' | 'Outlet blocked' | 'Spilling' | 'Pose preview';
+  climb: { attached: boolean; level: number; lift: number };
   mass: number; intake: number; hopper: number; hood: number; preview: boolean;
   feeding: number; airborne: number; shooter: ShooterTelemetry;
 };
@@ -36,6 +38,7 @@ export type MechanismTelemetry = {
 /** Fixed-tick mechanism state. Rendering and DOM never own fuel or actuation. */
 export class RobotSimulation {
   readonly chassis: SwerveChassis;
+  readonly climber: Climber;
   readonly shooter: Shooter;
   readonly contacts: GameplayContacts;
   readonly owner = 'robot-0';
@@ -50,12 +53,15 @@ export class RobotSimulation {
   private outletBlocked = false;
   private payloadSignature = '';
 
-  constructor(private world: RAPIER.World, readonly fuel: FuelSystem, private fieldElements: Map<number, string>) {
-    this.chassis = new SwerveChassis(world, undefined, fieldElements);
+  constructor(private world: RAPIER.World, readonly fuel: FuelSystem, private fieldElements: Map<number, string>, definition: RobotDefinition = REBLITZ) {
+    this.chassis = new SwerveChassis(world, definition, fieldElements);
+    this.climber = new Climber(world, this.chassis);
     this.chassis.setPose(STARTING_POSE);
     this.shooter = new Shooter(world, this.chassis, fuel, this.owner, () => this.updatePayload());
     this.contacts = new GameplayContacts(world, this.chassis, fuel, fieldElements);
   }
+  get mechanism() { return this.chassis.definition.mechanisms; }
+  get capacity() { return this.mechanism.capacity; }
   get held() { return this.fuel.ownedBy(this.owner); }
   private storedPosition(slot: number) {
     const p = STORAGE_SLOTS[slot];
@@ -65,7 +71,7 @@ export class RobotSimulation {
   }
   preload(ids: number[]) {
     for (const id of ids.slice(0, 8)) {
-      const slot = STORAGE_SLOTS.findIndex((_, i) => !this.held.some(f => f.slot === i));
+      const slot = STORAGE_SLOTS.findIndex((_, i) => i < this.capacity && !this.held.some(f => f.slot === i));
       const f = this.fuel.records[id];
       if (slot < 0 || !f || !this.fuel.capture(f, this.owner, slot, this.storedPosition(slot))) continue;
       f.state = 'stored';
@@ -78,12 +84,14 @@ export class RobotSimulation {
     if (pose) this.chassis.setPose(pose);
   }
   reset() {
+    this.climber.reset();
     this.clearInput(); this.deployed = false; this.inspectionPose = null; this.actuatorsEnabled = true;
     this.overturnedFor = 0; this.outletBlocked = false; this.rollerAngle = 0;
     this.chassis.reset(); this.chassis.setPose(STARTING_POSE); this.updatePayload();
     this.shooter.reset();
   }
   respawn(spawn: DriveSpawn) {
+    this.climber.reset();
     this.clearInput(); this.inspectionPose = null; this.overturnedFor = 0; this.outletBlocked = false;
     this.chassis.reset(spawn); // Held IDs and cargo remain owned by this robot.
     this.deployed = true;
@@ -93,13 +101,13 @@ export class RobotSimulation {
   }
   preStep(dt: number) {
     const held = this.held;
-    const shoot = !!this.input.shoot && !this.input.reverse && !this.inspectionPose && this.actuatorsEnabled;
+    const shoot = !!this.input.shoot && !this.input.reverse && !this.inspectionPose && this.actuatorsEnabled && !this.climber.attached;
     const aimTurn = this.inspectionPose ? undefined : this.shooter.preStep(dt, shoot, this.actuatorsEnabled);
     if (!this.inspectionPose && this.actuatorsEnabled) {
       const demand = this.input.reverse || (this.input.intake && !shoot);
       const approach = (v: number, target: number, seconds: number) => v + Math.max(-dt / seconds, Math.min(dt / seconds, target - v));
       const hopper = approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
-      const target = this.deployed && shoot ? cargoExtension(held.length) : 1;
+      const target = this.mechanism.compress && this.deployed && shoot ? cargoExtension(held.length) : 1;
       const intake = approach(this.chassis.pose.intake, target, target < this.chassis.pose.intake ? INTAKE.compressSeconds : INTAKE.deploySeconds);
       if (hopper === 1 && intake === 1) this.deployed = true;
       this.chassis.setPose({ intake, hopper, hood: this.shooter.hood });
@@ -116,14 +124,14 @@ export class RobotSimulation {
       } else if (f.state === 'stored') f.local = this.storedPosition(f.slot);
     }
     this.updatePayload();
-    this.chassis.step(dt, aimTurn, this.actuatorsEnabled);
+    if (!this.climber.attached) this.chassis.step(dt, aimTurn, this.actuatorsEnabled);
   }
   postStep(dt: number) {
     if (this.inspectionPose || !this.actuatorsEnabled) return;
     const up = rotate(v3(0, 1, 0), this.chassis.body.rotation());
     this.overturnedFor = up.y < 0.4 ? this.overturnedFor + dt : 0;
     const spilling = this.overturnedFor > 0.25;
-    const shoot = !!this.input.shoot && !this.input.reverse && !spilling;
+    const shoot = !!this.input.shoot && !this.input.reverse && !spilling && !this.climber.attached;
     this.shooter.postStep(dt, shoot);
     this.updatePayload();
     this.outletBlocked = false;
@@ -140,8 +148,8 @@ export class RobotSimulation {
     this.ejectCredit = 0;
     if (shoot) { this.captureCredit = 0; return; }
     const held = this.held;
-    if (!this.input.intake || this.chassis.pose.intake < 0.92 || this.chassis.pose.hopper < 0.95 || held.length >= INTAKE.capacity || up.y < 0.7) { this.captureCredit = 0; return; }
-    this.captureCredit = Math.min(4, this.captureCredit + dt * INTAKE.capturePerSecond);
+    if (!this.input.intake || this.chassis.pose.intake < 0.92 || this.chassis.pose.hopper < 0.95 || held.length >= this.capacity || up.y < 0.7) { this.captureCredit = 0; return; }
+    this.captureCredit = Math.min(4, this.captureCredit + dt * this.mechanism.intakeRate);
     if (this.captureCredit < 1) return;
     const body = this.chassis.body, position = body.translation(), q = body.rotation();
     // Query first, commit second. Disabled bodies are never loose ammunition.
@@ -158,8 +166,8 @@ export class RobotSimulation {
     }
     candidates.sort((a, b) => b.local.x - a.local.x || a.fuel.id - b.fuel.id);
     const occupied = new Set(held.map(f => f.slot));
-    for (const candidate of candidates.slice(0, Math.min(Math.floor(this.captureCredit), INTAKE.capacity - held.length))) {
-      const slot = STORAGE_SLOTS.findIndex((_, i) => !occupied.has(i));
+    for (const candidate of candidates.slice(0, Math.min(Math.floor(this.captureCredit), this.capacity - held.length))) {
+      const slot = STORAGE_SLOTS.findIndex((_, i) => i < this.capacity && !occupied.has(i));
       if (slot < 0 || !this.fuel.capture(candidate.fuel, this.owner, slot, candidate.local)) continue;
       occupied.add(slot); this.captureCredit--;
       this.updatePayload();
@@ -224,8 +232,8 @@ export class RobotSimulation {
     const held = this.held, counts = this.fuel.counts;
     const mode = this.inspectionPose ? 'Pose preview' : this.overturnedFor > 0.25 ? 'Spilling' : this.outletBlocked ? 'Outlet blocked'
       : this.input.reverse ? 'Reversing' : !this.deployed ? 'Deploying' : this.input.shoot && this.chassis.pose.intake > cargoExtension(held.length) + 0.01 ? 'Compressing'
-      : this.input.intake ? this.chassis.pose.intake < 0.92 ? 'Deploying' : held.length === INTAKE.capacity ? 'Full' : 'Intaking' : held.length ? 'Holding' : this.chassis.pose.intake > 0.92 ? 'Deployed' : 'Stowed';
-    return { count: held.length, capacity: INTAKE.capacity, transferring: counts.transferring, stored: counts.stored, loose: counts.loose,
+      : this.input.intake ? this.chassis.pose.intake < 0.92 ? 'Deploying' : held.length === this.capacity ? 'Full' : 'Intaking' : held.length ? 'Holding' : this.chassis.pose.intake > 0.92 ? 'Deployed' : 'Stowed';
+    return { climb: this.climber.telemetry, count: held.length, capacity: this.capacity, transferring: counts.transferring, stored: counts.stored, loose: counts.loose,
       mode, mass: this.chassis.totalMass, intake: this.chassis.pose.intake, hopper: this.chassis.pose.hopper, hood: this.chassis.pose.hood, preview: !!this.inspectionPose,
       feeding: counts.feeding, airborne: counts.airborne, shooter: this.shooter.telemetry };
   }

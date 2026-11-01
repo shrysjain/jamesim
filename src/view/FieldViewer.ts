@@ -1,3 +1,5 @@
+import { DEFAULT_CONTROLS, readActions } from '../controls';
+import type { Controls } from '../controls';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -71,6 +73,12 @@ export class FieldViewer {
   private resizeObserver: ResizeObserver;
   private disposed = false;
   private raf = 0;
+  private playerControls: Controls = DEFAULT_CONTROLS;
+  private gamepadArmed = false;
+  private restartHeld = false;
+  private pauseHeld = false;
+  private sessionPractice = false;
+  private sessionConfig = { ...DEFAULT_MATCH };
   private keys = new Set<string>();
   private flyDragging = false;
   private pointerStart!: THREE.Vector2;
@@ -448,7 +456,7 @@ export class FieldViewer {
   private followCamera(delta: number, snap = false) {
     const robot = this.sim.robot;
     if (!robot) return;
-    const p = robot.body.translation(), heading = this.driveFrame === 'field' ? Math.PI : robot.telemetry.heading;
+    const p = robot.body.translation(), heading = this.driveFrame === 'field' ? (this.sim.robotController?.shooter.alliance === 'red' ? 0 : Math.PI) : robot.telemetry.heading;
     const forward = new THREE.Vector3(Math.cos(heading), 0, -Math.sin(heading));
     const target = new THREE.Vector3(p.x, p.y + 0.25, p.z).addScaledVector(forward, 0.5);
     const desired = new THREE.Vector3(p.x, p.y + 2.9, p.z).addScaledVector(forward, -4.8);
@@ -504,19 +512,20 @@ export class FieldViewer {
 
   private readDriveInput() {
     if (!this.sim.robot) return;
-    if (!this.driveEnabled || this.mode === 'fly' || !this.sim.running) { this.sim.robot.input = { ...NEUTRAL_INPUT }; this.sim.robotController?.clearInput(); return; }
-    if (!this.sim.match.driverEnabled) return;
-    const held = (...codes: string[]) => codes.some((code) => this.keys.has(code)) ? 1 : 0;
-    if (this.sim.robotController) {
-      const input = { intake: !!held('ShiftLeft', 'ShiftRight'), reverse: !!held('KeyQ'), shoot: !!held('Space') };
-      if ((input.intake || input.reverse || input.shoot) && this.sim.robotController.inspectionPose) this.resumeMechanisms();
-      this.sim.robotController.input = input;
-    }
-    this.sim.robot.input = toRobotInput({
-      forward: held('KeyW', 'ArrowUp') - held('KeyS', 'ArrowDown'),
-      strafe: held('KeyD', 'ArrowRight') - held('KeyA', 'ArrowLeft'),
-      turn: held('KeyJ') - held('KeyL'), slow: false, brake: false,
-    }, this.sim.robot.telemetry.heading, this.driveFrame);
+    if (!this.driveEnabled || this.mode === 'fly') { this.sim.robot.input = { ...NEUTRAL_INPUT }; this.sim.robotController?.clearInput(); return; }
+    const pad = this.playerControls.gamepad ? Array.from(navigator.getGamepads?.() ?? []).find(p => p?.connected) : null;
+    const padActions = readActions(new Set(), this.playerControls, pad);
+    if (!Object.values(padActions).some(v => Math.abs(v) > 0.01)) this.gamepadArmed = true;
+    const a = readActions(this.keys, this.playerControls, this.gamepadArmed ? pad : null);
+    if (padActions.restart && this.gamepadArmed && !this.restartHeld) { this.restartHeld = true; this.restartMatch(); return; }
+    this.restartHeld = !!padActions.restart;
+    if (padActions.pause && this.gamepadArmed && !this.pauseHeld) { this.pauseHeld = true; this.setRunning(!this.sim.running); return; }
+    this.pauseHeld = !!padActions.pause;
+    if (!this.sim.running || !this.sim.match.driverEnabled) return;
+    if ((a.intake || a.reverse || a.shoot) && this.sim.robotController?.inspectionPose) this.resumeMechanisms();
+    if (this.sim.robotController) this.sim.robotController.input = { intake: !!a.intake, reverse: !!a.reverse, shoot: !!a.shoot, climb: !!a.climb, lower: !!a.lower, supply: !!a.supply };
+    const sign = this.sim.robotController?.shooter.alliance === 'red' && this.driveFrame === 'field' ? -1 : 1;
+    this.sim.robot.input = toRobotInput({ forward: sign * (a.forward - a.backward), strafe: sign * (a.right - a.left), turn: a.turnLeft - a.turnRight, slow: false, brake: false }, this.sim.robot.telemetry.heading, this.driveFrame);
   }
 
   setRobotPose(pose: RobotPose) { if (!import.meta.env.DEV) return; if (this.sim.match.mode === 'match') return; this.sim?.robotController?.inspect(pose); this.syncFuel(); if (this.sim?.robot) this.robotView.update(this.sim.robot, 0, this.sim.robotController); if (this.options.colliders) this.updateDebug(); }
@@ -524,7 +533,7 @@ export class FieldViewer {
 
   setDriveFrame(frame: DriveFrame) { if (!import.meta.env.DEV) return; this.driveFrame = frame; this.clearInput(); }
 
-  clearInput() { this.keys.clear(); if (this.sim?.robot) this.sim.robot.input = { ...NEUTRAL_INPUT }; this.sim?.robotController?.clearInput(); }
+  clearInput() { this.gamepadArmed = false; this.keys.clear(); if (this.sim?.robot) this.sim.robot.input = { ...NEUTRAL_INPUT }; this.sim?.robotController?.clearInput(); }
   setRunning(running: boolean) { this.clearInput(); this.sim?.setRunning(running); }
   respawn(spawn: DriveSpawn = 'practice') {
     if (!import.meta.env.DEV) return;
@@ -545,10 +554,18 @@ export class FieldViewer {
   }
 
   reset() { if (!import.meta.env.DEV) return; this.matchAudio.reset(); this.clearInput(); this.sim.reset(); this.syncFuel(); this.setMode('follow'); if (this.options.colliders) this.updateDebug(); }
-  startMatch(config: MatchConfig) { this.matchAudio.reset(true); this.clearInput(); this.sim.startMatch(config); this.syncFuel(); this.setMode('follow'); }
-  startPractice() { if (!import.meta.env.DEV) return; this.matchAudio.reset(); this.clearInput(); this.sim.startPractice(); this.syncFuel(); this.setMode('follow'); }
-  restartMatch() { this.startMatch({ ...(this.sim.match.mode === 'match' ? this.sim.match.config : DEFAULT_MATCH) }); }
+  startMatch(config: MatchConfig) { this.matchAudio.reset(true); this.clearInput(); this.sim.startMatch(config); this.sessionConfig = { ...config }; this.syncFuel(); this.setMode('follow'); }
+  startPractice() { this.matchAudio.reset(); this.clearInput(); this.sim.startPractice(); this.syncFuel(); this.setMode('follow'); }
+  restartMatch() { this.startSession(this.sessionConfig, this.sessionPractice); }
+  startSession(config: MatchConfig, practice = false) {
+    this.sessionConfig = { ...config }; this.sessionPractice = practice;
+    this.startMatch(config);
+    if (practice) { const applied = { ...this.sim.match.config }; this.sim.match.reset(); this.sim.match.config = applied; }
+    this.robotView.setDefinition(this.sim.robot!.definition);
+    this.syncFuel();
+  }
   applySettings(settings: Settings) {
+    this.playerControls = settings.controls; this.clearInput();
     this.matchAudio.setLevel(settings.volume, settings.muted);
     const preset = GRAPHICS[settings.graphics], shadows = preset.shadowSize > 0;
     const changed = this.renderer.shadowMap.enabled !== shadows;
@@ -626,9 +643,9 @@ export class FieldViewer {
   };
   private onKeyDown = (e: KeyboardEvent) => {
     if ((e.target as HTMLElement).closest('input, select, textarea, [role="dialog"]') || e.ctrlKey || e.metaKey || e.altKey || !this.driveEnabled) return;
-    if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'KeyJ', 'KeyL', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight'].includes(e.code)) {
+    if ([...Object.values(this.playerControls.keys).flat(), 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'KeyJ', 'KeyL', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight'].includes(e.code)) {
       if (e.code === 'Space' && (e.target as HTMLElement).closest('button')) return;
-      if (e.shiftKey) this.keys.add('ShiftLeft');
+
       this.keys.add(e.code); e.preventDefault();
     }
     if (e.code === 'Escape') { this.keys.clear(); this.flyDragging = false; }

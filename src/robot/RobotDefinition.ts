@@ -12,6 +12,7 @@ export type RobotDefinition = {
   hopper: { stowTravel: number };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
+  mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; turret: boolean; movingShots: boolean; climb: boolean };
 };
 
 /** CAD dimensions in meters; empty mass/inertia remain estimates.
@@ -19,6 +20,7 @@ export type RobotDefinition = {
  */
 export const REBLITZ: RobotDefinition = {
   id: '2910-reblitz', name: '2910 Re•Blitz', model: '/assets/robots/2910-reblitz/robot.glb',
+  mechanisms: { capacity: 55, intakeRate: 50, compress: true, lanes: [-0.2286, -0.0762, 0.0762, 0.2286], fireRate: 32, turret: false, movingShots: false, climb: false },
   mass: 56, inertia: [3.1, 6.2, 3.5], length: 0.8509, width: 0.85725,
   wheelRadius: 0.0508, mountY: -0.06, springLength: 0.12, travel: 0.08, bumperCenterY: -0.12616,
   modules: [
@@ -58,3 +60,16 @@ export function partTransform(definition: RobotDefinition, part: RobotPart, pose
 }
 
 export const STARTING_POSE: RobotPose = { intake: 0, hopper: 0, hood: 0 };
+
+/** Provisional gameplay model; replace estimates after verifying the FRSim card.
+ * Procedural geometry is original and does not claim to reproduce team CAD. */
+export const HIGH_TIDE: RobotDefinition = {
+  ...REBLITZ, id: '4414-high-tide', name: '4414 High Tide (provisional)', model: '',
+  mass: 54, inertia: [3, 5.8, 3.2],
+  mechanisms: { capacity: 24, intakeRate: 20, compress: false, lanes: [0], fireRate: 8, turret: true, movingShots: true, climb: false },
+  hopper: { stowTravel: 0 }, intake: { pivot: [-0.27305, -0.0467875, 0], stowedAngle: 0 },
+  colliders: REBLITZ.colliders.filter(c => c.part === 'chassis' && c.center[1] < 0),
+};
+export const TOWER_TRAINER: RobotDefinition = { ...HIGH_TIDE, id: 'tower-trainer', name: 'Tower trainer (original)', mechanisms: { ...HIGH_TIDE.mechanisms, climb: true } };
+export const ROBOTS = { '2910-reblitz': REBLITZ, '4414-high-tide': HIGH_TIDE, 'tower-trainer': TOWER_TRAINER };
+export type RobotId = keyof typeof ROBOTS;

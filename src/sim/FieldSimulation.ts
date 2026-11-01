@@ -1,3 +1,5 @@
+import { HumanPlayer } from './HumanPlayer';
+import { ROBOTS } from '../robot/RobotDefinition';
 import RAPIER from '@dimforge/rapier3d-compat';
 import type { CollisionAsset, Vec3 } from '../field/types';
 import { NEUTRAL_INPUT } from './SwerveChassis';
@@ -16,10 +18,11 @@ export class FieldSimulation {
   readonly world: RAPIER.World;
   readonly fuelSystem: FuelSystem;
   readonly hubs: HubSystem;
+  readonly humanPlayer: HumanPlayer;
   readonly match = new MatchRules();
   get fuel() { return this.fuelSystem.bodies; }
   readonly probe: RAPIER.RigidBody;
-  readonly robotController: RobotSimulation | null;
+  robotController: RobotSimulation | null;
   get robot() { return this.robotController?.chassis ?? null; }
   readonly colliderElements = new Map<number, string>();
   private accumulator = 0;
@@ -48,6 +51,7 @@ export class FieldSimulation {
       this.colliderElements.set(collider.handle, mesh.element);
     }
     this.fuelSystem = new FuelSystem(this.world, fuel.map(p => [...p]));
+    this.humanPlayer = new HumanPlayer(this.world, this.fuelSystem);
     this.hubs = new HubSystem(this.world, this.fuelSystem, withHubs, event => this.match.recordProcessed(event));
     this.probe = this.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(0, -20, 0).setCcdEnabled(true).setCanSleep(true));
@@ -84,8 +88,11 @@ export class FieldSimulation {
             shoot: false };
         }
       }
+      const robot = this.robotController;
+      if (robot) robot.climber.step(STEP, !!robot.input.climb, !!robot.input.lower, this.match.actuatorsEnabled, robot.shooter.alliance);
       this.robotController?.preStep(STEP);
       this.robotController?.contacts.displaceFuel();
+      this.humanPlayer.step(!!robot?.input.supply, this.match.actuatorsEnabled, robot?.shooter.alliance ?? 'blue');
       this.hubs.beforeStep();
       this.world.step();
       // Contacts and cargo impulses must never turn physical pitch/roll drift
@@ -96,6 +103,11 @@ export class FieldSimulation {
       this.hubs.postStep(STEP);
       this.robotController?.postStep(STEP);
       this.accumulator -= STEP;
+      if (this.match.mode === 'match' && robot) {
+        const time = this.match.elapsed + STEP;
+        if (time >= 23 && this.match.elapsed < 23) this.match.assessTower(robot.shooter.alliance, robot.climber.level, 'auto');
+        if ((time >= 166 && this.match.elapsed < 166) || (this.match.phase === 'Final scoring' && this.match.telemetry.phaseRemaining <= STEP + 1e-7)) this.match.assessTower(robot.shooter.alliance, robot.climber.level, 'teleop');
+      }
       this.match.advance();
       if (this.match.phase === 'Complete') { this.setRunning(false); break; }
     }
@@ -106,7 +118,7 @@ export class FieldSimulation {
     this.running = false;
     this.accumulator = 0;
     this.fuelSystem.reset();
-    this.hubs.reset();
+    this.hubs.reset(); this.humanPlayer.reset();
     this.match.reset();
     this.probe.setEnabled(false);
     this.probeVisible = false;
@@ -117,9 +129,22 @@ export class FieldSimulation {
   startPractice() { this.reset(); this.setRunning(true); }
   startMatch(config: MatchConfig) {
     this.reset(); this.match.start(config);
+    const definition = ROBOTS[this.match.config.robot ?? '2910-reblitz'];
+    if (this.robotController && this.robotController.chassis.definition.id !== definition.id) {
+      this.world.removeRigidBody(this.robotController.chassis.body);
+      this.robotController = new RobotSimulation(this.world, this.fuelSystem, this.colliderElements, definition);
+    }
+    this.configureRobot(config);
     const neutral = this.fuelSystem.records.filter(f => Math.abs(f.body.translation().x) < 1.1 && f.body.translation().y < 0.15).slice(-this.match.config.preloads);
     if (this.match.config.preloads) this.robotController?.preload(neutral.map(f => f.id));
+    if (config.humanSupply) this.humanPlayer.stock();
     this.setRunning(true);
+  }
+  configureRobot(config: MatchConfig) {
+    const r = this.robotController; if (!r) return;
+    const sign = config.alliance === 'red' ? -1 : 1;
+    r.shooter.alliance = config.alliance === 'red' ? 'red' : 'blue';
+    r.chassis.teleport([sign * 6.1, 0.26, sign * (config.spawn === 'left' ? -2.1 : config.spawn === 'center' ? -0.288925 : 2.1)], sign === 1 ? 0 : Math.PI);
   }
   restartMatch() { this.startMatch({ ...this.match.config }); }
 

@@ -1,13 +1,15 @@
+import { ROBOTS } from '../robot/RobotDefinition';
+import type { RobotId } from '../robot/RobotDefinition';
 import type { Alliance } from '../field/targets';
 
 export const MATCH_HZ = 120;
 export const MATCH_TIMES = { autoEnd: 20, teleopStart: 23, teleopEnd: 163, complete: 166, processingGrace: 3 };
 export const EVENT_PROFILES = {
-  regional: { label: 'Regional / district', energized: 100, supercharged: 360 },
-  districtChampionship: { label: 'District championship', energized: 240, supercharged: 360 },
-  championship: { label: 'FIRST Championship', energized: 360, supercharged: 500 },
+  regional: { label: 'Regional / district', energized: 100, supercharged: 360, traversal: 50 },
+  districtChampionship: { label: 'District championship', energized: 240, supercharged: 360, traversal: 50 },
+  championship: { label: 'FIRST Championship', energized: 360, supercharged: 500, traversal: 50 },
 } as const;
-export type MatchConfig = { profile: keyof typeof EVENT_PROFILES; preloads: number; seed: number };
+export type MatchConfig = { profile: keyof typeof EVENT_PROFILES; preloads: number; seed: number; alliance?: Alliance; spawn?: 'left' | 'center' | 'right'; robot?: RobotId; humanSupply?: boolean };
 export const DEFAULT_MATCH: MatchConfig = { profile: 'regional', preloads: 8, seed: 2026 };
 export type MatchPhase = 'Practice' | 'Auto' | 'Auto scoring' | 'Transition' | 'Shift 1' | 'Shift 2' | 'Shift 3' | 'Shift 4' | 'Endgame' | 'Final scoring' | 'Complete';
 const PHASES: { phase: MatchPhase; start: number; end: number; drive: boolean }[] = [
@@ -18,17 +20,17 @@ const PHASES: { phase: MatchPhase; start: number; end: number; drive: boolean }[
   { phase: 'Final scoring', start: 163, end: 166, drive: false },
 ];
 export type ProcessedFuel = { sequence: number; id: number; alliance: Alliance; enteredAt: number; processedAt: number };
-type FuelScore = { auto: number; teleop: number; inactive: number; late: number };
+type FuelScore = { autoTower: number; teleopTower: number; penalties: number; auto: number; teleop: number; inactive: number; late: number };
 export type HubLight = { active: boolean; warning: boolean; chase: boolean; graceRemaining: number };
 export type MatchTelemetry = {
   mode: 'practice' | 'match'; phase: MatchPhase; elapsed: number; remaining: number; phaseRemaining: number;
   driverEnabled: boolean; actuatorsEnabled: boolean; complete: boolean; endedEarly: boolean;
   firstInactive: Alliance | null; selectionReason: 'Auto fuel' | 'Seeded tie' | null; config: MatchConfig;
-  blue: FuelScore & { total: number; energized: boolean; supercharged: boolean };
-  red: FuelScore & { total: number; energized: boolean; supercharged: boolean };
+  blue: FuelScore & { total: number; energized: boolean; supercharged: boolean; traversal: boolean; fuelTotal: number; bonusRP: number };
+  red: FuelScore & { total: number; energized: boolean; supercharged: boolean; traversal: boolean; fuelTotal: number; bonusRP: number };
   lights: Record<Alliance, HubLight>;
 };
-const emptyScore = (): FuelScore => ({ auto: 0, teleop: 0, inactive: 0, late: 0 });
+const emptyScore = (): FuelScore => ({ autoTower: 0, teleopTower: 0, penalties: 0, auto: 0, teleop: 0, inactive: 0, late: 0 });
 
 /** Pure fixed-tick fuel-match rules. Physics, rendering and wall-clock time stay outside. */
 export class MatchRules {
@@ -53,7 +55,7 @@ export class MatchRules {
   get actuatorsEnabled() { return this.mode === 'practice' || this.phase === 'Auto' || this.driverEnabled; }
   start(config: MatchConfig) {
     this.reset(); this.mode = 'match';
-    this.config = { profile: Object.hasOwn(EVENT_PROFILES, config.profile) ? config.profile : 'regional',
+    this.config = { alliance: config.alliance === 'red' ? 'red' : 'blue', spawn: config.spawn === 'left' || config.spawn === 'center' ? config.spawn : 'right', humanSupply: config.humanSupply === true, robot: config.robot && Object.hasOwn(ROBOTS, config.robot) ? config.robot : '2910-reblitz', profile: Object.hasOwn(EVENT_PROFILES, config.profile) ? config.profile : 'regional',
       preloads: Number.isFinite(config.preloads) ? Math.max(0, Math.min(8, Math.floor(config.preloads))) : 8, seed: config.seed >>> 0 };
   }
   reset() {
@@ -113,9 +115,17 @@ export class MatchRules {
       chase: this.phase === 'Transition' && this.firstInactive === alliance,
       graceRemaining: grace ? grace[1] + MATCH_TIMES.processingGrace - time : 0 };
   }
+  assessTower(alliance: Alliance, level: number, period: 'auto' | 'teleop') {
+    if (this.mode !== 'match' || !Number.isInteger(level) || level < 0 || level > 3) return;
+    this.scores[alliance][period === 'auto' ? 'autoTower' : 'teleopTower'] = period === 'auto' ? (level ? 15 : 0) : level * 10;
+  }
+  recordPenalty(offender: Alliance, major: boolean) {
+    if (this.mode !== 'match' || !this.driverEnabled) return;
+    this.scores[offender === 'blue' ? 'red' : 'blue'].penalties += major ? 15 : 5;
+  }
   get telemetry(): MatchTelemetry {
     const phase = this.phase, time = this.elapsed, profile = EVENT_PROFILES[this.config.profile];
-    const read = (score: FuelScore) => ({ ...score, total: score.auto + score.teleop,
+    const read = (score: FuelScore) => ({ ...score, total: score.auto + score.teleop + score.autoTower + score.teleopTower + score.penalties, fuelTotal: score.auto + score.teleop, traversal: score.autoTower + score.teleopTower >= profile.traversal, bonusRP: Number(score.auto + score.teleop >= profile.energized) + Number(score.auto + score.teleop >= profile.supercharged) + Number(score.autoTower + score.teleopTower >= profile.traversal),
       energized: score.auto + score.teleop >= profile.energized, supercharged: score.auto + score.teleop >= profile.supercharged });
     return { mode: this.mode, phase, elapsed: time, remaining: phase === 'Auto' ? 20 - time : this.driverEnabled && this.mode === 'match' ? 163 - time : 0,
       phaseRemaining: this.mode === 'practice' || phase === 'Complete' ? 0 : this.stoppedAt !== null ? this.finishAt - time : PHASES.find(p => p.phase === phase)!.end - time,

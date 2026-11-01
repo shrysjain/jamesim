@@ -1,6 +1,8 @@
+import { DEFAULT_CONTROLS, validateControls } from './controls';
+import type { Controls } from './controls';
 export type GraphicsPreset = 'low' | 'medium' | 'high';
-export type Settings = { version: 1; volume: number; muted: boolean; graphics: GraphicsPreset; showHints: boolean };
-export const DEFAULT_SETTINGS: Settings = { version: 1, volume: 0.7, muted: false, graphics: 'medium', showHints: true };
+export type Settings = { version: 1; volume: number; muted: boolean; graphics: GraphicsPreset; showHints: boolean; controls: Controls };
+export const DEFAULT_SETTINGS: Settings = { version: 1, volume: 0.7, muted: false, graphics: 'medium', showHints: true, controls: validateControls(DEFAULT_CONTROLS) };
 export const SETTINGS_KEY = 'jamesim.settings';
 export const GRAPHICS = {
   low: { pixelRatio: 1, shadowSize: 0 },
@@ -13,7 +15,7 @@ export function validateSettings(value: unknown): Settings {
   if (!value || typeof value !== 'object') return defaults;
   const s = value as Record<string, unknown>;
   if (s.version !== 1) return defaults;
-  return { ...defaults,
+  return { ...defaults, controls: validateControls(s.controls),
     volume: typeof s.volume === 'number' && Number.isFinite(s.volume) ? Math.max(0, Math.min(1, s.volume)) : defaults.volume,
     muted: typeof s.muted === 'boolean' ? s.muted : defaults.muted,
     graphics: s.graphics === 'low' || s.graphics === 'medium' || s.graphics === 'high' ? s.graphics : defaults.graphics,

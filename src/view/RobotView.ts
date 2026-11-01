@@ -4,7 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import type { SwerveChassis } from '../sim/SwerveChassis';
 import { REBLITZ, partTransform } from '../robot/RobotDefinition';
-import type { RobotPart } from '../robot/RobotDefinition';
+import type { RobotDefinition, RobotPart } from '../robot/RobotDefinition';
 import type { RobotSimulation } from '../sim/RobotSimulation';
 import { rotate, unrotate, v3 } from '../sim/vector';
 
@@ -18,6 +18,27 @@ export class RobotView {
   private disposed = false;
 
   constructor() { if (this.contacts) { this.contacts.frustumCulled = false; this.contacts.renderOrder = 22; this.contacts.visible = false; } }
+
+  private badges = new THREE.Group();
+  private procedural = new THREE.Group();
+  setDefinition(definition: RobotDefinition) {
+    if (this.model) this.model.visible = !!definition.model;
+    this.badges.visible = !!definition.model;
+    this.procedural.visible = !definition.model;
+    const existingClimber = this.procedural.getObjectByName('climber'); if (existingClimber) existingClimber.visible = definition.mechanisms.climb;
+    if (definition.model || this.procedural.children.length) return;
+    const box = (name: string, size: number[], position: number[], color: number) => {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size as [number, number, number]), new THREE.MeshStandardMaterial({ color }));
+      mesh.position.set(...position as [number, number, number]); mesh.name = name; mesh.castShadow = true; this.procedural.add(mesh); return mesh;
+    };
+    box('frame', [.78, .15, .78], [0, -.1, 0], 0x163841);
+    box('hopper', [.55, .35, .6], [-.1, .12, 0], 0x48bdb3);
+    box('intake', [.25, .08, .6], [-.52, -.1, 0], 0x111111);
+    box('turret', [.4, .1, .2], [.12, .42, 0], 0xf4d56a);
+    box('climber', [.06, .65, .06], [.28, .3, -.28], 0xcccccc);
+    this.procedural.getObjectByName('climber')!.visible = definition.mechanisms.climb;
+    this.group.add(this.procedural);
+  }
 
   async load() {
     const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(runtimeAsset(REBLITZ.model));
@@ -39,10 +60,11 @@ export class RobotView {
     ctx.fillStyle = '#ffffff'; ctx.fillText('2910', 256, 78);
     const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
     const material = new THREE.MeshStandardMaterial({ map: texture, transparent: true, alphaTest: 0.15, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
+    this.group.add(this.badges);
     const geometry = new THREE.PlaneGeometry(0.295, 0.083);
     for (const sign of [-1, 1]) {
-      const end = new THREE.Mesh(geometry, material); end.position.set(sign * (REBLITZ.length / 2 + 0.0015), REBLITZ.bumperCenterY, 0); end.rotation.y = sign * Math.PI / 2; this.group.add(end);
-      const side = new THREE.Mesh(geometry, material); side.position.set(0, REBLITZ.bumperCenterY, sign * (REBLITZ.width / 2 + 0.0015)); side.rotation.y = sign > 0 ? 0 : Math.PI; this.group.add(side);
+      const end = new THREE.Mesh(geometry, material); end.position.set(sign * (REBLITZ.length / 2 + 0.0015), REBLITZ.bumperCenterY, 0); end.rotation.y = sign * Math.PI / 2; this.badges.add(end);
+      const side = new THREE.Mesh(geometry, material); side.position.set(0, REBLITZ.bumperCenterY, sign * (REBLITZ.width / 2 + 0.0015)); side.rotation.y = sign > 0 ? 0 : Math.PI; this.badges.add(side);
     }
   }
 
@@ -60,6 +82,10 @@ export class RobotView {
       else if (name === 'shooter-drum' || name.startsWith('hood-roller-')) node.rotation.z = -mechanisms.shooter.drumAngle;
       else if (name === 'shooter-flywheel') node.rotation.z = -mechanisms.shooter.drumAngle * 6.7;
     }
+    const turret = this.procedural.getObjectByName('turret');
+    if (turret && mechanisms) turret.rotation.y = mechanisms.shooter.turretYaw;
+    const climber = this.procedural.getObjectByName('climber');
+    if (climber && mechanisms) climber.scale.y = 1 + mechanisms.climber.telemetry.lift;
     const points: number[] = [];
     robot.modules.forEach((m, i) => {
       const id = d.modules[i].name;

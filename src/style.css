@@ -167,3 +167,9 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 @keyframes load-slide { to { transform: translateX(125%); } }
 @media (max-width: 1100px) { .identity .practice-tag, .identity > i { display: none; } .inventory-hud { bottom: 82px; left: 20px; } .drive-hints { left: 50%; right: auto; transform: translateX(-50%); bottom: 20px; } }
 @media (max-width: 760px) { .play-header .match-scoreboard { top: 48px; } .inventory-hud { bottom: 20px; padding: 13px 16px; } .modal-backdrop { padding: 12px; } .help-dialog { padding: 25px; max-height: calc(100dvh - 24px); } }
+
+.controls-settings { margin: 20px 0; border: 1px solid #7992a536; padding: 12px; }
+.binding-row { display: grid; grid-template-columns: 1fr 1.3fr 50px; gap: 8px; align-items: center; margin: 8px 0; font-size: 13px; }
+.binding-row button { padding: 6px; font-size: 12px; }
+.setting-row select, .setting-row input[type=number], .binding-row select { max-width: 220px; color: #e2edf6; background: #102030; padding: 6px; border: 1px solid #7992a560; border-radius: 4px; }
+.setting-row input[type=number] { width: 60px; }
