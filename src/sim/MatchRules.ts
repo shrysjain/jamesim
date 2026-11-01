@@ -116,7 +116,7 @@ export class MatchRules {
       graceRemaining: grace ? grace[1] + MATCH_TIMES.processingGrace - time : 0 };
   }
   assessTower(alliance: Alliance, level: number, period: 'auto' | 'teleop') {
-    if (this.mode !== 'match' || !Number.isInteger(level) || level < 0 || level > 3) return;
+    if (this.mode !== 'match' || this.phase === 'Complete' || !Number.isInteger(level) || level < 0 || level > 3) return;
     this.scores[alliance][period === 'auto' ? 'autoTower' : 'teleopTower'] = period === 'auto' ? (level ? 15 : 0) : level * 10;
   }
   recordPenalty(offender: Alliance, major: boolean) {

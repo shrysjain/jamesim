@@ -12,7 +12,7 @@ import { SettingsDialog } from './components/SettingsDialog';
 import { readSettings, saveSettings } from './settings';
 
 const DebugPanel = import.meta.env.DEV ? lazy(() => import('./components/DebugPanel')) : null;
-const initialStats: ViewerStats = { fps: 0, drawCalls: 0, triangles: 0, colliders: 0, awake: 0, physicsMs: 0, running: false, robot: null, mechanisms: null, hubs: null, match: null };
+const initialStats: ViewerStats = { fps: 0, drawCalls: 0, triangles: 0, colliders: 0, awake: 0, physicsMs: 0, running: false, humanPlayer: null, robot: null, mechanisms: null, hubs: null, match: null };
 type Modal = 'settings' | 'help' | 'about' | 'session' | 'referee' | null;
 
 export function App() {
@@ -118,13 +118,14 @@ export function App() {
           <div className="inventory-hud" aria-label="Robot fuel and status">
             <div className="robot-label"><span />{ROBOTS[match?.config.robot ?? '2910-reblitz'].name}</div>
             <div className={`fuel-readout ${fuelStatus === 'Full' ? 'full' : ''}`} aria-label={`${fuel?.count ?? 0} of ${fuel?.capacity ?? 55} fuel. ${fuelStatus}`}><i /><strong>{fuel?.count ?? 0}<small> / {fuel?.capacity ?? 55}</small></strong><span>FUEL<b>{fuelStatus}</b></span></div>
+            {match?.config.humanSupply && <div className="shooter-readout" aria-label="Outpost supply"><span>Outpost · {match.config.alliance ?? 'blue'}</span><strong>{stats.humanPlayer?.[match.config.alliance ?? 'blue'] ?? 0} fuel{stats.humanPlayer?.blocked ? ' · outlet blocked' : ''}</strong></div>}
             {shooter?.active && <div className="shooter-readout" aria-label={`Shooter: ${shooter.mode}`}><span>{shooter.target ?? 'Shooter'}</span><strong>{shooter.mode}</strong></div>}
           </div>
           {settings.showHints && <div className="drive-hints">{(['forward', 'intake', 'shoot', 'climb', 'restart'] as const).map(action => <span key={action}><kbd>{settings.controls.keys[action].map(keyLabel).join('/')}</kbd>{ACTION_LABELS[action]}</span>)}</div>}
           {fuel?.climb.attached && <div className="match-notice">Tower attached · level {fuel.climb.level} · release climb to hold, lower to descend</div>}
           {import.meta.env.DEV && cameraMode !== 'follow' && <div className="camera-notice"><span>Inspection camera</span><button onClick={() => { viewer.current?.setMode('follow'); focus(); }}>Follow robot</button></div>}
           {match?.mode === 'match' && stats.running && !match.driverEnabled && !match.complete && <div className="match-notice">Processing final fuel · driving resumes with the next period</div>}
-          {!stats.running && !blocked && !panel && !match?.complete && <div className="pause-shade"><section className="pause-card"><span className="eyebrow">MATCH PAUSED</span><h1>Ready when you are.</h1><p>Your robot, fuel and match clock stay in place.</p><button className="primary-button" onClick={() => setRunning(true)}><Icon name="play" size={16} />Resume match <kbd>↵</kbd></button><button className="end-match" onClick={restart}>Restart match <kbd>R</kbd></button></section></div>}
+          {!stats.running && !blocked && !panel && !match?.complete && <div className="pause-shade"><section className="pause-card"><span className="eyebrow">MATCH PAUSED</span><h1>Ready when you are.</h1><p>Your robot, fuel and match clock stay in place.</p><button className="primary-button" onClick={() => setRunning(true)}><Icon name="play" size={16} />Resume match <kbd>↵</kbd></button><button className="end-match" onClick={restart}>Restart match <kbd>{settings.controls.keys.restart.map(keyLabel).join(' / ')}</kbd></button></section></div>}
         </>}
         {(!manifest || error || unsupported) && <div className="loading-screen" role={error ? 'alert' : 'status'}>
           <div className="loading-orbit"><Icon name="cube" size={28} /></div>
@@ -136,7 +137,7 @@ export function App() {
         </div>}
       </main>
       {!error && !unsupported && <header className="play-header">
-        <div className="identity"><strong>Jamesim</strong><i /><span className="practice-tag"><b />Solo fuel match</span></div>
+        <div className="identity"><strong>Jamesim</strong><i /><span className="practice-tag"><b />{match?.mode === 'practice' ? 'Free practice' : 'Solo match'}</span></div>
         {manifest && match?.mode === 'match' && <MatchScoreboard match={match} />}
         <div className="play-actions">
           <button aria-label={settings.muted ? 'Enable match sounds' : 'Mute match sounds'} aria-pressed={!settings.muted} title="Match sounds" onClick={() => { setSettings(s => ({ ...s, muted: !s.muted })); focus(); }}><Icon name={settings.muted ? 'muted' : 'sound'} /></button>
@@ -152,7 +153,7 @@ export function App() {
       </header>}
       {import.meta.env.DEV && panel && DebugPanel && viewer.current && <Suspense fallback={null}><DebugPanel engine={viewer.current} stats={stats} onClose={togglePanel} onRestart={restart} onSync={sync} /></Suspense>}
     </div>
-    {showResults && match && <MatchResults match={match} onRematch={restart} onClose={() => { setResultsDismissed(true); focus(); }} />}
+    {showResults && match && <MatchResults match={match} onRematch={restart} onClose={() => { setResultsDismissed(true); focus(); }} restartLabel={settings.controls.keys.restart.map(keyLabel).join(' / ')} />}
     {modal === 'session' && <SessionDialog config={match?.config ?? DEFAULT_MATCH} onClose={closeModal} onStart={(config, practice) => { viewer.current?.startSession(config, practice); resumeAfterModal.current = false; setResultsDismissed(false); closeModal(); }} />}
     {modal === 'referee' && <Dialog title="Assess a foul" eyebrow="MANUAL REFEREE ASSESSMENT" onClose={closeModal}>
       <p>Intent and human conduct require referee judgment. Add a minor (5) or major (15) foul to the offending alliance; points go to its opponent.</p>
@@ -163,7 +164,7 @@ export function App() {
     {modal === 'help' && <Dialog title="Take the wheel." eyebrow="JAMESIM · CONTROLS" onClose={closeModal}>
       <p>You drive during AUTO and teleop. Use your mapped intake and shoot actions to collect fuel and aim at your alliance hub, or pass back into your zone. Re•Blitz must stop to fire; High Tide uses turret aiming. The Tower trainer can attach near its own tower: hold Climb to rise, release to hold, and hold Lower to descend. Enable outpost stock in Session, then hold Supply to release it.</p>
       <dl className="controls-list">{[...ACTIONS.map(a => [settings.controls.keys[a].map(keyLabel).join(' / '), ACTION_LABELS[a]]), ['Enter', 'Pause / resume'], ['Esc', 'Pause / close a dialog'], ['H', 'Driving controls']].map(([key, label]) => <div key={key}><dt><kbd>{key}</kbd></dt><dd>{label}</dd></div>)}</dl>
-      <p>Losing focus pauses the match and clears held inputs. The hopper stays deployed; the intake compresses while shooting and extends again when you release Space.</p>
+      <p>Losing focus pauses the match and clears held inputs. The hopper stays deployed; the intake compresses while shooting and extends again when you release Shoot.</p>
       <button className="primary-button" onClick={closeModal}>Got it</button>
     </Dialog>}
     {modal === 'about' && <Dialog title="Jamesim" eyebrow="REBUILT · SOLO FUEL MATCH" onClose={closeModal}>

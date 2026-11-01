@@ -1,3 +1,4 @@
+import type { RobotDefinition } from '../robot/RobotDefinition';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { FIELD_HALF_LENGTH, shotTarget } from '../field/targets';
 import type { Alliance, ShotTarget } from '../field/targets';
@@ -16,7 +17,7 @@ export const SHOOTER = {
   hoodRadiansPerSecond: 140 * DEG, feedSeconds: 0.10, laneInterval: 0.125, fireRate: 32, movingThreshold: 0.18, passRange: 33 * 0.3048,
   yawTolerance: 1.5 * DEG, hoodTolerance: 1 * DEG,
 };
-const speedPerRpm = 2 * Math.PI * SHOOTER.drumRadius / 60 * SHOOTER.slip;
+const DEFAULT_GEOMETRY: NonNullable<RobotDefinition['shooterGeometry']> = { pivot: [.282575, .25325, 0], drumRadius: SHOOTER.drumRadius, guideLength: .155, turretRadiansPerSecond: 3 };
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 const approach = (from: number, to: number, amount: number) => from + clamp(to - from, -amount, amount);
 export type AimSolution = { target: ShotTarget; speed: number; elevation: number; yawError: number; trackingRate: number; time: number; obstructed: boolean };
@@ -35,9 +36,11 @@ export function flightPosition(position: Vector, velocity: Vector, seconds: numb
   return add(position, add(scale(velocity, a), v3(0, -9.81 * b, 0)));
 }
 
-/** Four managed feed lanes, one shared flywheel and a real, force-driven chassis aim controller. */
+/** Definition-owned feed lanes and flywheel geometry, with chassis or turret aiming. */
 export class Shooter {
   turretYaw = 0;
+  get geometry() { return this.chassis.definition.shooterGeometry ?? DEFAULT_GEOMETRY; }
+  private get speedPerRpm() { return 2 * Math.PI * this.geometry.drumRadius / 60 * SHOOTER.slip; }
   private get mechanism() { return this.chassis.definition.mechanisms; }
   private turretRotate(p: Vector) { const c = Math.cos(this.turretYaw), s = Math.sin(this.turretYaw); return v3(p.x*c+p.z*s, p.y, -p.x*s+p.z*c); }
   alliance: Alliance = 'blue';
@@ -71,9 +74,9 @@ export class Shooter {
   get hood() { return (SHOOTER.maxElevation - this.elevation) / (SHOOTER.maxElevation - SHOOTER.minElevation); }
   /** Measured drum tangent plus 155 mm of guide clearance; not the bumper edge. */
   muzzleLocal(elevation: number, z: number) {
-    const radius = SHOOTER.drumRadius + FUEL_RADIUS + 0.004;
-    return this.turretRotate(v3(0.282575 - Math.sin(elevation) * radius + Math.cos(elevation) * 0.155,
-      0.25325 + Math.cos(elevation) * radius + Math.sin(elevation) * 0.155, z));
+    const radius = this.geometry.drumRadius + FUEL_RADIUS + 0.004;
+    return add(v3(...this.geometry.pivot), this.turretRotate(v3(-Math.sin(elevation) * radius + Math.cos(elevation) * this.geometry.guideLength,
+      Math.cos(elevation) * radius + Math.sin(elevation) * this.geometry.guideLength, z)));
   }
   muzzle(z = 0, elevation = this.elevation) { return add(this.chassis.body.translation(), rotate(this.muzzleLocal(elevation, z), this.chassis.renderRotation)); }
 
@@ -144,7 +147,7 @@ export class Shooter {
   }
   private clearExit(z: number, elevation = this.elevation) {
     const body = this.chassis.body, q = this.chassis.renderRotation;
-    const breech = add(body.translation(), rotate(v3(0.22, 0.19, z), q));
+    const breech = add(body.translation(), rotate(add(v3(...this.geometry.pivot), this.turretRotate(v3(-.062575, -.06325, z))), q));
     // Check the managed-to-physical handoff too: the exit point can lie above a trench roof.
     return !this.world.castShape(breech, q, sub(this.muzzle(z, elevation), breech), new RAPIER.Ball(FUEL_RADIUS + 0.002), 0, 1, true,
       RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
@@ -154,11 +157,11 @@ export class Shooter {
     this.active = requested; this.blocked = false;
     this.solution = requested ? this.solve() : null;
     if (this.mechanism.turret && powered && this.solution) {
-      this.turretYaw += clamp(this.solution.yawError, -dt * 3, dt * 3);
+      this.turretYaw += clamp(this.solution.yawError, -dt * this.geometry.turretRadiansPerSecond, dt * this.geometry.turretRadiansPerSecond);
       this.solution = this.solve();
     }
     this.blocked = !!this.solution?.obstructed;
-    const targetRpm = this.solution ? this.solution.speed / speedPerRpm : 0;
+    const targetRpm = this.solution ? this.solution.speed / this.speedPerRpm : 0;
     this.rpm = approach(this.rpm, targetRpm, dt * (targetRpm > this.rpm ? SHOOTER.rpmPerSecond : SHOOTER.coastPerSecond));
     if (powered) this.elevation = approach(this.elevation, this.solution?.elevation ?? SHOOTER.maxElevation, dt * SHOOTER.hoodRadiansPerSecond);
     this.drumAngle = (this.drumAngle + this.rpm * 2 * Math.PI / 60 * dt) % (2 * Math.PI);
@@ -177,7 +180,7 @@ export class Shooter {
     return !!this.solution && !this.solution.obstructed && this.stable && Math.abs(this.solution.yawError) < SHOOTER.yawTolerance && Math.abs(this.chassis.body.angvel().y) < 0.3
       && Math.abs(this.elevation - this.solution.elevation) < SHOOTER.hoodTolerance
       && (this.mechanism.movingShots || this.chassis.telemetry.speed < SHOOTER.movingThreshold)
-      && Math.abs(this.rpm * speedPerRpm - this.solution.speed) < Math.max(0.12, this.solution.speed * 0.02);
+      && Math.abs(this.rpm * this.speedPerRpm - this.solution.speed) < Math.max(0.12, this.solution.speed * 0.02);
   }
 
   postStep(dt: number, requested: boolean) {
@@ -202,10 +205,10 @@ export class Shooter {
       if (!f) continue;
       lane.age = clamp(lane.age + (requested ? dt : -dt), 0, lane.duration);
       const t = lane.age / lane.duration, z = lane.z + lane.offset;
-      const end = this.muzzleLocal(this.elevation, z), control = v3(0.18, 0.12, z);
+      const end = this.muzzleLocal(this.elevation, z), control = add(v3(...this.geometry.pivot), this.turretRotate(v3(-.102575, -.13325, z)));
       f.local = lerp(lerp(lane.start, control, t), lerp(control, end, t), t);
       if (!requested && lane.age === 0) { f.state = 'stored'; lane.id = null; continue; }
-      if (t < 1 || !this.ready || !requested || !this.solution || this.fuel.time < this.nextLaunchAt || this.fuel.time < lane.lastShotAt + SHOOTER.laneInterval - 1e-7) continue;
+      if (t < 1 || !this.ready || !requested || !this.solution || this.fuel.time < this.nextLaunchAt || this.fuel.time < lane.lastShotAt + (this.mechanism.turret ? 1 / this.mechanism.fireRate : SHOOTER.laneInterval) - 1e-7) continue;
       const position = this.muzzle(z), q = this.chassis.renderRotation;
       const relative = rotate(this.turretRotate(v3(Math.cos(this.elevation), Math.sin(this.elevation), 0)), q);
       // Include own proxies and other loose balls: never create a projectile in solid geometry.
@@ -218,7 +221,7 @@ export class Shooter {
       const elevation = this.elevation + (this.random() - 0.5) * 0.008;
       const yaw = (this.random() - 0.5) * 0.009;
       const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
-        this.rpm * speedPerRpm * (0.996 + this.random() * 0.008))), q);
+        this.rpm * this.speedPerRpm * (0.996 + this.random() * 0.008))), q);
       const velocity = add(this.chassis.body.velocityAtPoint(position), exit);
       if (!this.fuel.release(f, position, velocity, true)) continue;
       this.payloadChanged();
@@ -251,7 +254,7 @@ export class Shooter {
       : !this.mechanism.movingShots && this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? 'Waiting to stop'
       : Math.abs(this.elevation - solution.elevation) >= SHOOTER.hoodTolerance ? 'Adjusting hood'
       : !this.ready ? 'Spinning up' : feeding ? 'Feeding' : 'Ready';
-    return { active: this.active, mode, target: solution?.target.kind ?? null, rpm: this.rpm, targetRpm: solution ? solution.speed / speedPerRpm : 0,
+    return { active: this.active, mode, target: solution?.target.kind ?? null, rpm: this.rpm, targetRpm: solution ? solution.speed / this.speedPerRpm : 0,
       elevation: this.elevation / DEG, yawError: (solution?.yawError ?? 0) / DEG, shots: this.shotsFired, feeding,
       lanes: this.laneState.map(l => l.id === null ? 0 : l.age / l.duration) };
   }

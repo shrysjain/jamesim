@@ -30,13 +30,15 @@ export const cargoExtension = (count: number) => Math.max(0, Math.min(1, (count 
 export type MechanismTelemetry = {
   count: number; capacity: number; transferring: number; stored: number; loose: number;
   mode: 'Stowed' | 'Deployed' | 'Deploying' | 'Compressing' | 'Intaking' | 'Holding' | 'Full' | 'Reversing' | 'Outlet blocked' | 'Spilling' | 'Pose preview';
-  climb: { attached: boolean; level: number; lift: number };
+  climb: { attached: boolean; level: number; lift: number; attachment: Vector | null };
   mass: number; intake: number; hopper: number; hood: number; preview: boolean;
   feeding: number; airborne: number; shooter: ShooterTelemetry;
 };
 
 /** Fixed-tick mechanism state. Rendering and DOM never own fuel or actuation. */
 export class RobotSimulation {
+  readonly storageSlots: Vector[];
+  readonly pickup: NonNullable<RobotDefinition['pickup']>;
   readonly chassis: SwerveChassis;
   readonly climber: Climber;
   readonly shooter: Shooter;
@@ -54,8 +56,11 @@ export class RobotSimulation {
   private payloadSignature = '';
 
   constructor(private world: RAPIER.World, readonly fuel: FuelSystem, private fieldElements: Map<number, string>, definition: RobotDefinition = REBLITZ) {
+    this.storageSlots = definition.cargoSlots?.map(([x, y, z]) => v3(x, y, z)) ?? STORAGE_SLOTS.slice(0, definition.mechanisms.capacity).map(p => ({ ...p }));
+    if (this.storageSlots.length !== definition.mechanisms.capacity) throw new Error(`Invalid cargo layout for ${definition.id}`);
+    this.pickup = definition.pickup ?? { minX: -.79, maxX: -.44, halfWidth: .29, mouthX: -.53, ejectX: -.755 };
     this.chassis = new SwerveChassis(world, definition, fieldElements);
-    this.climber = new Climber(world, this.chassis);
+    this.climber = new Climber(world, this.chassis, fieldElements);
     this.chassis.setPose(STARTING_POSE);
     this.shooter = new Shooter(world, this.chassis, fuel, this.owner, () => this.updatePayload());
     this.contacts = new GameplayContacts(world, this.chassis, fuel, fieldElements);
@@ -64,14 +69,14 @@ export class RobotSimulation {
   get capacity() { return this.mechanism.capacity; }
   get held() { return this.fuel.ownedBy(this.owner); }
   private storedPosition(slot: number) {
-    const p = STORAGE_SLOTS[slot];
+    const p = this.storageSlots[slot];
     // The hopper stays out. The retracting intake pushes cargo toward the
     // feeder, whose pocket remains fixed to the frame throughout actuation.
     return { ...p, x: p.x + (slot === FEEDER_POCKET ? 0 : this.chassis.definition.hopper.stowTravel * (1 - this.chassis.pose.intake)) };
   }
   preload(ids: number[]) {
     for (const id of ids.slice(0, 8)) {
-      const slot = STORAGE_SLOTS.findIndex((_, i) => i < this.capacity && !this.held.some(f => f.slot === i));
+      const slot = this.storageSlots.findIndex((_, i) => i < this.capacity && !this.held.some(f => f.slot === i));
       const f = this.fuel.records[id];
       if (slot < 0 || !f || !this.fuel.capture(f, this.owner, slot, this.storedPosition(slot))) continue;
       f.state = 'stored';
@@ -157,17 +162,17 @@ export class RobotSimulation {
     for (const f of this.fuel.records) {
       if (f.state !== 'loose' || f.availableAt > this.fuel.time) continue;
       const p = f.body.translation(), local = unrotate(sub(p, position), q);
-      if (local.x < -0.79 || local.x > -0.44 || Math.abs(local.z) > 0.29 || local.y < -0.21 || local.y > 0.025) continue;
+      if (local.x < this.pickup.minX || local.x > this.pickup.maxX || Math.abs(local.z) > this.pickup.halfWidth || local.y < -0.21 || local.y > 0.025) continue;
       const relative = sub(f.body.linvel(), body.velocityAtPoint(p));
       if (unrotate(relative, q).x < -0.6) continue; // Rapidly departing fuel is not pulled backwards into the robot.
-      const mouth = this.toWorld(v3(-0.53, -0.10, local.z));
+      const mouth = this.toWorld(v3(this.pickup.mouthX, -0.10, local.z));
       if (!this.clearFieldPath(p, mouth)) continue;
       candidates.push({ fuel: f, local, impulse: scale(relative, FUEL_MASS), position: { ...p } });
     }
     candidates.sort((a, b) => b.local.x - a.local.x || a.fuel.id - b.fuel.id);
     const occupied = new Set(held.map(f => f.slot));
     for (const candidate of candidates.slice(0, Math.min(Math.floor(this.captureCredit), this.capacity - held.length))) {
-      const slot = STORAGE_SLOTS.findIndex((_, i) => i < this.capacity && !occupied.has(i));
+      const slot = this.storageSlots.findIndex((_, i) => i < this.capacity && !occupied.has(i));
       if (slot < 0 || !this.fuel.capture(candidate.fuel, this.owner, slot, candidate.local)) continue;
       occupied.add(slot); this.captureCredit--;
       this.updatePayload();
@@ -179,8 +184,8 @@ export class RobotSimulation {
     for (const f of this.fuel.records) {
       if (f.state !== 'loose') continue;
       const p = f.body.translation(), local = unrotate(sub(p, body.translation()), q);
-      if (local.x < -0.79 || local.x > -0.44 || Math.abs(local.z) > 0.29 || local.y < -0.21 || local.y > 0.025) continue;
-      if (!this.clearFieldPath(p, this.toWorld(v3(-0.53, -0.10, local.z)))) continue;
+      if (local.x < this.pickup.minX || local.x > this.pickup.maxX || Math.abs(local.z) > this.pickup.halfWidth || local.y < -0.21 || local.y > 0.025) continue;
+      if (!this.clearFieldPath(p, this.toWorld(v3(this.pickup.mouthX, -0.10, local.z)))) continue;
       const relative = unrotate(sub(f.body.linvel(), body.velocityAtPoint(p)), q);
       const impulse = rotate(v3(-Math.min(Math.max(0, 2.2 + relative.x), 16 * dt) * FUEL_MASS, 0, 0), q);
       f.body.applyImpulse(impulse, true); body.applyImpulseAtPoint(scale(impulse, -1), p, true);
@@ -193,11 +198,11 @@ export class RobotSimulation {
   }
   private eject(f: Fuel, spilling: boolean) {
     const body = this.chassis.body, q = body.rotation();
-    const lanes = [STORAGE_SLOTS[f.slot].z, -0.2286, -0.0762, 0.0762, 0.2286];
+    const lanes = [this.storageSlots[f.slot].z, -0.2286, -0.0762, 0.0762, 0.2286];
     for (const z of lanes) {
-      const local = v3(-0.755, -0.115, z);
+      const local = v3(this.pickup.ejectX, -0.115, z);
       const position = this.toWorld(local);
-      if (!this.clearFieldPath(this.toWorld(v3(-0.54, -0.10, z)), position)) continue;
+      if (!this.clearFieldPath(this.toWorld(v3(this.pickup.mouthX, -0.10, z)), position)) continue;
       let blocked = false;
       this.world.intersectionsWithShape(position, q, new RAPIER.Ball(FUEL_RADIUS + 0.003), () => { blocked = true; return false; },
         RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
@@ -224,7 +229,7 @@ export class RobotSimulation {
     // The upper rear panel slopes inward at 45°. Keep the visible full-hopper
     // packing behind its inner face, including the ball radius and a small gap.
     const hopperShift = this.chassis.definition.hopper.stowTravel * (1 - this.chassis.pose.hopper);
-    if (fuel.state !== 'transferring') local.x = Math.max(local.x, -0.63897 + FUEL_RADIUS + 0.006 + hopperShift,
+    if (!this.chassis.definition.cargoSlots && fuel.state !== 'transferring') local.x = Math.max(local.x, -0.63897 + FUEL_RADIUS + 0.006 + hopperShift,
       local.y - 0.832565 + (FUEL_RADIUS + 0.006) * Math.SQRT2 + hopperShift);
     return add(this.chassis.body.translation(), rotate(local, this.chassis.renderRotation));
   }

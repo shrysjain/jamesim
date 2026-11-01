@@ -12,6 +12,9 @@ export type RobotDefinition = {
   hopper: { stowTravel: number };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
+  cargoSlots?: Vec3[];
+  pickup?: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
+  shooterGeometry?: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number };
   mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; turret: boolean; movingShots: boolean; climb: boolean };
 };
 
@@ -64,12 +67,27 @@ export const STARTING_POSE: RobotPose = { intake: 0, hopper: 0, hood: 0 };
 /** Provisional gameplay model; replace estimates after verifying the FRSim card.
  * Procedural geometry is original and does not claim to reproduce team CAD. */
 export const HIGH_TIDE: RobotDefinition = {
-  ...REBLITZ, id: '4414-high-tide', name: '4414 High Tide (provisional)', model: '',
+  ...REBLITZ, id: '4414-high-tide', name: '4414 High Tide · Ripcurrent', model: '',
   mass: 54, inertia: [3, 5.8, 3.2],
-  mechanisms: { capacity: 24, intakeRate: 20, compress: false, lanes: [0], fireRate: 8, turret: true, movingShots: true, climb: false },
+  mechanisms: { capacity: 85, intakeRate: 20, compress: false, lanes: [0], fireRate: 8, turret: true, movingShots: true, climb: false },
+  // 25 × 32 in frame, plus approximate 3 in bumper allowance on each edge.
+  length: 38 * 0.0254, width: 31 * 0.0254,
+  modules: REBLITZ.modules.map(m => ({ ...m, x: Math.sign(m.x) * .33, z: Math.sign(m.z) * .23 })),
+  cargoSlots: Array.from({ length: 85 }, (_, i): Vec3 => {
+    const layer = Math.floor(i / 30), row = Math.floor(i % 30 / 5), column = i % 5;
+    return [-.85 + row * .151 + (column % 2) * .151 / 2 + (layer % 2) * .151 / 2, -.022 + layer * .151 * Math.sqrt(2 / 3), (column - 2) * .151 * Math.sqrt(3) / 2 + (layer % 2) * .151 * Math.sqrt(3) / 6];
+  }),
+  pickup: { minX: -1.15, maxX: -.88, halfWidth: .29, mouthX: -.94, ejectX: -1.14 },
+  shooterGeometry: { pivot: [.12, .25325, 0], drumRadius: .0381, guideLength: .155, turretRadiansPerSecond: 3 },
   hopper: { stowTravel: 0 }, intake: { pivot: [-0.27305, -0.0467875, 0], stowedAngle: 0 },
-  colliders: REBLITZ.colliders.filter(c => c.part === 'chassis' && c.center[1] < 0),
+  colliders: [
+    ...[-1, 1].flatMap((sign): RobotCollider[] => [
+      { part: 'chassis', center: [sign * .4445, -.12616, 0], halfExtents: [.0381, .05715, .3937], radius: .008 },
+      { part: 'chassis', center: [0, -.12616, sign * .3556], halfExtents: [.4064, .05715, .0381], radius: .008 },
+    ]),
+    { part: 'chassis', center: [0, -.18215, 0], halfExtents: [.4, .002, .31], radius: .006 },
+  ],
 };
-export const TOWER_TRAINER: RobotDefinition = { ...HIGH_TIDE, id: 'tower-trainer', name: 'Tower trainer (original)', mechanisms: { ...HIGH_TIDE.mechanisms, climb: true } };
+export const TOWER_TRAINER: RobotDefinition = { ...HIGH_TIDE, id: 'tower-trainer', name: 'Tower trainer (original)', cargoSlots: undefined, pickup: undefined, length: REBLITZ.length, width: REBLITZ.width, modules: REBLITZ.modules, colliders: REBLITZ.colliders.filter(c => c.part === 'chassis' && c.center[1] < 0), mechanisms: { ...HIGH_TIDE.mechanisms, capacity: 24, climb: true } };
 export const ROBOTS = { '2910-reblitz': REBLITZ, '4414-high-tide': HIGH_TIDE, 'tower-trainer': TOWER_TRAINER };
 export type RobotId = keyof typeof ROBOTS;

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CONTROLS, axisValue, bindKey, readActions, validateControls } from './controls';
+import { DEFAULT_CONTROLS, axisValue, bindKey, bindButton, readActions, validateControls } from './controls';
 describe('player controls', () => {
+  it('swaps controller button conflicts', () => {
+    const c = bindButton(DEFAULT_CONTROLS, 'shoot', 0);
+    expect(c.buttons.shoot).toBe(0); expect(c.buttons.climb).toBe(7);
+    expect(bindButton(c, 'shoot', null).buttons.shoot).toBeNull();
+  });
   it('validates saved inputs and survives corrupt bindings', () => {
     const c = validateControls({ keys: { shoot: ['Escape'] }, deadzone: NaN, buttons: { shoot: -2 } });
     expect(c).toEqual(DEFAULT_CONTROLS);

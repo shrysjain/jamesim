@@ -6,7 +6,7 @@ import type { SwerveChassis } from '../sim/SwerveChassis';
 import { REBLITZ, partTransform } from '../robot/RobotDefinition';
 import type { RobotDefinition, RobotPart } from '../robot/RobotDefinition';
 import type { RobotSimulation } from '../sim/RobotSimulation';
-import { rotate, unrotate, v3 } from '../sim/vector';
+import { rotate, unrotate, sub, v3 } from '../sim/vector';
 
 /** Prepared team CAD, batched around explicit mechanism frames offline. */
 export class RobotView {
@@ -21,22 +21,41 @@ export class RobotView {
 
   private badges = new THREE.Group();
   private procedural = new THREE.Group();
+  private proceduralId = '';
   setDefinition(definition: RobotDefinition) {
     if (this.model) this.model.visible = !!definition.model;
     this.badges.visible = !!definition.model;
     this.procedural.visible = !definition.model;
-    const existingClimber = this.procedural.getObjectByName('climber'); if (existingClimber) existingClimber.visible = definition.mechanisms.climb;
-    if (definition.model || this.procedural.children.length) return;
-    const box = (name: string, size: number[], position: number[], color: number) => {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size as [number, number, number]), new THREE.MeshStandardMaterial({ color }));
-      mesh.position.set(...position as [number, number, number]); mesh.name = name; mesh.castShadow = true; this.procedural.add(mesh); return mesh;
+    if (definition.model || this.proceduralId === definition.id) return;
+    this.disposeObject(this.procedural); this.procedural.clear(); this.proceduralId = definition.id;
+    const box = (parent: THREE.Object3D, name: string, size: [number, number, number], position: [number, number, number], color: number, opacity = 1) => {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), new THREE.MeshStandardMaterial({ color, transparent: opacity < 1, opacity, depthWrite: opacity === 1 }));
+      mesh.position.set(...position); mesh.name = name; mesh.castShadow = opacity === 1; parent.add(mesh); return mesh;
     };
-    box('frame', [.78, .15, .78], [0, -.1, 0], 0x163841);
-    box('hopper', [.55, .35, .6], [-.1, .12, 0], 0x48bdb3);
-    box('intake', [.25, .08, .6], [-.52, -.1, 0], 0x111111);
-    box('turret', [.4, .1, .2], [.12, .42, 0], 0xf4d56a);
-    box('climber', [.06, .65, .06], [.28, .3, -.28], 0xcccccc);
-    this.procedural.getObjectByName('climber')!.visible = definition.mechanisms.climb;
+    const highTide = !!definition.cargoSlots, rear = highTide ? -.96 : -.64, width = definition.width;
+    box(this.procedural, 'frame', [definition.length - .1, .07, width - .12], [0, -.12, 0], 0x1b3138);
+    for (const sign of [-1, 1]) {
+      box(this.procedural, `bumper-side-${sign}`, [definition.length, .115, .076], [0, definition.bumperCenterY, sign * (width / 2 - .038)], 0x106b7a);
+      box(this.procedural, `bumper-end-${sign}`, [.076, .115, width - .152], [sign * (definition.length / 2 - .038), definition.bumperCenterY, 0], 0x106b7a);
+      box(this.procedural, `hopper-side-${sign}`, [.25 - rear, .32, .012], [(rear + .25) / 2, .1, sign * .34], 0x72dfdb, .3);
+    }
+    box(this.procedural, 'hopper-rear', [.015, .32, .68], [rear, .1, 0], 0x72dfdb, .3);
+    const intake = new THREE.Mesh(new THREE.CylinderGeometry(.038, .038, .64, 16), new THREE.MeshStandardMaterial({ color: 0x15191d }));
+    intake.rotation.x = Math.PI / 2; intake.position.set(highTide ? -1.04 : -.61, -.10, 0); intake.name = 'pickup-roller'; this.procedural.add(intake);
+    const rotor = new THREE.Mesh(new THREE.CylinderGeometry(.26, .26, .045, 32), new THREE.MeshStandardMaterial({ color: 0xd7c783 }));
+    rotor.position.set(-.18, -.02, 0); rotor.name = 'rotor'; this.procedural.add(rotor);
+    const turret = new THREE.Group(); turret.name = 'turret'; turret.position.set(...(definition.shooterGeometry?.pivot ?? REBLITZ.hood.pivot)); this.procedural.add(turret);
+    box(turret, 'turret-body', [.22, .14, .2], [0, .04, 0], 0xb6bec2);
+    const hood = new THREE.Group(); hood.name = 'turret-hood'; turret.add(hood);
+    box(hood, 'barrel', [.25, .08, .16], [.12, .08, 0], 0xf4d56a);
+    for (const [index, module] of definition.modules.entries()) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(definition.wheelRadius, definition.wheelRadius, .045, 16), new THREE.MeshStandardMaterial({ color: 0x191919 }));
+      wheel.name = `procedural-wheel-${index}`; wheel.rotation.x = Math.PI / 2; wheel.position.set(module.x, -.19, module.z); this.procedural.add(wheel);
+    }
+    if (definition.mechanisms.climb) {
+      box(this.procedural, 'climber-mast', [.07, .6, .07], [.28, .25, -.27], 0xc7cbd1);
+      box(this.procedural, 'climber-hook', [.75, .045, .06], [.6, .55, -.27], 0xf4d56a);
+    }
     this.group.add(this.procedural);
   }
 
@@ -84,11 +103,27 @@ export class RobotView {
     }
     const turret = this.procedural.getObjectByName('turret');
     if (turret && mechanisms) turret.rotation.y = mechanisms.shooter.turretYaw;
-    const climber = this.procedural.getObjectByName('climber');
-    if (climber && mechanisms) climber.scale.y = 1 + mechanisms.climber.telemetry.lift;
+    const hood = this.procedural.getObjectByName('turret-hood');
+    if (hood && mechanisms) hood.rotation.z = mechanisms.shooter.elevation;
+    const rotor = this.procedural.getObjectByName('rotor');
+    if (rotor && mechanisms) rotor.rotation.y = mechanisms.shooter.feederAngle + mechanisms.rollerAngle * .1;
+    const intake = this.procedural.getObjectByName('pickup-roller');
+    if (intake && mechanisms) intake.rotation.y = mechanisms.rollerAngle;
+    const mast = this.procedural.getObjectByName('climber-mast');
+    const hook = this.procedural.getObjectByName('climber-hook');
+    if (mast && hook && mechanisms) {
+      const attachment = mechanisms.climber.telemetry.attachment;
+      if (attachment) {
+        const local = unrotate(sub(attachment, p), q);
+        hook.position.set((.28 + local.x) / 2, local.y, local.z); hook.scale.x = Math.max(.1, (local.x - .28) / .75);
+        mast.position.set(.28, (local.y - .05) / 2, local.z); mast.scale.y = Math.max(.1, (local.y + .05) / .6);
+      } else { hook.position.set(.6, .55, -.27); hook.scale.set(1, 1, 1); mast.position.set(.28, .25, -.27); mast.scale.set(1, 1, 1); }
+    }
     const points: number[] = [];
     robot.modules.forEach((m, i) => {
       const id = d.modules[i].name;
+      const proceduralWheel = this.procedural.getObjectByName(`procedural-wheel-${i}`);
+      if (proceduralWheel) { proceduralWheel.position.y = d.mountY - m.suspension; proceduralWheel.rotation.y = -m.angle; }
       this.wheelRotation[i] -= m.speed * dt / d.wheelRadius;
       for (const suffix of ['wheel', 'fork']) {
         const node = this.nodes.get(`${id}-${suffix}`); if (!node) continue;

@@ -10,7 +10,7 @@ The prepared runtime field, robot and audio pack is included for the owner-autho
 
 ## Player extensions branch
 
-Optional **Session** setup now exposes alliance, spawn, preloads, event profiles, free practice and robot selection. Settings include saved key/controller mappings and stick deadzones. 4414 High Tide has a provisional procedural turret model; its exact FRSim tuning remains unverified. The separate original Tower trainer exercises climbing and tower scoring. Optional outpost supply conserves fuel, and manual foul assessment adds penalty points. See [implementation scope and accuracy limits](docs/PLAYER_EXTENSIONS.md). The older release descriptions below describe the previous v1 baseline.
+Optional **Session** setup now exposes alliance, spawn, preloads, event profiles, free practice and robot selection. Settings include saved key/controller mappings and stick deadzones. 4414 High Tide / Ripcurrent has a procedural turret/rotor model and an 85-fuel hopper based on the team binder; exact FRSim tuning remains unverified. The separate original Tower trainer exercises climbing and tower scoring. Optional outpost supply conserves fuel, and manual foul assessment adds penalty points. See [implementation scope and accuracy limits](docs/PLAYER_EXTENSIONS.md). The older release descriptions below describe the previous v1 baseline.
 
 ## Run locally
 

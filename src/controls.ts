@@ -31,6 +31,12 @@ export function bindKey(controls: Controls, action: Action, code: string): Contr
   for (const other of ACTIONS) if (other !== action && keys[other].includes(code)) keys[other] = keys[other].filter(k => k !== code).concat(keys[other].length === 1 ? [old] : []);
   keys[action] = [code]; return { ...controls, keys };
 }
+export function bindButton(controls: Controls, action: Action, button: number | null): Controls {
+  const buttons = { ...controls.buttons }, previous = buttons[action];
+  if (button !== null) for (const other of ACTIONS) if (other !== action && buttons[other] === button) buttons[other] = previous;
+  buttons[action] = button;
+  return { ...controls, buttons };
+}
 export function keyLabel(code: string) { return code.replace(/^Key|^Digit/, '').replace('Left', ' L').replace('Right', ' R'); }
 export function axisValue(value: number, deadzone: number) {
   if (!Number.isFinite(value) || Math.abs(value) <= deadzone) return 0;

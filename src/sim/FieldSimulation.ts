@@ -26,6 +26,8 @@ export class FieldSimulation {
   get robot() { return this.robotController?.chassis ?? null; }
   readonly colliderElements = new Map<number, string>();
   private accumulator = 0;
+  private autoTowerAssessed = false;
+  private finalTowerAssessed = false;
   running = false;
   probeVisible = false;
   physicsMs = 0;
@@ -92,7 +94,6 @@ export class FieldSimulation {
       if (robot) robot.climber.step(STEP, !!robot.input.climb, !!robot.input.lower, this.match.actuatorsEnabled, robot.shooter.alliance);
       this.robotController?.preStep(STEP);
       this.robotController?.contacts.displaceFuel();
-      this.humanPlayer.step(!!robot?.input.supply, this.match.actuatorsEnabled, robot?.shooter.alliance ?? 'blue');
       this.hubs.beforeStep();
       this.world.step();
       // Contacts and cargo impulses must never turn physical pitch/roll drift
@@ -101,12 +102,25 @@ export class FieldSimulation {
       this.robotController?.contacts.displaceFuel();
       this.fuelSystem.postStep(STEP);
       this.hubs.postStep(STEP);
+      this.humanPlayer.collectReturns();
+      // Clearance queries need the current broad phase before a managed release.
+      this.humanPlayer.step(!!robot?.input.supply, this.match.actuatorsEnabled, robot?.shooter.alliance ?? 'blue');
       this.robotController?.postStep(STEP);
       this.accumulator -= STEP;
       if (this.match.mode === 'match' && robot) {
         const time = this.match.elapsed + STEP;
-        if (time >= 23 && this.match.elapsed < 23) this.match.assessTower(robot.shooter.alliance, robot.climber.level, 'auto');
-        if ((time >= 166 && this.match.elapsed < 166) || (this.match.phase === 'Final scoring' && this.match.telemetry.phaseRemaining <= STEP + 1e-7)) this.match.assessTower(robot.shooter.alliance, robot.climber.level, 'teleop');
+        if (!this.autoTowerAssessed && time >= 20 && !this.match.telemetry.endedEarly) {
+          this.match.assessTower(robot.shooter.alliance, robot.climber.level, 'auto'); this.autoTowerAssessed = true;
+        }
+        if (this.match.phase === 'Final scoring' && !this.finalTowerAssessed) {
+          const velocity = robot.chassis.body.linvel(), spin = robot.chassis.body.angvel();
+          const atRest = Math.hypot(velocity.x, velocity.y, velocity.z) < .05 && Math.hypot(spin.x, spin.y, spin.z) < .05;
+          if (atRest || this.match.telemetry.phaseRemaining <= STEP + 1e-7) {
+            const autoOnly = this.match.telemetry.endedEarly && this.match.elapsed < 23;
+            if (!autoOnly || !this.autoTowerAssessed) this.match.assessTower(robot.shooter.alliance, robot.climber.level, autoOnly ? 'auto' : 'teleop');
+            this.finalTowerAssessed = true;
+          }
+        }
       }
       this.match.advance();
       if (this.match.phase === 'Complete') { this.setRunning(false); break; }
@@ -116,6 +130,7 @@ export class FieldSimulation {
 
   reset() {
     this.running = false;
+    this.autoTowerAssessed = this.finalTowerAssessed = false;
     this.accumulator = 0;
     this.fuelSystem.reset();
     this.hubs.reset(); this.humanPlayer.reset();

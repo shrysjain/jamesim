@@ -1,3 +1,4 @@
+import type { HumanPlayer } from '../sim/HumanPlayer';
 import { DEFAULT_CONTROLS, readActions } from '../controls';
 import type { Controls } from '../controls';
 import * as THREE from 'three';
@@ -27,7 +28,7 @@ import { unpackCollisions } from '../field/collisionAsset';
 
 export type CameraMode = 'follow' | 'orbit' | 'fly';
 export type CameraPreset = 'overview' | 'overhead' | 'blue' | 'red';
-export type ViewerStats = { fps: number; drawCalls: number; triangles: number; colliders: number; awake: number; physicsMs: number; running: boolean; robot: DriveTelemetry | null; mechanisms: MechanismTelemetry | null; hubs: HubTelemetry | null; match: MatchTelemetry | null };
+export type ViewerStats = { fps: number; drawCalls: number; triangles: number; colliders: number; awake: number; physicsMs: number; running: boolean; humanPlayer: HumanPlayer['telemetry'] | null; robot: DriveTelemetry | null; mechanisms: MechanismTelemetry | null; hubs: HubTelemetry | null; match: MatchTelemetry | null };
 export type ViewerOptions = { colliders: boolean; visuals: boolean; fuel: boolean; grid: boolean; labels: boolean };
 type Callbacks = {
   progress: (message: string) => void;
@@ -75,6 +76,7 @@ export class FieldViewer {
   private raf = 0;
   private playerControls: Controls = DEFAULT_CONTROLS;
   private gamepadArmed = false;
+  private gamepadIdentity = '';
   private restartHeld = false;
   private pauseHeld = false;
   private sessionPractice = false;
@@ -514,8 +516,10 @@ export class FieldViewer {
     if (!this.sim.robot) return;
     if (!this.driveEnabled || this.mode === 'fly') { this.sim.robot.input = { ...NEUTRAL_INPUT }; this.sim.robotController?.clearInput(); return; }
     const pad = this.playerControls.gamepad ? Array.from(navigator.getGamepads?.() ?? []).find(p => p?.connected) : null;
+    const identity = pad ? `${pad.index}:${pad.id}` : '';
+    if (identity !== this.gamepadIdentity) { this.gamepadArmed = false; this.restartHeld = this.pauseHeld = false; this.gamepadIdentity = identity; }
     const padActions = readActions(new Set(), this.playerControls, pad);
-    if (!Object.values(padActions).some(v => Math.abs(v) > 0.01)) this.gamepadArmed = true;
+    if (pad && !Object.values(padActions).some(v => Math.abs(v) > 0.01)) this.gamepadArmed = true;
     const a = readActions(this.keys, this.playerControls, this.gamepadArmed ? pad : null);
     if (padActions.restart && this.gamepadArmed && !this.restartHeld) { this.restartHeld = true; this.restartMatch(); return; }
     this.restartHeld = !!padActions.restart;
@@ -585,7 +589,7 @@ export class FieldViewer {
     return { fps, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles,
       colliders: import.meta.env.DEV ? this.sim.world.colliders.len() : 0,
       awake: import.meta.env.DEV ? this.sim.awakeBodies : 0, physicsMs: this.sim.running ? this.sim.physicsMs : 0,
-      running: this.sim.running, robot: this.sim.robot?.telemetry ?? null,
+      running: this.sim.running, humanPlayer: this.sim.humanPlayer.telemetry, robot: this.sim.robot?.telemetry ?? null,
       mechanisms: this.sim.robotController?.telemetry ?? null, hubs: this.sim.hubs.telemetry, match: this.sim.match.telemetry };
   }
 

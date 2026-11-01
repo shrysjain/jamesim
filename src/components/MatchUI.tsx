@@ -14,14 +14,14 @@ export function MatchScoreboard({ match }: { match: MatchTelemetry }) {
   </div>;
 }
 
-export function MatchResults({ match, onRematch, onClose }: {
-  match: MatchTelemetry; onRematch: () => void; onClose: () => void;
+export function MatchResults({ match, onRematch, onClose, restartLabel }: {
+  match: MatchTelemetry; onRematch: () => void; onClose: () => void; restartLabel: string;
 }) {
   const profile = EVENT_PROFILES[match.config.profile];
   return <Dialog title="Solo match results." eyebrow={match.endedEarly ? 'SESSION ENDED EARLY' : 'MATCH COMPLETE'} onClose={onClose} className="results-dialog">
     <div className="result-totals"><div className="blue-hit"><span>BLUE</span><strong>{match.blue.total}</strong></div><div className="red-hit"><span>RED</span><strong>{match.red.total}</strong></div></div>
     <table className="result-table"><thead><tr><th>Points</th><th>Blue</th><th>Red</th></tr></thead><tbody>
-      <tr><th>Autonomous</th><td>{match.blue.auto}</td><td>{match.red.auto}</td></tr><tr><th>Teleop</th><td>{match.blue.teleop}</td><td>{match.red.teleop}</td></tr>
+      <tr><th>AUTO fuel</th><td>{match.blue.auto}</td><td>{match.red.auto}</td></tr><tr><th>Teleop fuel</th><td>{match.blue.teleop}</td><td>{match.red.teleop}</td></tr>
       <tr><th>AUTO tower</th><td>{match.blue.autoTower}</td><td>{match.red.autoTower}</td></tr>
       <tr><th>Teleop tower</th><td>{match.blue.teleopTower}</td><td>{match.red.teleopTower}</td></tr>
       <tr><th>Penalty points awarded</th><td>{match.blue.penalties}</td><td>{match.red.penalties}</td></tr>
@@ -29,6 +29,6 @@ export function MatchResults({ match, onRematch, onClose }: {
     </tbody></table>
     <div className="result-targets"><strong>{profile.label} · fuel RP targets</strong><p>Energized ({profile.energized}): Blue {match.blue.energized ? 'met' : 'not met'} · Red {match.red.energized ? 'met' : 'not met'}</p><p>Supercharged ({profile.supercharged}): Blue {match.blue.supercharged ? 'met' : 'not met'} · Red {match.red.supercharged ? 'met' : 'not met'}</p><p>Traversal ({profile.traversal} tower points): Blue {match.blue.traversal ? 'met' : 'not met'} · Red {match.red.traversal ? 'met' : 'not met'}</p></div>
     <p className="source-note">{match.endedEarly ? 'Incomplete match; these are the points earned before the early stop and its final processing window. ' : ''}Solo play assesses fuel, tower and bonus targets. A single robot can earn at most 45 tower points; Traversal requires an alliance. Opponent-dependent fouls and win/tie RP are not assessed.</p>
-    <button className="primary-button" onClick={onRematch}>Restart match <kbd>R</kbd></button>
+    <button className="primary-button" onClick={onRematch}>Restart match <kbd>{restartLabel}</kbd></button>
   </Dialog>;
 }
