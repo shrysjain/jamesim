@@ -37,7 +37,20 @@
     {
       "role": "team-linked-technical-packet",
       "url": "https://drive.google.com/file/d/11rQrMwCIseY18JbKFytGLXSd__x1JP1S/view",
-      "status": "viewer-only; contents not inspected in this session"
+      "status": "District Championship mechanical chapters inspected through connected Google Drive readable extraction; raw PDF not downloaded.",
+      "providerMetadata": {
+        "fileName": "States Pages to print.pdf",
+        "bytes": 26550129,
+        "modifiedTime": "2026-04-13T23:00:56Z"
+      },
+      "variant": "District Championship Downpour drum-shooter rebuild; exact equivalence to mutable May requested workspace unverified.",
+      "extraction": {
+        "path": "assets/source/robots/6800-downpour/technical-packet-extracted.txt",
+        "bytes": 5955,
+        "sha256": "cdfc23d058c6d64613f63dd3aecf728c5271eb2c1c4ae028d3205203250f6531",
+        "kind": "readable text excerpt, not raw PDF",
+        "ignored": true
+      }
     },
     {
       "role": "team-linked-code",
@@ -47,7 +60,7 @@
     {
       "role": "secondary-research-pointer",
       "url": "https://dmeglan.github.io/frc2026-rebuilt-dashboard/",
-      "status": "Identity pointer only; elevator/arm summary is not verified against requested CAD."
+      "status": "Identity pointer only. Its elevator/arm description is superseded for the District Championship revision by the team packet describing a drum-shooter rebuild."
     }
   ],
   "access": {
@@ -57,7 +70,17 @@
     "derivativeSearch": "No matching 6800 geometry found in TylerHandel/rebuilt-sim-2026 CAD README or repository code search; exact-document GitHub matches were tables/preview metadata, not geometry.",
     "requiredResource": "GLB or STEP export of requested Downpour assembly, retaining hierarchy when possible."
   },
-  "inputs": [],
+  "inputs": [
+    {
+      "kind": "readable-text-extraction",
+      "sourceRole": "team-linked-technical-packet",
+      "path": "assets/source/robots/6800-downpour/technical-packet-extracted.txt",
+      "bytes": 5955,
+      "sha256": "cdfc23d058c6d64613f63dd3aecf728c5271eb2c1c4ae028d3205203250f6531",
+      "ignored": true,
+      "note": "Hash verifies this text excerpt only, not original PDF bytes."
+    }
+  ],
   "measurements": {},
   "gameplayEstimates": {},
   "runtime": {
@@ -69,5 +92,58 @@
     "status": "pending",
     "evidence": [],
     "note": "Public source attribution is preserved; unrelated code licenses do not establish CAD rights."
+  },
+  "sourceSpecifications": {
+    "sourceRole": "team-linked-technical-packet",
+    "classification": "Team-stated District Championship figures; not CAD measurements or confirmed May workspace limits.",
+    "intake": {
+      "widthInches": 25.5,
+      "widthMeters": 0.6477,
+      "poweredRollerDiameterInches": 2,
+      "staticCrashBarTubeDiameterInches": 1,
+      "rollerMotors": "2 Kraken X60",
+      "rollerReduction": 1.23,
+      "deployment": "Single pivot, two ThriftyBot cycloidal gearboxes and low-mounted Kraken X60",
+      "pivotReduction": 69
+    },
+    "hopper": {
+      "unextendedVolumeCubicInches": 4613.4,
+      "extendedVolumeCubicInches": 8683.9,
+      "structure": "Stationary bumper-mounted panels and expanding top net",
+      "usableFuelCapacity": null
+    },
+    "indexer": {
+      "transferWidthFuel": 4,
+      "motors": "2 Kraken X44",
+      "reduction": 2.5,
+      "rollerDiametersInches": [
+        2,
+        1.25
+      ]
+    },
+    "shooter": {
+      "motors": "3 Kraken X60",
+      "gearing": "3:2",
+      "feederMotors": "2 Kraken X60",
+      "feederGearing": "20:9",
+      "feederRollerDiameterInches": 2
+    },
+    "hood": {
+      "motor": "Kraken X44",
+      "packetGearing": "1580:21",
+      "totalTravelDegrees": 80,
+      "absoluteOperatingAngles": null,
+      "laterMayDiscussionGearing": "790:11",
+      "note": "Different dated ratios retained, not silently reconciled; total travel does not establish absolute shot-angle limits."
+    },
+    "climber": {
+      "hooks": 2,
+      "hookType": "Pivoting, 3/8in aluminum",
+      "deployment": "Surgical tubing connected to static shaft",
+      "retraction": "Dyneema spool",
+      "motor": "Kraken X44",
+      "totalReduction": 74.1,
+      "simulationStatus": "Not implemented; real pivoting-hook attachment requires optional coordinated support contract beyond vertical side-hook-l1."
+    }
   }
 }
