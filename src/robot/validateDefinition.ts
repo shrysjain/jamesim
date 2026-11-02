@@ -24,6 +24,9 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(vector(geometry.pivot) && [geometry.drumRadius, geometry.guideLength, geometry.turretRadiansPerSecond].every(positive), 'Shooter geometry must be finite and positive.');
   check(!m.turret || !!geometry.turretPivot && vector(geometry.turretPivot), 'A turret requires its bearing pivot.');
   check(!geometry.feedPath || geometry.feedPath.every(vector), 'Feed path points must be finite.');
+  check(geometry.yawOffset === undefined || Number.isFinite(geometry.yawOffset), 'Shooter yaw offset must be finite.');
+  check(geometry.fixedElevation === undefined || Number.isFinite(geometry.fixedElevation) && geometry.fixedElevation > 0 && geometry.fixedElevation < Math.PI / 2, 'Fixed release elevation must lie above horizontal and below vertical.');
+  if (geometry.spread) check(Object.values(geometry.spread).every(v => Number.isFinite(v) && v >= 0) && geometry.spread.flyerChance <= 1 && geometry.spread.speed < 1, 'Shot spread must be finite and nonnegative with valid probability and fractional speed.');
   check(m.climb === !!d.climb, 'Climb capability and physics profile must agree.');
   if (d.climb) check(d.climb.kind === 'side-hook-l1' && [d.climb.maxLift, d.climb.rate, d.climb.travel, d.climb.deploySeconds].every(positive) && vector(d.climb.hook), 'Unsupported or invalid climber profile.');
   const v = d.visual, names = v.requiredNodes;

@@ -4,6 +4,7 @@ import type { Alliance, ShotTarget } from '../field/targets';
 import { FUEL_LINEAR_DAMPING, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { FuelSystem } from './FuelSystem';
 import type { SwerveChassis } from './SwerveChassis';
+import {sampleShotScatter} from './ShotScatter';
 import { DRIVE_RESPONSE } from './SwerveChassis';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
@@ -39,8 +40,8 @@ export function flightPosition(position: Vector, velocity: Vector, seconds: numb
 export class Shooter {
   turretYaw = 0;
   get geometry() { return this.chassis.definition.shooterGeometry; }
-  private get minElevation() { return this.geometry.minElevation ?? SHOOTER.minElevation; }
-  private get maxElevation() { return this.geometry.maxElevation ?? SHOOTER.maxElevation; }
+  private get minElevation() { return this.geometry.fixedElevation ?? this.geometry.minElevation ?? SHOOTER.minElevation; }
+  private get maxElevation() { return this.geometry.fixedElevation ?? this.geometry.maxElevation ?? SHOOTER.maxElevation; }
   /** Rotate every point about the bearing axis, including an offset flywheel axle. */
   private turretPoint(offset: Vector) {
     const pivot = v3(...this.geometry.pivot), axis = v3(...(this.geometry.turretPivot ?? this.geometry.pivot));
@@ -48,7 +49,7 @@ export class Shooter {
   }
   private get speedPerRpm() { return 2 * Math.PI * this.geometry.drumRadius / 60 * SHOOTER.slip; }
   private get mechanism() { return this.chassis.definition.mechanisms; }
-  private turretRotate(p: Vector) { const c = Math.cos(this.turretYaw), s = Math.sin(this.turretYaw); return v3(p.x*c+p.z*s, p.y, -p.x*s+p.z*c); }
+  private turretRotate(p: Vector) { const yaw = this.turretYaw + (this.geometry.yawOffset ?? 0), c = Math.cos(yaw), s = Math.sin(yaw); return v3(p.x*c+p.z*s, p.y, -p.x*s+p.z*c); }
   alliance: Alliance = 'blue';
   rpm = 0;
   elevation = SHOOTER.maxElevation;
@@ -61,6 +62,7 @@ export class Shooter {
   private active = false;
   private blocked = false;
   private randomState = 29102026;
+  private scatterState = 20261102;
   private feedOrder: number[] = [];
   private laneOrder: number[] = [];
   private nextFeedAt = 0;
@@ -69,6 +71,7 @@ export class Shooter {
   // One slot per conventional lane; a pipelined channel can hold several visible balls in transit.
   private makeFeedSlots() { return this.mechanism.lanes.flatMap(z => Array.from({ length: this.geometry.feedPath ? 8 : 1 }, () => z)).map(z => ({ z, id: null as number | null, age: 0, duration: SHOOTER.feedSeconds, offset: 0, availableAt: 0, lastShotAt: -Infinity, start: v3() })); }
   private random() { this.randomState = (Math.imul(this.randomState, 1664525) + 1013904223) >>> 0; return this.randomState / 0x100000000; }
+  private scatterRandom = () => { this.scatterState = (Math.imul(this.scatterState, 1664525) + 1013904223) >>> 0; return this.scatterState / 0x100000000; };
   private refillOrder() {
     if (!this.laneOrder.length) {
       this.laneOrder = this.laneState.map((_, i) => i);
@@ -78,7 +81,7 @@ export class Shooter {
   }
 
   constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem, private owner: string, private payloadChanged: () => void) { this.laneState = this.makeFeedSlots(); this.elevation = this.maxElevation; }
-  get hood() { return (this.maxElevation - this.elevation) / (this.maxElevation - this.minElevation); }
+  get hood() { return this.geometry.fixedElevation === undefined ? (this.maxElevation - this.elevation) / (this.maxElevation - this.minElevation) : 0; }
   /** Measured drum tangent plus 155 mm of guide clearance; not the bumper edge. */
   muzzleLocal(elevation: number, z: number) {
     const radius = this.geometry.drumRadius + FUEL_RADIUS + 0.004;
@@ -100,15 +103,40 @@ export class Shooter {
       elevation = Math.atan2(local.y, Math.hypot(local.x, local.z));
     }
     const speed = Math.hypot(relative.x, relative.y, relative.z);
-    if (elevation < this.minElevation || elevation > this.maxElevation || speed < SHOOTER.minSpeed || speed > SHOOTER.maxSpeed) return null;
+    if (elevation < this.minElevation - 1e-6 || elevation > this.maxElevation + 1e-6 || speed < SHOOTER.minSpeed || speed > SHOOTER.maxSpeed) return null;
     const muzzle = this.muzzle(0, elevation), launch = add(body.velocityAtPoint(muzzle), relative);
     const verticalAtTarget = launch.y * Math.exp(-FUEL_LINEAR_DAMPING * t) - 9.81 / FUEL_LINEAR_DAMPING * (1 - Math.exp(-FUEL_LINEAR_DAMPING * t));
     if (verticalAtTarget > -1) return null; // Require descending entry/landing.
     const preferred = (target.kind === 'Hub' ? 64 : 52) * DEG;
     const local = unrotate(relative, q), dx = relative.x * a, dz = relative.z * a, velocity = body.linvel();
     const trackingRate = clamp((dx * velocity.z - dz * velocity.x) / (dx * dx + dz * dz), -2, 2);
-    const solution: AimSolution = { target, speed, elevation, yawError: Math.atan2(Math.sin(Math.atan2(-local.z, local.x) - this.turretYaw), Math.cos(Math.atan2(-local.z, local.x) - this.turretYaw)), trackingRate, time: t, obstructed: false };
+    const yawError = Math.atan2(-local.z, local.x) - this.turretYaw - (this.geometry.yawOffset ?? 0);
+    const solution: AimSolution = { target, speed, elevation, yawError: Math.atan2(Math.sin(yawError), Math.cos(yawError)), trackingRate, time: t, obstructed: false };
     return { solution, cost: Math.abs(elevation - preferred) + speed * 0.004, muzzle, launch };
+  }
+
+  /** Solve flight time at the real fixed hood angle, rather than moving a
+   * nonexistent hood to fit one of the variable-angle trajectory samples. */
+  private fixedFlightTimes(target: ShotTarget): number[] {
+    const elevation = this.geometry.fixedElevation!;
+    const muzzle = this.muzzle(0, elevation), delta = sub(target.position, muzzle), q = this.chassis.renderRotation;
+    const velocity = this.chassis.body.velocityAtPoint(muzzle);
+    const error = (t: number) => {
+      const a = (1 - Math.exp(-FUEL_LINEAR_DAMPING * t)) / FUEL_LINEAR_DAMPING, b = (t - a) / FUEL_LINEAR_DAMPING;
+      const v = unrotate(sub(scale(add(delta, v3(0, 9.81 * b, 0)), 1 / a), velocity), q);
+      return v.y - Math.hypot(v.x, v.z) * Math.tan(elevation);
+    };
+    const times: number[] = []; let previous = .1, lowError = error(previous);
+    for (let next = .125; next <= 3.2; next += .025) {
+      const highError = error(next);
+      if (lowError * highError < 0) {
+        let lo = previous, hi = next, sign = lowError;
+        for (let i = 0; i < 30; i++) { const mid = (lo + hi) / 2, e = error(mid); if (sign * e <= 0) hi = mid; else { lo = mid; sign = e; } }
+        times.push((lo + hi) / 2);
+      }
+      previous = next; lowError = highError;
+    }
+    return times;
   }
 
   solve(): AimSolution | null {
@@ -122,9 +150,13 @@ export class Shooter {
       if (current) return { ...current.solution, obstructed: cached.obstructed };
     }
     let blocked: AimSolution | null = null;
-    for (const extra of base.kind === 'Pass' ? [0, 0.2, 0.4, 0.6, 0.8, 1] : [0]) {
+    // A fixed hood cannot loft a steeper arc. Search farther safe landing
+    // points within the same alliance zone instead of changing its angle.
+    const passOffsets = this.geometry.fixedElevation === undefined ? [0, .2, .4, .6, .8, 1] : Array.from({ length: 16 }, (_, i) => i * .2);
+    for (const extra of base.kind === 'Pass' ? passOffsets : [0]) {
       const target = targetAt(extra), candidates = [];
-      for (let t = 0.35; t <= 3.2; t += 0.025) {
+      const times = this.geometry.fixedElevation === undefined ? Array.from({ length: 115 }, (_, i) => .35 + i * .025) : this.fixedFlightTimes(target);
+      for (const t of times) {
         const candidate = this.candidate(target, t); if (candidate) candidates.push(candidate);
       }
       candidates.sort((a, b) => a.cost - b.cost);
@@ -246,12 +278,17 @@ export class Shooter {
       // Reduce precision while translating; the released ball keeps its physical trajectory.
       const accuracy = this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? this.geometry.movingAccuracy ?? 1 : 1;
       const dispersion = 1 / clamp(accuracy, .05, 1);
-      const elevation = this.elevation + (this.random() - 0.5) * 0.008 * dispersion;
-      const yaw = (this.random() - 0.5) * 0.009 * dispersion;
+      const scatter = this.geometry.spread ? sampleShotScatter(this.geometry.spread, this.geometry.movingAccuracy ?? .9,
+        this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom) : {
+        elevation: (this.random() - .5) * .008 * dispersion, yaw: (this.random() - .5) * .009 * dispersion,
+        speedFactor: .996 + this.random() * .008, spin: v3(),
+      };
+      const elevation = this.elevation + scatter.elevation, yaw = scatter.yaw;
       const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
-        this.rpm * this.speedPerRpm * (0.996 + this.random() * 0.008))), q);
+        this.rpm * this.speedPerRpm * scatter.speedFactor)), q);
       const velocity = add(this.chassis.body.velocityAtPoint(position), exit);
       if (!this.fuel.release(f, position, velocity, true)) continue;
+      if (this.geometry.spread) f.body.setAngvel(rotate(this.turretRotate(scatter.spin), q), true);
       this.payloadChanged();
       this.chassis.body.applyImpulseAtPoint(scale(exit, -FUEL_MASS), position, true);
       this.shotsFired++; this.shots.push({ id: f.id, lane: this.mechanism.lanes.indexOf(lane.z), time: this.fuel.time, position, velocity, target: this.solution.target, flightTime: this.solution.time });
@@ -272,6 +309,7 @@ export class Shooter {
     this.solution = null; this.selection = null; this.active = this.blocked = false;
     this.feedOrder = []; this.laneOrder = []; this.nextFeedAt = this.nextLaunchAt = 0;
     this.randomState = 29102026;
+    this.scatterState = 20261102;
     if (clearShots) { this.shots.length = 0; this.shotsFired = 0; }
   }
   stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; }
