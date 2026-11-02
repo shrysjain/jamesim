@@ -32,20 +32,47 @@ not a prepared-runtime manifest.
 
 The team's CAD-release discussion describes a four-fuel-wide shooter and an
 adjustable hood. It says reverse-direction shooting remained an inconsistent
-experiment that was not used in matches. The separately linked Drizzle revision
-and an early-season binder must not silently supply geometry or measurements
-for Downpour. A later post reports a 790:11 hood ratio; that is an actuator
-ratio, not an angular limit or a measured launch-performance claim.
+experiment that was not used in matches.
 
-A secondary study dashboard characterizes this robot as an elevator/arm
-launcher. That description has not been checked against the full requested
-assembly, and is insufficient evidence to implement a new mechanism family.
-Inspect the actual CAD and team material first. Do not enable bidirectional
-shooting, climbing, a turret or other capabilities without evidence.
+The technical packet, **States Pages to print.pdf**, was inspected through the
+Google Drive connector's readable extraction. Provider metadata reports
+26,550,129 bytes and modification time `2026-04-13T23:00:56Z`. Its District
+Championship chapters describe the rebuild from a single-stream turret to a
+four-fuel-wide drum shooter. This directly supersedes the secondary dashboard's
+unverified elevator/arm characterization as evidence for this revision. The
+separately linked Drizzle workspace and the initial March binder must not
+silently supply measurements for the requested May CAD workspace.
 
-No mass, frame dimensions, wheel locations, hopper capacity, intake stroke,
-launch geometry, firing rate or moving-shot accuracy has been measured here.
-Those values remain intentionally unset rather than copied from another team.
+The packet reports these design specifications; they are **team-stated figures,
+not measurements of the inaccessible CAD**:
+
+| Subsystem | District Championship packet evidence |
+| --- | --- |
+| Intake | 25.5 in (0.6477 m) acquisition width; powered 2 in roller and static 1 in aluminum crash-bar tube; two Kraken X60 roller motors at 1.23:1 |
+| Deployment | Single pivot, two ThriftyBot cycloidal gearboxes, 69:1 reduction; low-mounted Kraken X60 |
+| Hopper | 4,613.4 in³ unextended and 8,683.9 in³ extended; stationary bumper-mounted panels and an expanding top net |
+| Indexer | Four-fuel-wide transfer; two Kraken X44s at 2.5:1; mixed 2 in / 1.25 in rollers |
+| Shooter / feeder | Three Kraken X60 shooter motors at 3:2 and two X60 feeder motors at 20:9; 2 in feeder rollers |
+| Hood | Kraken X44; packet gearing 1580:21; stated 80° total travel |
+| Climber | Two pivoting 3/8 in aluminum hooks; surgical-tubing deployment and Dyneema spool retraction; Kraken X44 and 74.1:1 total reduction |
+
+The stated hopper volumes do not establish usable full-size-fuel capacity or
+legal cargo seed positions. The 80° hood travel does not specify an absolute
+shot-angle range. A later May discussion gives a different hood ratio, 790:11;
+keep both dated records until CAD/code establishes which applies to the chosen
+export. Neither ratio is a measured launch-performance claim.
+
+The packet's April District Championship documentation and the mutable May
+release workspace are related sources, not proof of identical geometry or
+unchanged operating limits. Verify their differences when the full export is
+available. The two pivoting hooks are not the existing vertical `side-hook-l1`
+family: enabling a climb requires real attachment/support behavior and a
+coordinated optional contract extension, not an animation-only substitute.
+
+No mass, frame dimensions, wheel locations, full-size cargo layout, intake pivot
+or limits, launch geometry, firing rate or moving-shot accuracy has been
+measured here. Those values remain intentionally unset rather than copied from
+another team. No unsupported capabilities are registered.
 
 ## CAD access and next implementation step
 
@@ -53,8 +80,11 @@ On November 2, 2026 the web reader could resolve the team's exact CAD URL but
 returned no geometry or assembly data. The selected cloud environment rejected
 the direct Onshape request with a proxy CONNECT 403. This is an access limitation
 of this session; it does **not** establish that the team disabled exports.
-The technical-packet viewer exposed a loading/sign-in page. No matching 6800
-geometry was found in the public derivative mesh pack used by existing robots.
+The ordinary technical-packet web viewer exposed a loading/sign-in page; its
+mechanical text was subsequently read through the connected Google Drive
+plugin. That text supplies revision evidence, not source mesh geometry. No
+matching 6800 geometry was found in the public derivative mesh pack used by
+existing robots.
 
 Provide a GLB or STEP export of the requested Downpour assembly, preferably with
 bumper, intake and hood subassembly hierarchy retained. Source exports belong
@@ -72,7 +102,9 @@ runtime payload. Once geometry is available:
 
 ## Validation and integration
 
-The repository branch guard passed for team 6800. The source JSON parses.
+The repository branch guard passed for team 6800. The source JSON parses, and the ignored readable-text extraction has a
+recorded byte count and SHA-256. That hash identifies the text extraction, not
+the raw PDF, which was not downloaded.
 Simulation, asset-budget and visual validation have not been run for this robot
 because no robot class or runtime CAD exists yet. This branch currently changes
 only this README and its source research record; it has no shared integration
