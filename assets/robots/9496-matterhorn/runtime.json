@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "9496-matterhorn",
+  "group": {
+    "name": "Team 9496 Matterhorn CAD",
+    "source": "https://cad.onshape.com/documents/768d7890bafac55a2a891aae/w/a270c1901be101ad8a97909d/e/df73afab8b112242516b9ad0",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/9496-matterhorn/robot.glb",
+        "bytes": 2989292,
+        "sha256": "3e51ea135a5b305376d6d0a8f96e664722f9f97198bd767d4d46193874b0ef3f"
+      }
+    ]
+  }
+}

@@ -7,6 +7,9 @@ import { CollisionGroups } from './collisionGroups';
 export const FUEL_RADIUS = 0.075;
 export const FUEL_MASS = 0.215;
 export const FUEL_LINEAR_DAMPING = 0.15;
+// Stable per-ball material variation models inconsistent foam rebounds. Gameplay
+// estimates; identical properties survive every capture, shot, return and reset.
+export const fuelRestitution = (id: number) => .38 + .16 * (Math.imul(id + 1, 0x9e3779b1) >>> 0) / 4294967296;
 export type FuelState = 'loose' | 'transferring' | 'stored' | 'feeding' | 'airborne' | 'hubTransit';
 export type Fuel = {
   readonly id: number; readonly body: RAPIER.RigidBody;
@@ -24,7 +27,7 @@ export class FuelSystem {
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(...position)
         .setLinearDamping(FUEL_LINEAR_DAMPING).setAngularDamping(0.5).setCanSleep(true).setCcdEnabled(true));
       world.createCollider(RAPIER.ColliderDesc.ball(FUEL_RADIUS).setMass(FUEL_MASS)
-        .setFriction(0.6).setRestitution(0.35).setCollisionGroups(CollisionGroups.fuel), body);
+        .setFriction(0.6).setRestitution(fuelRestitution(id)).setCollisionGroups(CollisionGroups.fuel), body);
       body.sleep();
       return { id, body, state: 'loose', owner: null, slot: -1, age: 0, local: v3(), start: v3(), availableAt: 0 };
     });
@@ -48,6 +51,8 @@ export class FuelSystem {
     if (fuel.owner === null) return false;
     fuel.body.setTranslation(position, false); fuel.body.setLinvel(velocity, false);
     fuel.body.setAngvel(v3(), false); fuel.body.setRotation({ x: 0, y: 0, z: 0, w: 1 }, false);
+    fuel.body.collider(0).setCollisionGroups(CollisionGroups.fuel);
+    fuel.body.collider(0).setRestitution(fuelRestitution(fuel.id));
     fuel.body.setEnabled(true); fuel.body.wakeUp();
     fuel.state = airborne ? 'airborne' : 'loose'; fuel.owner = null; fuel.slot = -1; fuel.age = 0; fuel.availableAt = this.time + 0.4;
     this.world.propagateModifiedBodyPositionsToColliders();
@@ -71,6 +76,7 @@ export class FuelSystem {
       f.state = 'loose'; f.owner = null; f.slot = -1; f.age = 0; f.availableAt = 0;
       f.local = v3(); f.start = v3(); f.body.setEnabled(true);
       f.body.collider(0).setCollisionGroups(CollisionGroups.fuel);
+      f.body.collider(0).setRestitution(fuelRestitution(f.id));
       f.body.setTranslation(v3(...this.initial[i]), false); f.body.setLinvel(v3(), false); f.body.setAngvel(v3(), false);
       f.body.setRotation({ x: 0, y: 0, z: 0, w: 1 }, false); f.body.sleep();
     });
