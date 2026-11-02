@@ -7,6 +7,9 @@ export type HopperVolume = {
   frontX: number; backX: number; halfWidth: number; floorY: number; ceilingY: number;
   frontTravel: number; ceilingTravel?: number; // roof follows the vertical climber/lid stage
   floorSlope?: number; slopedFront?: boolean;
+  /** Finite wall tops in local Y. When present, the hopper is open above its rim;
+   * ceilingY only bounds authored cargo seeds, never traps dynamic fuel. */
+  rim?: { front: number; back: number; sides: number };
 };
 /** Estimated launch standard deviations: radians, fractional speed, and rad/s backspin. */
 export type ShotSpread = { yaw: number; elevation: number; speed: number; flyerChance: number; backspin: number };
@@ -19,7 +22,7 @@ export type RobotDefinition = {
   modules: { name: string; x: number; z: number }[];
   intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean };
   hopper: { stowTravel: number; coupledToIntake?: boolean; autoLift?: { loweredCapacity: number }; intakeCurve?: number[];
-    volume?: HopperVolume; fixedSlot?: number };
+    volume?: HopperVolume; fixedSlot?: number; entry?: Vec3 };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
   climb?: { kind: 'side-hook-l1'; approachAxis?: 'x' | 'z'; hookOffsetsZ?: number[]; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };

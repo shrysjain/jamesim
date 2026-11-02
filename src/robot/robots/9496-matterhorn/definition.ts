@@ -3,8 +3,8 @@ import {STANDARD_SWERVE,swerveModules} from '../../defaults';
 import {MATTERHORN_VISUAL} from './visual';
 import {MATTERHORN_CARGO} from './cargo';
 
-/** Exact owner-supplied release CAD. Mass, rates, fixed launch fit and net
- * envelope are gameplay estimates; measured dimensions and sources are in README. */
+/** Exact owner-supplied release CAD. Mass, rates, fixed launch fit and wall
+ * contacts are gameplay estimates; measured dimensions and sources are in README. */
 export const MATTERHORN: RobotDefinition = {
   ...STANDARD_SWERVE,
   id:'9496-matterhorn',teamNumber:'9496',name:'9496 LYNK · Matterhorn',
@@ -15,16 +15,17 @@ export const MATTERHORN: RobotDefinition = {
   // Team confirms a passive drop: no powered retraction or climb is advertised.
   intake:{pivot:[-.32385,.18415-.223,0],stowedAngle:-115*Math.PI/180},
   // Keep stored spheres ahead of the shooter housing, including its side plates.
-  // The higher retaining envelope is a gameplay fit, not measured net geometry.
-  hopper:{stowTravel:.3048,volume:{frontX:-.618,backX:-.006,halfWidth:.307,
-    floorY:-.0705,floorSlope:-.1764,ceilingY:.50,frontTravel:.3048}},
+  // Finite CAD panel tops: fuel can roll over the rim and return to field physics.
+  hopper:{stowTravel:.3048,entry:[-.45,.24,0],volume:{frontX:-.618,backX:-.006,halfWidth:.307,
+    floorY:-.0705,floorSlope:-.1764,ceilingY:.44,frontTravel:.3048,
+    rim:{front:.308,back:.34,sides:.31}}},
   hood:{pivot:[.127,.454025-.223,0],maxAngle:0},
   shooterGeometry:{pivot:[.127,.454025-.223,0],drumRadius:.0508,guideLength:.155,turretRadiansPerSecond:3,
     yawOffset:Math.PI,fixedElevation:56*Math.PI/180,passRange:9,movingAccuracy:.90,
     spread:{yaw:.030,elevation:.035,speed:.035,flyerChance:.10,backspin:30},
-    // Fuel rises behind the feeder rollers, between their outer surfaces and
-    // the printed guides; it must not travel through the roller axle centers.
-    feedPath:[[.17,-.02,0],[.2458,.2801-.223,0],[.2458,.3881-.223,0],[.235,.523-.223,0]]},
+    // Fit full-size fuel inside the curved rear guide. Contact at the roller
+    // nip approximates soft-fuel compression, not a rigid CAD contact solver.
+    feedPath:[[.17,-.02,0],[.224,.2801-.223,0],[.224,.3881-.223,0],[.208,.523-.223,0]]},
   mechanisms:{capacity:MATTERHORN_CARGO.length,intakeRate:35,compress:false,lanes:[-.17,0,.17],fireRate:18,
     turret:false,movingShots:true,simultaneousIntake:true,climb:false},
   cargoSlots:MATTERHORN_CARGO,

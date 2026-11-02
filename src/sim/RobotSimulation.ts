@@ -143,16 +143,26 @@ export class RobotSimulation {
       if (f.state === 'transferring') {
         if (!this.actuatorsEnabled) continue;
         f.age += dt;
-        const t = Math.min(1, f.age / INTAKE.transferSeconds), end = this.storedPosition(f.slot);
+        const t = Math.min(1, f.age / INTAKE.transferSeconds);
+        const entry = this.chassis.definition.hopper.entry, end = entry ? v3(...entry) : this.storedPosition(f.slot);
         const control = v3(-0.4, 0.25, f.start.z * 0.5 + end.z * 0.5);
         f.local = lerp(lerp(f.start, control, t), lerp(control, end, t), t);
         if (t === 1) f.state = 'stored';
       } else if (f.state === 'stored' && !this.chassis.definition.hopper.volume) f.local = this.storedPosition(f.slot);
     }
-    if (!this.inspectionPose && this.chassis.definition.hopper.volume) this.hopper.step(dt, held, this.chassis.pose, {
-      position: this.chassis.body.translation(), velocity: this.chassis.body.linvel(),
-      angularVelocity: this.chassis.body.angvel(), rotation: this.chassis.renderRotation,
-    });
+    if (!this.inspectionPose && this.chassis.definition.hopper.volume) {
+      const body = this.chassis.body, q = this.chassis.renderRotation;
+      const spills = this.hopper.step(dt, held, this.chassis.pose, {
+        position: body.translation(), velocity: body.linvel(), angularVelocity: body.angvel(), rotation: q,
+      });
+      for (const spill of spills) {
+        const f = this.fuel.records[spill.id];
+        if (f.owner !== this.owner || f.state !== 'stored') continue;
+        const position = add(body.translation(), rotate(f.local, q));
+        const velocity = add(body.velocityAtPoint(position), rotate(spill.velocity, q));
+        this.fuel.release(f, position, velocity);
+      }
+    }
     this.updatePayload();
     if (!this.climber.attached) this.chassis.step(dt, aimTurn, this.actuatorsEnabled);
     else { this.chassis.body.resetForces(false); this.chassis.body.resetTorques(false); }
