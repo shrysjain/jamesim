@@ -15,7 +15,7 @@ const doc=new Document(),buffer=doc.createBuffer(),scene=doc.createScene('3847 S
 // FM exports are Y-up, intake +Z. Normalize intake to −X and chassis reference .223 m.
 const frame=new Matrix4().makeRotationY(-Math.PI/2).setPosition(0,-.223,0);
 const runtime=p=>new Vector3(...p).applyMatrix4(frame).toArray();
-const groups=new Map(),batches=new Map(),materials=new Map(),report={inputs:{},kept:0,omitted:0,duplicates:0,assemblies:{}};
+const groups=new Map(),batches=new Map(),materials=new Map(),report={inputs:{},kept:0,omitted:0,duplicates:0,assemblies:{},polycarbonate:[]};
 function group(name,position=[0,0,0],parent=''){
  if(groups.has(name))return name;
  const n=doc.createNode(name).setTranslation(position).setExtras({mechanism:name});
@@ -31,7 +31,12 @@ function bounds(node){const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infin
 function axle(name,parent,point){
  if(!groups.has(name)){const base=new Vector3(...groups.get(parent).getWorldTranslation());group(name,new Vector3(...runtime(point)).sub(base).toArray(),parent);}return name;
 }
-function material(original,bumper=false){
+function material(original,bumper=false,polycarbonate=false){
+ if(polycarbonate){
+  const key='exterior-polycarbonate';
+  if(!materials.has(key))materials.set(key,doc.createMaterial(key).setBaseColorFactor([.82,.90,1,.24]).setAlphaMode('BLEND').setMetallicFactor(0).setRoughnessFactor(.22));
+  return materials.get(key);
+ }
  const rgba=original?.getBaseColorFactor()??[.55,.55,.55,1];
  const color=rgba.slice(0,3).map(x=>Math.round(x*20)/20),key=bumper?'bumper':color.join(',')+','+Math.round(rgba[3]*10)/10;
  if(!materials.has(key)){
@@ -39,10 +44,10 @@ function material(original,bumper=false){
   if(rgba[3]<.99)m.setAlphaMode('BLEND');materials.set(key,m);
  }return materials.get(key);
 }
-function append(parent,node,transform,bumper=false){
+function append(parent,node,transform,bumper=false,polycarbonate=false){
  const origin=new Vector3(...groups.get(parent).getWorldTranslation()),nm=new Matrix3().getNormalMatrix(transform);
  for(const p of node.getMesh().listPrimitives()){
-  const mat=material(p.getMaterial(),bumper),key=parent+'/'+mat.getName();
+  const mat=material(p.getMaterial(),bumper,polycarbonate),key=parent+'/'+mat.getName();
   if(!batches.has(key))batches.set(key,{parent,mat,positions:[],normals:[],indices:[]});
   const b=batches.get(key),pos=p.getAttribute('POSITION'),normal=p.getAttribute('NORMAL'),base=b.positions.length/3;
   for(let i=0;i<pos.getCount();i++){v.fromArray(pos.getElement(i,[])).applyMatrix4(transform).sub(origin);b.positions.push(v.x,v.y,v.z);
@@ -95,7 +100,12 @@ for(const file of sources.files){
    const ys=[.2847,.3422,.3997],i=ys.findIndex(y=>Math.abs(b.center[1]-y)<.004);
    if(i>=0)parent=axle(`feeder-vertical-${i}`,'chassis',[0,ys[i],-.0755168]);
   }
-  append(parent,node,matrix,path.includes('Bumpers <1>')&&/Fabric/i.test(name));report.kept++;
+  // Match named outer hopper skins, not their shared white/black CAD colors:
+  // frame rails, brackets, crash plates, rollers and bumper fabric stay opaque.
+  const polycarbonate=(file.name==='model.glb'&&path.includes('Static Hopper <1>')&&['1-09-Static Hopper','1-12-Lower Static Hopper Wall','Part 9','Part 10'].includes(name))
+   ||(file.name==='model_0.glb'&&['2-27-Intake C Hopper','2-28-Intake Front Hopper'].includes(name));
+  if(polycarbonate)report.polycarbonate.push({file:file.name,name});
+  append(parent,node,matrix,path.includes('Bumpers <1>')&&/Fabric/i.test(name),polycarbonate);report.kept++;
  }
 }
 if(moduleNames.size!==4)throw Error('Expected four actual MK5n modules');
