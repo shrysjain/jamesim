@@ -65,4 +65,19 @@ describe('Rembrandts prepared-CAD animation',()=>{
    s.startSession(config,true);expect(r.kickerDeployment).toBe(0);
   }finally{s.dispose();}
  });
+ it('keeps the deployed lower bar fixed while the carriage slides in and out',()=>{
+  const {view,robot,mechanisms,nodes}=fixture(),bar=nodes.get('passive-kicker')!,carriage=nodes.get('intake')!;
+  mechanisms.kickerDeployment=1;
+  robot.pose.intake=1;view.update(robot,0,mechanisms);view.group.updateMatrixWorld(true);
+  const position=bar.getWorldPosition(new THREE.Vector3()),rotation=bar.getWorldQuaternion(new THREE.Quaternion());
+  const bounds=new THREE.Box3().setFromObject(bar,true),start=carriage.getWorldPosition(new THREE.Vector3());
+  try{for(const extension of [1,.7,.35,0,1]){
+   robot.pose.intake=extension;view.update(robot,0,mechanisms);view.group.updateMatrixWorld(true);
+   expect(bar.getWorldPosition(new THREE.Vector3()).distanceTo(position)).toBeLessThan(1e-12);
+   expect(bar.getWorldQuaternion(new THREE.Quaternion()).angleTo(rotation)).toBeLessThan(1e-7);
+   const current=new THREE.Box3().setFromObject(bar,true);
+   expect(current.min.distanceTo(bounds.min)).toBeLessThan(1e-12);expect(current.max.distanceTo(bounds.max)).toBeLessThan(1e-12);
+   expect(carriage.getWorldPosition(new THREE.Vector3()).x-start.x).toBeCloseTo(.26*(1-extension),6);
+  }}finally{view.dispose();}
+ });
 });

@@ -1,6 +1,6 @@
 # 4481 Team Rembrandts — Era II (2026 Worlds)
 
-Selectable, owner-supplied Worlds CAD robot with a passive linear intake, two intake rollers, rotating-floor indexer, fixed feed tower, finite-travel turret and adjustable hood. Uses the shared simulation, fuel bodies, controls, camera and match lifecycle.
+Selectable, owner-supplied Worlds CAD robot with a linear intake, fuel-dependent shooting retraction, an independent lower bar, two intake rollers, rotating-floor indexer, fixed feed tower, finite-travel turret and adjustable hood. Uses the shared simulation, fuel bodies, controls, camera and match lifecycle.
 
 The user's exact [Onshape document/workspace/element](https://cad.onshape.com/documents/af9429d854eeaa98a1b3eeda/w/2554bb5ba18919b03a73491d/e/0bdb27080b01fd9a708ccf46) is the Worlds link in the [official release, post 521](https://www.chiefdelphi.com/t/frc-4481-team-rembrandts-2026-build-thread-open-alliance/507296?page=26). This is Era II, distinct from Regionals Era. The uploaded GLB's root is `TR26-00-1000_4481_Robot Worlds`.
 
@@ -42,7 +42,7 @@ The complete CAD's rear `TR26-CM` assembly contains UC-844 cameras. The pinned `
 ## Controls and mechanism behavior
 
 - **WASD** drive; **J/L** rotate; **Shift** collect; **Q** reverse; **Space** aim/shoot/pass; **R** restart; Escape opens controls/settings. Shared rebinding and controller handling are retained.
-- The four constant-force springs passively deploy the intake at session start. Its estimated 260 mm travel/95 mm rise follow the inclined rails. The intake stays out during firing. The separate passive kicker folds inside the bumper at the measured frame hinge in preview/reset and deploys only after simulation starts. Its 110° folding angle is an estimate; original CAD geometry is retained. Explicit `manualRetraction: false` prevents exposing an ineffective V button despite a real starting-to-deployed slide.
+- The four constant-force springs passively deploy the intake at session start. Its estimated 260 mm travel/95 mm rise follow the inclined rails. During shooting, the carriage retracts progressively as held fuel falls from 48 toward eight or fewer; eight or fewer allow full retraction. Intake/reverse demand extends it again, and releasing shooting restores extension. The lower kicker stays deployed independently of that slide. The separate passive kicker folds inside the bumper at the measured frame hinge in preview/reset and deploys only after simulation starts. Its 110° folding angle is an estimate; original CAD geometry is retained. Explicit `manualRetraction: false` prevents exposing an ineffective V button despite a real starting-to-deployed slide.
 - Original intake rollers and fixed tower rollers spin on their real shafts. Each opposed upper feeder cylinder has its own center; the right cylinder counter-rotates so both sides feed upward. The floor disk stirs supported fuel with bounded friction during collection/shooting and reverses with Q. Upper cargo moves through normal sphere contacts, not a forced rigid stack.
 - Intake transfer preserves each ball's lateral pickup column across a bounded .46 m inlet. It does not collapse the whole roller width into one point. The indexer cone, feed tower and inclined rear funnel exclude occupied volume from seeds and dynamic fuel contacts.
 - A single managed/pipelined feed path carries the same owned IDs from the hopper into the fixed tower and rotating muzzle. The remaining detailed roller/brush/gear interactions are approximations, not a separate simulation or instant replacement ammunition.
@@ -95,3 +95,11 @@ The forward `TR26-IN-4013` kicker plates were incorrectly left fixed on the chas
 The current correction passes **47 focused tests across 8 files**, including real-GLTF/RobotView rotation checks throughout 360°, counter-rotation, folded footprint below .55 m, preview after deployment, paused pre-match state, restart, Rembrandts gameplay and shared rendering/definition/asset checks. `pnpm build:release` passes. The full 323-test result above is the pre-correction baseline; this visual correction used focused regression coverage.
 
 Isolated browser renders also confirm folded/deployed kicker and quarter/half-turn feeder poses with no page errors.
+
+## Fuel-dependent intake retraction
+
+The owner requested shooting compression on this simulation variant. The team source describes a passively extended intake; this automatic retraction is a requested gameplay behavior, not a claimed measurement of a powered Era II mechanism. It reuses the existing shared cargo-limited actuator: full at 48, proportional partial extension as fuel is consumed, fully retracted at eight or fewer. Collection/reverse override it to extend. No manual V control is added.
+
+The existing independent lower kicker/bar stays down after deployment while only the carriage and its rollers slide inward/upward. The moving hopper front boundary follows that same carriage position, so cargo is pushed by the existing solver. The model, bar hinge, cargo mass, IDs, capacity, feed path, turret, rates and other robots' settings are unchanged.
+
+Validation: **329 tests passed across 48 files** with `pnpm test:sim`; `pnpm build:release` passes. The new full-load test fires all 48 original fuel bodies while recording progressively smaller intake extensions and a fully retracted empty pose. Actual GLTF/RobotView tests prove that the deployed lower bar position, rotation and bounds stay unchanged across carriage travel. Collection/reverse, pause and restart checks pass. Browser full/half/retracted poses show the bar staying down with no page errors.
