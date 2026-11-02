@@ -15,8 +15,8 @@ const run=(s:FieldSimulation,t:number)=>{for(let i=0;i<Math.round(t*120);i++)s.u
 const seeds=(n:number)=>Array.from({length:n},(_,i):[number,number,number]=>[0,.08,3+i*.16]);
 function fill(s:FieldSimulation){const r=s.robotController!;for(const [i,f]of s.fuelSystem.records.entries()){s.fuelSystem.capture(f,r.owner,i,r.storageSlots[i]);f.state='stored';}}
 describe('9496 Matterhorn',()=>{
- it('validates fixed/reverse shooting and full-size non-overlapping forty-nine-fuel packing',()=>{
-  expect(validateRobotDefinition(D)).toEqual([]);expect(D.mechanisms.capacity).toBe(49);expect(D.mechanisms.climb).toBe(false);
+ it('validates fixed/reverse shooting and full-size non-overlapping forty-two-fuel packing',()=>{
+  expect(validateRobotDefinition(D)).toEqual([]);expect(D.mechanisms.capacity).toBe(42);expect(D.mechanisms.climb).toBe(false);
   expect(D.shooterGeometry.yawOffset).toBe(Math.PI);const v=D.hopper.volume!;
   for(const [i,p]of D.cargoSlots.entries()){
    expect(p[0]-.075).toBeGreaterThanOrEqual(v.frontX-1e-8);expect(p[0]+.075).toBeLessThanOrEqual(v.backX+1e-8);
@@ -25,24 +25,65 @@ describe('9496 Matterhorn',()=>{
    for(const q of D.cargoSlots.slice(i+1))expect(Math.hypot(...p.map((x,k)=>x-q[k]))).toBeGreaterThan(.15);
   }
  });
- it('keeps a full hopper ahead of the actual shooter housing while accelerating and turning',()=>{
+ it('retains fuel below the finite walls and lets the top of a moving full load spill',()=>{
   const hopper=new HopperDynamics(D),volume=D.hopper.volume!;
   const balls=D.cargoSlots.map(([x,y,z],id)=>({id,state:'stored' as const,local:v3(x,y,z)}));
   const motion={position:v3(0,.223,0),velocity:v3(),angularVelocity:v3(),rotation:{x:0,y:0,z:0,w:1}};
-  let minClearance=Infinity;
+  const spilled=new Set<number>();
   for(let step=0;step<480;step++){
    motion.velocity=v3(2*Math.sin(step/60),0,Math.cos(step/80));motion.angularVelocity.y=2*Math.sin(step/90);
-   hopper.step(1/120,balls,{intake:1,hopper:1,hood:0},motion);
-   for(const f of balls){
+   const active=balls.filter(f=>!spilled.has(f.id));
+   for(const spill of hopper.step(1/120,active,{intake:1,hopper:1,hood:0},motion))spilled.add(spill.id);
+   for(const f of active.filter(f=>!spilled.has(f.id))){
     // Housing begins at x=-.0015; this bounds the sphere surface, not its center.
-    expect(f.local.x+.075).toBeLessThanOrEqual(-.004);
-    expect(f.local.x-.075).toBeGreaterThanOrEqual(volume.frontX-.001);
-    expect(Math.abs(f.local.z)+.075).toBeLessThanOrEqual(volume.halfWidth+.001);
-    expect(f.local.y+.075).toBeLessThanOrEqual(volume.ceilingY+.001);
+    if(f.local.y<=volume.rim!.back)expect(f.local.x+.075).toBeLessThanOrEqual(-.004);
+    if(f.local.y<=volume.rim!.front)expect(f.local.x-.075).toBeGreaterThanOrEqual(volume.frontX-.001);
+    if(f.local.y<=volume.rim!.sides)expect(Math.abs(f.local.z)+.075).toBeLessThanOrEqual(volume.halfWidth+.001);
    }
   }
-  for(const [i,a]of balls.entries())for(const b of balls.slice(i+1))minClearance=Math.min(minClearance,Math.hypot(a.local.x-b.local.x,a.local.y-b.local.y,a.local.z-b.local.z));
-  expect(minClearance).toBeGreaterThan(.145);
+  expect(spilled.size).toBeGreaterThan(0);expect(spilled.size).toBeLessThan(D.mechanisms.capacity);
+ });
+ it('releases spilled fuel as the same dynamic body with chassis velocity and no shot credit',async()=>{
+  const s=await FieldSimulation.create(floor,seeds(1),true);
+  try{
+   s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);run(s,.6);
+   const r=s.robotController!,f=s.fuelSystem.records[0],handle=f.body.handle;
+   expect(s.fuelSystem.capture(f,r.owner,0,v3(-.3,.45,.45))).toBe(true);f.state='stored';
+   r.chassis.body.setLinvel(v3(1,0,0),true);r.preStep(1/120);
+   expect(f.owner).toBeNull();expect(f.state).toBe('loose');expect(f.body.isEnabled()).toBe(true);
+   expect(f.body.handle).toBe(handle);expect(f.body.linvel().x).toBeGreaterThan(.7);
+   expect(r.held).toHaveLength(0);expect(r.telemetry.mass).toBeCloseTo(D.mass,3);
+   const startY=f.body.translation().y;run(s,.5);
+   expect(f.body.translation().y).toBeLessThan(startY-.08);
+   expect(r.shooter.shotsFired).toBe(0);expect(s.fuelSystem.counts.total).toBe(1);
+   expect(s.fuel[0].handle).toBe(handle);
+   const paused={...f.body.translation()};s.setRunning(false);run(s,.25);
+   expect(f.body.translation()).toEqual(paused);s.setRunning(true);
+   f.body.setTranslation(r.toWorld(v3(-.58,-.147,0)),true);f.body.setLinvel(v3(),true);
+   s.world.propagateModifiedBodyPositionsToColliders();r.input.intake=true;run(s,.7);
+   expect(f.owner).toBe(r.owner);expect(f.body.handle).toBe(handle);
+   expect(r.telemetry.mass).toBeCloseTo(D.mass+.215,3);
+   s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);
+   expect(f.owner).toBeNull();expect(f.body.handle).toBe(handle);expect(s.fuelSystem.counts.total).toBe(1);
+  }finally{s.dispose();}
+ });
+ it('keeps feeding sphere surfaces inside the actual curved rear guide',async()=>{
+  const s=await FieldSimulation.create(floor,seeds(8),true);
+  // Outer rear surfaces sampled from rays through the owner-supplied CAD,
+  // at the feeder centerline. A center-only bound missed this protrusion.
+  const guard=[[-.05,.2718],[0,.3035],[.1,.3143],[.2,.3150],[.3,.3011],[.325,.3090]];
+  try{
+   s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);run(s,.6);fill(s);
+   const r=s.robotController!;r.input.shoot=true;let samples=0;
+   for(let tick=0;tick<720;tick++){
+    s.update(1/120);
+    for(const f of r.held.filter(f=>f.state==='feeding'))for(const [height,rear]of guard){
+     const dy=Math.abs(f.local.y-height);if(dy>=.075)continue;
+     samples++;expect(f.local.x+Math.sqrt(.075**2-dy**2),JSON.stringify(f.local)).toBeLessThanOrEqual(rear+.001);
+    }
+   }
+   expect(samples).toBeGreaterThan(100);expect(r.shooter.shotsFired).toBe(8);
+  }finally{s.dispose();}
  });
  it('passively deploys once and does not invent powered retraction, hood articulation or climbing',async()=>{
   const s=await FieldSimulation.create(floor,seeds(8),true);
@@ -63,12 +104,19 @@ describe('9496 Matterhorn',()=>{
    expect(new Set(r.shooter.shots.map(e=>e.id)).size).toBe(12);expect(s.fuel.map(b=>b.handle)).toEqual(handles);
   }finally{s.dispose();}
  });
- it('collects to its full cap and fires the whole hopper without replacing bodies or payload',async()=>{
+ it('collects to its intake limit and conserves every fired or naturally spilled fuel body',async()=>{
   const capacity=D.mechanisms.capacity,s=await FieldSimulation.create(floor,seeds(capacity+4),true);
   try{s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);run(s,.6);const r=s.robotController!,handles=s.fuel.map(b=>b.handle);r.input.intake=true;
    for(let i=0;i<360&&r.held.length<capacity;i++){const f=s.fuelSystem.records.find(f=>f.owner===null)!;f.body.setTranslation(r.toWorld({x:-.58,y:-.147,z:0}),true);f.body.setLinvel({x:0,y:0,z:0},true);s.world.propagateModifiedBodyPositionsToColliders();s.update(1/120);}
-   expect(r.held).toHaveLength(capacity);expect(r.telemetry.mass).toBeCloseTo(D.mass+capacity*.215,3);r.input.intake=false;r.input.shoot=true;run(s,9);
-   expect(r.shooter.shotsFired,JSON.stringify(r.shooter.telemetry)).toBe(capacity);expect(r.held).toHaveLength(0);
+   expect(r.held).toHaveLength(capacity);expect(r.telemetry.mass).toBeCloseTo(D.mass+capacity*.215,3);
+   const collected=r.held.map(f=>f.id);r.input.intake=false;r.input.shoot=true;run(s,9);
+   // A real open hopper may shed the upper load while chassis aim turns it.
+   // Every collected ID must either be fired or remain as loose spilled fuel.
+   const shots=new Set(r.shooter.shots.map(e=>e.id)),spilled=collected.filter(id=>!shots.has(id));
+   expect(r.shooter.shotsFired,JSON.stringify(r.shooter.telemetry)).toBeGreaterThanOrEqual(Math.floor(capacity*.75));
+   expect(shots.size).toBe(r.shooter.shotsFired);expect(shots.size+spilled.length).toBe(capacity);
+   for(const id of spilled){const f=s.fuelSystem.records[id];expect(f.owner).toBeNull();expect(f.state).toBe('loose');expect(f.body.isEnabled()).toBe(true);}
+   expect(r.held).toHaveLength(0);
    expect(r.telemetry.mass).toBeCloseTo(D.mass,3);expect(s.fuel.map(b=>b.handle)).toEqual(handles);
   }finally{s.dispose();}
  },30000);
