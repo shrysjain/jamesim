@@ -112,7 +112,7 @@ export class RobotView {
     }
     if (mechanisms) {
       for (const { node, axis, source, factor } of this.spinNodes) {
-        const angle = source === 'intake' ? mechanisms.rollerAngle : source === 'feeder' ? mechanisms.rollerAngle * .7 + mechanisms.shooter.feederAngle : mechanisms.shooter.drumAngle;
+        const angle = source === 'indexer' ? mechanisms.indexerAngle : source === 'intake' ? mechanisms.rollerAngle : source === 'feeder' ? mechanisms.rollerAngle * .7 + mechanisms.shooter.feederAngle : mechanisms.shooter.drumAngle;
         node.rotation[axis] = angle * factor;
       }
       const visual = d.visual;

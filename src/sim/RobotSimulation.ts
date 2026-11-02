@@ -1,4 +1,4 @@
-import { linkedHopperExtension } from '../robot/poses';
+import { linkedHopperExtension, supportsIntakeToggle } from '../robot/poses';
 import { HopperDynamics } from './HopperDynamics';
 import { Climber } from './Climber';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -45,6 +45,7 @@ export class RobotSimulation {
   input = { ...NEUTRAL_MECHANISMS };
   inspectionPose: RobotPose | null = null;
   rollerAngle = 0;
+  indexerAngle = 0;
   kickerDeployment = 0;
   actuatorsEnabled = true;
   private deployed = false;
@@ -103,7 +104,7 @@ export class RobotSimulation {
   reset() {
     this.climber.reset(); this.hopper.reset();
     this.clearInput(); this.deployed = false; this.intakeOut = true; this.intakeTarget = 0; this.inspectionPose = null; this.actuatorsEnabled = true;
-    this.overturnedFor = 0; this.outletBlocked = false; this.rollerAngle = 0; this.kickerDeployment = 0;
+    this.overturnedFor = 0; this.outletBlocked = false; this.rollerAngle = 0; this.indexerAngle = 0; this.kickerDeployment = 0;
     this.chassis.reset(); this.chassis.setPose(STARTING_POSE); this.updatePayload();
     this.shooter.reset();
   }
@@ -117,19 +118,21 @@ export class RobotSimulation {
     this.updatePayload();
   }
   requestClimbToggle() { this.climber.requestToggle(); }
-  requestIntakeToggle() { if (this.chassis.definition.intake.stowTravel || this.chassis.definition.intake.manualRetraction) this.pendingIntakeToggles++; }
+  requestIntakeToggle() { if (supportsIntakeToggle(this.chassis.definition)) this.pendingIntakeToggles++; }
   preStep(dt: number) {
     if (this.actuatorsEnabled && !this.inspectionPose && this.pendingIntakeToggles % 2 === 1) this.intakeOut = !this.intakeOut;
     this.pendingIntakeToggles = 0;
-    if (this.actuatorsEnabled && !this.inspectionPose && (this.chassis.definition.intake.stowTravel || this.chassis.definition.intake.manualRetraction) && this.input.toggleIntake && !this.toggleHeld) this.intakeOut = !this.intakeOut;
+    if (this.actuatorsEnabled && !this.inspectionPose && supportsIntakeToggle(this.chassis.definition) && this.input.toggleIntake && !this.toggleHeld) this.intakeOut = !this.intakeOut;
     this.toggleHeld = !!this.input.toggleIntake;
     const held = this.held;
     const shoot = !!this.input.shoot && !this.input.reverse && !this.inspectionPose && this.actuatorsEnabled && !this.climber.attached;
+    const indexerDirection = this.actuatorsEnabled && !this.inspectionPose ? this.input.reverse ? -1 : this.input.intake || shoot ? 1 : 0 : 0;
+    this.indexerAngle += (this.chassis.definition.hopper.indexer?.angularSpeed ?? 0) * indexerDirection * dt;
     const aimTurn = this.inspectionPose ? undefined : this.shooter.preStep(dt, shoot, this.actuatorsEnabled);
     if (!this.inspectionPose && this.actuatorsEnabled) {
       const demand = this.input.reverse || (this.input.intake && (!shoot || this.mechanism.simultaneousIntake));
       const approach = (v: number, target: number, seconds: number) => v + Math.max(-dt / seconds, Math.min(dt / seconds, target - v));
-      const compress = shoot || (!!(this.chassis.definition.intake.stowTravel || this.chassis.definition.intake.manualRetraction) && !this.intakeOut && !this.input.intake && !this.input.reverse);
+      const compress = shoot || (supportsIntakeToggle(this.chassis.definition) && !this.intakeOut && !this.input.intake && !this.input.reverse);
       const manual = this.chassis.definition.intake.manualRetraction && !this.intakeOut && !demand;
       const target = demand ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? cargoExtension(held.length, this.capacity) : 1;
       this.intakeTarget = target;
@@ -146,6 +149,8 @@ export class RobotSimulation {
         f.age += dt;
         const t = Math.min(1, f.age / INTAKE.transferSeconds);
         const entry = this.chassis.definition.hopper.entry, end = entry ? v3(...entry) : this.storedPosition(f.slot);
+        const width = this.chassis.definition.hopper.entryHalfWidth;
+        if (width !== undefined) end.z = Math.max(-width,Math.min(width,f.start.z));
         const control = v3(-0.4, 0.25, f.start.z * 0.5 + end.z * 0.5);
         f.local = lerp(lerp(f.start, control, t), lerp(control, end, t), t);
         if (t === 1) f.state = 'stored';
@@ -155,7 +160,7 @@ export class RobotSimulation {
       const body = this.chassis.body, q = this.chassis.renderRotation;
       const spills = this.hopper.step(dt, held, this.chassis.pose, {
         position: body.translation(), velocity: body.linvel(), angularVelocity: body.angvel(), rotation: q,
-      }, this.chassis.definition.hopper.volume.rim ? this.hopperFieldContact : undefined);
+      }, this.chassis.definition.hopper.volume.rim ? this.hopperFieldContact : undefined, indexerDirection);
       this.releaseSpills(spills);
     }
     this.updatePayload();
@@ -297,7 +302,7 @@ export class RobotSimulation {
     const mode = this.inspectionPose ? 'Pose preview' : this.overturnedFor > 0.25 ? 'Spilling' : this.outletBlocked ? 'Outlet blocked'
       : this.input.reverse ? 'Reversing' : !this.deployed ? 'Deploying' : this.mechanism.compress && this.input.shoot && this.chassis.pose.intake > cargoExtension(held.length, this.capacity) + 0.01 ? 'Compressing'
       : this.input.intake ? this.chassis.pose.intake < 0.92 ? 'Deploying' : held.length === this.capacity ? 'Full' : 'Intaking' : held.length ? 'Holding' : this.chassis.pose.intake > 0.92 ? 'Deployed' : 'Stowed';
-    const wantsIn = (this.mechanism.compress && !!this.input.shoot) || (!!(this.chassis.definition.intake.stowTravel || this.chassis.definition.intake.manualRetraction) && !this.intakeOut && !this.input.intake && !this.input.reverse);
+    const wantsIn = (this.mechanism.compress && !!this.input.shoot) || (supportsIntakeToggle(this.chassis.definition) && !this.intakeOut && !this.input.intake && !this.input.reverse);
     const intakeStatus = wantsIn && this.intakeTarget > .02 && Math.abs(this.chassis.pose.intake - this.intakeTarget) < .02 ? 'Cargo limited'
       : this.chassis.pose.intake < .02 ? 'Retracted' : this.chassis.pose.intake > .98 ? 'Extended' : this.intakeTarget > this.chassis.pose.intake ? 'Extending' : 'Retracting';
     return { intakeStatus, climb: this.climber.telemetry, count: held.length, capacity: this.capacity, transferring: counts.transferring, stored: counts.stored, loose: counts.loose,

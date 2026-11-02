@@ -11,6 +11,12 @@ export function partTransform(definition: RobotDefinition, part: RobotPart, pose
 
 export const STARTING_POSE: RobotPose = { intake: 0, hopper: 0, hood: 0 };
 
+/** Explicit false distinguishes a passive slide from a powered retractable one.
+ * Undefined preserves the established behavior of existing sliding intakes. */
+export function supportsIntakeToggle(definition: RobotDefinition): boolean {
+  return definition.intake.manualRetraction ?? !!definition.intake.stowTravel;
+}
+
 /** A definition-owned linkage maps the shared intake actuator to the actual hopper slide. */
 export function linkedHopperExtension(definition: RobotDefinition, intake: number): number {
   const curve = definition.hopper.intakeCurve;
