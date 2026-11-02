@@ -6,6 +6,7 @@ import type { FuelSystem } from './FuelSystem';
 import type { SwerveChassis } from './SwerveChassis';
 import { DRIVE_RESPONSE } from './SwerveChassis';
 import { DEFAULT_SHOT_SPREAD, sampleShotScatter } from './ShotScatter';
+import { turretTravelError } from './TurretTravel';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
 
@@ -206,8 +207,9 @@ export class Shooter {
     this.active = requested; this.blocked = false;
     this.solution = requested ? this.solve() : null;
     if (this.mechanism.turret && powered && this.solution) {
-      const predictedError = this.solution.yawError + (this.solution.trackingRate - this.chassis.body.angvel().y) * dt;
+      const predictedError = turretTravelError(this.turretYaw, this.solution.yawError + (this.solution.trackingRate - this.chassis.body.angvel().y) * dt, this.geometry.turretLimits);
       this.turretYaw += clamp(predictedError, -dt * this.geometry.turretRadiansPerSecond, dt * this.geometry.turretRadiansPerSecond);
+      if (this.geometry.turretLimits) this.turretYaw = clamp(this.turretYaw, ...this.geometry.turretLimits);
       this.solution = this.solve();
     }
     this.blocked = !!this.solution?.obstructed;
@@ -226,10 +228,15 @@ export class Shooter {
     const up = rotate(v3(0, 1, 0), this.chassis.renderRotation);
     return up.y > 0.965 && this.chassis.telemetry.grounded >= 3;
   }
+  private get motionReady() {
+    const limits = this.solution?.target.kind === 'Pass' ? this.geometry.movingLimits?.pass : this.geometry.movingLimits?.hub;
+    return (this.mechanism.movingShots || this.chassis.telemetry.speed < SHOOTER.movingThreshold)
+      && (!limits || this.chassis.telemetry.speed <= limits.speed && Math.abs(this.chassis.body.angvel().y) <= limits.turnRate);
+  }
   private get ready() {
     return !!this.solution && !this.solution.obstructed && this.stable && Math.abs(this.solution.yawError) < SHOOTER.yawTolerance && (this.mechanism.turret || Math.abs(this.chassis.body.angvel().y) < 0.3)
       && Math.abs(this.elevation - this.solution.elevation) < SHOOTER.hoodTolerance
-      && (this.mechanism.movingShots || this.chassis.telemetry.speed < SHOOTER.movingThreshold)
+      && this.motionReady
       && Math.abs(this.rpm * this.speedPerRpm - this.solution.speed) < Math.max(0.12, this.solution.speed * 0.02);
   }
 
@@ -331,7 +338,7 @@ export class Shooter {
     const solution = this.solution, feeding = this.laneState.filter(l => l.id !== null).length;
     const mode = !this.active ? 'Idle' : !this.fuel.ownedBy(this.owner).length ? 'Empty' : !solution ? 'Out of range' : !this.stable ? 'Unstable'
       : this.blocked ? 'Blocked' : Math.abs(solution.yawError) >= SHOOTER.yawTolerance || (!this.mechanism.turret && Math.abs(this.chassis.body.angvel().y) >= 0.3) ? 'Aiming'
-      : !this.mechanism.movingShots && this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? 'Waiting to stop'
+      : !this.motionReady ? 'Waiting to stop'
       : Math.abs(this.elevation - solution.elevation) >= SHOOTER.hoodTolerance ? 'Adjusting hood'
       : !this.ready ? 'Spinning up' : feeding ? 'Feeding' : 'Ready';
     return { active: this.active, mode, target: solution?.target.kind ?? null, rpm: this.rpm, targetRpm: solution ? solution.speed / this.speedPerRpm : 0,

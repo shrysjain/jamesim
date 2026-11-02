@@ -1,3 +1,4 @@
+import { hopperObstacleContact } from '../robot/hopperGeometry';
 import type { HopperVolume, RobotDefinition, RobotPose } from '../robot/RobotDefinition';
 import { FUEL_RADIUS } from './FuelSystem';
 import type { Fuel } from './FuelSystem';
@@ -10,7 +11,6 @@ type Particle = { fuel: HopperFuel; velocity: Vector; previous: Vector };
 type ExternalContact = (position: Vector, velocity: Vector) => void;
 const cross = (a: Vector, b: Vector) => v3(a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x);
 const clamp = (value: number, limit: number) => Math.max(-limit, Math.min(limit, value));
-
 /** Local sphere dynamics inside moving hopper walls, stepped with the 120 Hz world.
  * Field fuel keeps its one Rapier body/ID. Owned fuel's disabled field bodies do not
  * double-count chassis payload mass; their local positions and velocities evolve here. */
@@ -21,7 +21,7 @@ export class HopperDynamics {
   get volume(): HopperVolume { return this.definition.hopper.volume!; }
   reset() { this.particles.clear(); this.lastMotion = null; }
 
-  step(dt: number, held: HopperFuel[], pose: RobotPose, motion: Motion, externalContact?: ExternalContact) {
+  step(dt: number, held: HopperFuel[], pose: RobotPose, motion: Motion, externalContact?: ExternalContact, indexerDirection = 0) {
     const ids = new Set(held.filter(f => f.state === 'stored').map(f => f.id));
     for (const id of this.particles.keys()) if (!ids.has(id)) this.particles.delete(id);
     for (const fuel of held) if (fuel.state === 'stored' && !this.particles.has(fuel.id)) {
@@ -47,6 +47,18 @@ export class HopperDynamics {
         const rotational = add(cross(alpha, p.fuel.local), add(cross(omega, cross(omega, p.fuel.local)), scale(cross(omega, p.velocity), 2)));
         const force = sub(sub(gravity, acceleration), rotational);
         p.velocity.x += clamp(force.x, 35)*h; p.velocity.y += clamp(force.y, 35)*h; p.velocity.z += clamp(force.z, 35)*h;
+        const disk = this.definition.hopper.indexer;
+        if (disk && indexerDirection) {
+          const x = p.fuel.local.x-disk.center[0], z = p.fuel.local.z-disk.center[2];
+          // Only supported fuel touches the disk; upper layers receive motion
+          // through sphere contacts rather than an artificial whole-load force.
+          if (Math.hypot(x,z) <= disk.radius && p.fuel.local.y-disk.center[1] >= FUEL_RADIUS-.025 && p.fuel.local.y-disk.center[1] <= FUEL_RADIUS+.025) {
+            const omega = disk.angularSpeed*indexerDirection;
+            const dx = omega*z-p.velocity.x, dz = -omega*x-p.velocity.z;
+            const speed = Math.hypot(dx,dz), blend = Math.min(1,disk.friction*9.81*h/(speed || 1));
+            p.velocity.x += dx*blend; p.velocity.z += dz*blend;
+          }
+        }
         const drag = Math.exp(-(this.volume.rim ? 1.8 : .8)*h);
         p.velocity = scale(p.velocity, drag);
         p.fuel.local = add(p.fuel.local, scale(p.velocity, h));
@@ -144,10 +156,20 @@ export class HopperDynamics {
         }
         const slope = this.volume.floorSlope ?? 0, length = Math.sqrt(1+slope*slope);
         if (p.y <= this.floor(p.x)+FUEL_RADIUS*length+.001) stop(velocity,v3(-slope/length,1/length,0));
+        for (const box of this.definition.hopper.obstacles ?? []) {
+          const contact = hopperObstacleContact([p.x,p.y,p.z],box);
+          if (contact.distance <= FUEL_RADIUS+.001) stop(velocity,v3(...contact.normal));
+        }
       }
     }
   }
   private constrain(p: Vector, front: number, width: number, pose: RobotPose) {
+    for (const box of this.definition.hopper.obstacles ?? []) {
+      const contact = hopperObstacleContact([p.x,p.y,p.z],box), penetration = FUEL_RADIUS-contact.distance;
+      if (penetration > 0) {
+        p.x += contact.normal[0]*penetration; p.y += contact.normal[1]*penetration; p.z += contact.normal[2]*penetration;
+      }
+    }
     const rim = this.volume.rim;
     if (rim) {
       this.wall(p, 'x', front, 1, rim.front);

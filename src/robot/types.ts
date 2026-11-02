@@ -12,27 +12,37 @@ export type HopperVolume = {
 };
 /** Estimated launch standard deviations: radians, fractional speed, and rad/s backspin. */
 export type ShotSpread = { yaw: number; elevation: number; speed: number; flyerChance: number; backspin: number };
+export type HopperObstacle = { center: Vec3; halfExtents: Vec3; angle?: number };
 export type RobotDefinition = {
   id: string; teamNumber: string; name: string; summary: string; model: string;
   visual: RobotVisualDefinition;
   mass: number; inertia: Vec3; length: number; width: number;
   wheelRadius: number; mountY: number; springLength: number; travel: number; bumperCenterY: number;
-  drive?: { maxSpeed: number; acceleration: number; grip: number };
+  drive?: { maxSpeed: number; acceleration: number; grip: number;
+    /** Optional unloaded wheel braking response; chassis forces remain grip-limited. */
+    brakeAcceleration?: number };
   modules: { name: string; x: number; z: number }[];
   intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean };
   hopper: { stowTravel: number; coupledToIntake?: boolean; autoLift?: { loweredCapacity: number }; intakeCurve?: number[];
-    volume?: HopperVolume; fixedSlot?: number; entry?: Vec3 };
+    volume?: HopperVolume; fixedSlot?: number; entry?: Vec3; entryHalfWidth?: number;
+    /** Fixed internal CAD envelopes, e.g. an indexer cone or feed tower. */
+    obstacles?: HopperObstacle[];
+    /** Powered rotating floor, with bounded friction against supported fuel. */
+    indexer?: { center: Vec3; radius: number; angularSpeed: number; friction: number } };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
   climb?: { kind: 'side-hook-l1'; approachAxis?: 'x' | 'z'; hookOffsetsZ?: number[]; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };
   cargoSlots: Vec3[];
   pickup: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
-  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; passLandingExtra?: number; movingAccuracy?: number; feedPath?: Vec3[]; feedAcrossLanes?: boolean; laneJitter?: number; yawOffset?: number; fixedElevation?: number; spread?: ShotSpread };
+  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; passLandingExtra?: number; movingAccuracy?: number; feedPath?: Vec3[]; feedAcrossLanes?: boolean; laneJitter?: number; yawOffset?: number; fixedElevation?: number; spread?: ShotSpread;
+    /** Unwrapped cable-safe travel relative to the prepared neutral bearing. */
+    turretLimits?: [number, number];
+    movingLimits?: { hub: { speed: number; turnRate: number }; pass: { speed: number; turnRate: number } } };
   mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; movingShots: boolean; simultaneousIntake?: boolean; climb: boolean };
 };
 
 /** Browser-independent model contract. Nodes use glTF extras.mechanism, not exporter names. */
-export type SpinSource = 'intake' | 'feeder' | 'shooter';
+export type SpinSource = 'intake' | 'feeder' | 'shooter' | 'indexer';
 export type SpinBinding = {
   node?: string; prefix?: string; source: SpinSource; factor: number;
   axis?: 'x' | 'y' | 'z'; // otherwise use node extras.spinAxis, falling back to Z

@@ -36,6 +36,17 @@ const rotate = (v: Vector, q: Quaternion) => {
 const angleDelta = (to: number, from: number) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 const approach = (from: number, to: number, amount: number) => from + Math.max(-amount, Math.min(amount, to - from));
 
+/** Stop a spinning wheel before spending the remaining tick accelerating in
+ * reverse. A faster brake response never increases powered acceleration. */
+export function nextWheelSpeed(from: number, to: number, dt: number, acceleration: number, braking: number) {
+  if (from*to < 0) {
+    const stopTime = Math.abs(from)/braking;
+    if (stopTime < dt) return approach(0,to,acceleration*(dt-stopTime));
+    return approach(from,0,braking*dt);
+  }
+  return approach(from,to,(Math.abs(to)<Math.abs(from) ? braking : acceleration)*dt);
+}
+
 /** Force-limited swerve with rigid modules and stable numerical ground support. */
 export class SwerveChassis {
   readonly body: RAPIER.RigidBody;
@@ -234,7 +245,9 @@ export class SwerveChassis {
       const error = angleDelta(targetAngle, m.angle);
       if (powered) m.angle += Math.max(-DRIVE_RESPONSE.steerRate * dt, Math.min(DRIVE_RESPONSE.steerRate * dt, error));
       targetSpeed *= Math.max(0, Math.cos(error));
-      if (powered) m.speed = this.input.brake ? 0 : approach(m.speed, targetSpeed, this.tuning.acceleration * dt);
+      if (powered) m.speed = this.input.brake ? 0 : this.definition.drive?.brakeAcceleration === undefined
+        ? approach(m.speed, targetSpeed, this.tuning.acceleration * dt)
+        : nextWheelSpeed(m.speed,targetSpeed,dt,this.tuning.acceleration,this.definition.drive.brakeAcceleration);
       const mount = add(position, rotate(vec(m.x, this.definition.mountY, m.z), q));
       const maxRay = this.definition.springLength + this.definition.travel + this.definition.wheelRadius;
       // Fuel never acts as a support surface. It still collides with the frame and wheel proxies.

@@ -5,7 +5,7 @@
   "season": 2026,
   "name": "Team Rembrandts \u2014 Era II",
   "variant": "Worlds",
-  "status": "research-complete-awaiting-geometry",
+  "status": "implemented-and-locally-validated",
   "onshape": {
     "url": "https://cad.onshape.com/documents/af9429d854eeaa98a1b3eeda/w/2554bb5ba18919b03a73491d/e/0bdb27080b01fd9a708ccf46",
     "exactDocumentWorkspaceElementVerified": true,
@@ -79,16 +79,52 @@
         "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/WasmachineConstants.java",
         "bytes": 2001,
         "sha256": "b4180367197942117831473ac95ea2b9f20ee2a792c7da00c5f3e10c18e86c39"
+      },
+      {
+        "name": "VisionConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/VisionConstants.java",
+        "bytes": 5239,
+        "sha256": "ed44e230fc6cb4ca8e5b29d2932aa881d50acb376acb33f1bbc7ea6f32308075"
       }
     ]
   },
   "geometry": {
-    "downloaded": false,
-    "inputSha256": null,
-    "reason": "Exact Onshape page exposes no model through the connected reader; shell policy does not permit Onshape. Official GrabCAD release and its files page return HTTP 403 to the reader. Official source repository contains no GLB, glTF, STEP, STL or Parasolid assets."
+    "downloaded": true,
+    "providedBy": "project owner",
+    "inputFileName": "Rembrandts 4481 Worlds.glb",
+    "inputBytes": 362992644,
+    "inputSha256": "6502ca903919ef90fab559e73bab930cd6335a362fc9585fb2a552beca893fc4",
+    "transfer": "14 uploaded binary parts, in numeric order; verified against owner-supplied Join-Parts.ps1 expected SHA-256. Script inspected, not executed.",
+    "source": "Exact Worlds Onshape document/workspace/element recorded above; root assembly TR26-00-1000_4481_Robot Worlds."
   },
   "redistribution": {
     "status": "pending",
     "evidence": []
+  },
+  "preparation": {
+    "script": "src/robot/robots/4481-era-ii/prepare.mjs",
+    "embeddedFuelRemoved": 5,
+    "hardwareAndSmallDetailsOmitted": 1833,
+    "pendingCADRightsReview": true
+  },
+  "estimates": [
+    "Empty mass/inertia and traction",
+    "48-fuel working capacity from full-size CAD-envelope packing",
+    "38 fuel/s intake and 16 fuel/s fire cadence",
+    "260 mm intake travel / 95 mm rise",
+    "49\u201375 degree SI exit-angle mapping; source hood controller uses signed mechanism angles",
+    "5 rad/s turret rate; 5 rad/s indexer speed and .45 floor friction",
+    "Scatter/moving-accuracy rating and simplified box/plane hopper contacts",
+    "Inclined rear funnel and below-floor continuation of fixed cone/tower envelopes",
+    "460 mm inlet preserves original lateral pickup columns",
+    "Indexer animation and local floor friction share the same fixed-step actuator angle",
+    "18.8 m/s\u00b2 unloaded wheel braking response; powered acceleration remains source 9.4 m/s\u00b2, chassis force remains traction-limited"
+  ],
+  "validation": {
+    "simulationTests": 323,
+    "simulationFiles": 46,
+    "releaseBuild": "passed",
+    "browser": "CAD poses, all seven selector entries, Rembrandts/red start, visible bindings, keyboard resume, input smoke and return to setup; no page errors",
+    "baseIntegration": "88e062f2947aa7477f18ec14bb92b0d090d71810"
   }
 }
