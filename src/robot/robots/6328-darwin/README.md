@@ -114,3 +114,7 @@ The wall-contact follow-up reproduces the owner’s reported sticking before the
 The latest browser review fills all 65/60/48 slots through actual mouth collection and renders the original CAD with full hoppers. Shared distribution tests cover bounded unbiased release variation, deterministic resets, original-body spin and differing physical rebounds.
 
 Contact envelopes, packing capacity, rates and launch fitting need driver/spec feedback. The nine-sample slot mapping approximates a continuous linkage. The fixed roof retains its published pose; active vertical compaction is not modeled or advertised. This is not a full motor/gearing, compliant net, free tipping or every-CAD-surface collision simulation. The existing managed feed/recovery/aim policies remain in force. CAD publication rights and the current live Onshape revision remain unverified as noted above.
+
+## Compatible PR integration
+
+The branch now contains the moving-shot/match-stop PR via a normal merge. Shared integration also touches `src/sim/FieldSimulation.ts` (disabled hold), `src/sim/MovingShotsAndStop.test.ts` (inherited regressions) and `docs/KEPLER.md` (motion-estimate notes). The newer per-robot scatter distribution remains singular; motion estimation, acceleration sensitivity, spin and recoil are reconciled. TypeScript and 20 targeted moving-shot, cutoff, wall and scatter checks pass. Recommended merge order: moving-shot/match-stop, Darwin, Citrus. Prior full-suite/build evidence above predates this merge; targeted checks were used for the requested usage budget.
