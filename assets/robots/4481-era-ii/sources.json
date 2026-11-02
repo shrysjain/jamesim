@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "robotId": "4481-era-ii",
+  "teamNumber": "4481",
+  "season": 2026,
+  "name": "Team Rembrandts \u2014 Era II",
+  "variant": "Worlds",
+  "status": "research-complete-awaiting-geometry",
+  "onshape": {
+    "url": "https://cad.onshape.com/documents/af9429d854eeaa98a1b3eeda/w/2554bb5ba18919b03a73491d/e/0bdb27080b01fd9a708ccf46",
+    "exactDocumentWorkspaceElementVerified": true,
+    "evidence": "https://www.chiefdelphi.com/t/frc-4481-team-rembrandts-2026-build-thread-open-alliance/507296?page=26",
+    "evidencePost": 521,
+    "evidenceLinkLabel": "Worlds Robot",
+    "originalFileName": "TR26-00-1000_4481_Robot Worlds.x_t"
+  },
+  "cadRelease": "https://grabcad.com/library/era-v2-first-robotics-competition-rebuilt-2026-1",
+  "code": {
+    "repository": "FRC-4481-Team-Rembrandts/2026-robot-public",
+    "commit": "e00d344b705b5e272229ba6ca5b6de26d93337af",
+    "commitDate": "2026-07-15T14:15:15Z",
+    "files": [
+      {
+        "name": "ExitVelocityConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/ExitVelocityConstants.java",
+        "bytes": 1331,
+        "sha256": "fe3ee8357675ba9d9fb619f30faff24695ae46dc4a9c4300cefa6906d6550344"
+      },
+      {
+        "name": "FeederConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/FeederConstants.java",
+        "bytes": 1935,
+        "sha256": "e2952f2365ff287c2333e461ade14a7623572f0902800d7a1cf7f98ee6581977"
+      },
+      {
+        "name": "FlywheelConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/FlywheelConstants.java",
+        "bytes": 4040,
+        "sha256": "5762fccdddbe923e022c6e868c971844fa02b7c35c9978bbccce206d8d0c2d38"
+      },
+      {
+        "name": "HoodConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/HoodConstants.java",
+        "bytes": 5024,
+        "sha256": "71167ec3c0cb85bf15cc2c276741492df33e5c7bcbe4bf30e5fbd4aabdc9db11"
+      },
+      {
+        "name": "IntakeConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/IntakeConstants.java",
+        "bytes": 2299,
+        "sha256": "4b7f88fc6a2ecded1d294269e118123b77f21326ceef81b8216286125f13ea72"
+      },
+      {
+        "name": "KikkerConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/KikkerConstants.java",
+        "bytes": 2145,
+        "sha256": "d6a330d95a3f2b28e2426d6776bfa6e857a22b7054b6da6ed65437e4cbd9b08a"
+      },
+      {
+        "name": "ShooterConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/ShooterConstants.java",
+        "bytes": 2210,
+        "sha256": "c02888f5c2100789352211be5f17015ab2fbb10c342ab278297d00e477619ca2"
+      },
+      {
+        "name": "SwerveDriveConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/SwerveDriveConstants.java",
+        "bytes": 8501,
+        "sha256": "b647ffc44758e4a9d953bad78565ed063cc6dac11219d3602a9351d5c0326b6b"
+      },
+      {
+        "name": "TurretConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/TurretConstants.java",
+        "bytes": 5679,
+        "sha256": "5b69fb3a67fb9cf1faa44b8fc7763d8233accc2d44c6c6f54bfdf6989f3b8f1a"
+      },
+      {
+        "name": "WasmachineConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/WasmachineConstants.java",
+        "bytes": 2001,
+        "sha256": "b4180367197942117831473ac95ea2b9f20ee2a792c7da00c5f3e10c18e86c39"
+      }
+    ]
+  },
+  "geometry": {
+    "downloaded": false,
+    "inputSha256": null,
+    "reason": "Exact Onshape page exposes no model through the connected reader; shell policy does not permit Onshape. Official GrabCAD release and its files page return HTTP 403 to the reader. Official source repository contains no GLB, glTF, STEP, STL or Parasolid assets."
+  },
+  "redistribution": {
+    "status": "pending",
+    "evidence": []
+  }
+}
