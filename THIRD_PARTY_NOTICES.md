@@ -18,3 +18,5 @@ Jamesim is an independent browser simulator. Public source availability does not
 No FRSim or MoSimulator code or media is included. FRSim was a qualitative gameplay/UI reference, and the user supplied the current 2910 performance targets. Jamesim's own source license has not been selected; this file does not relicense it or the third-party materials.
 
 The project owner authorized this noncommercial v1 publication on November 1, 2026, deferring license review. `docs/V1_PUBLICATION.md` records that decision; pending redistribution statuses remain unchanged.
+
+- Team 3847 Spectrum Infrared FM CAD: official Spectrum3847/2026-Spectrum exports pinned in assets/robots/3847-infrared/sources.json. Redistribution review pending under the existing owner-authorized noncommercial v1 publication; upstream software licensing does not establish CAD clearance.

@@ -145,7 +145,7 @@ export class Shooter {
   solve(): AimSolution | null {
     const base = shotTarget(this.chassis.body.translation(), this.alliance), sign = this.alliance === 'blue' ? 1 : -1;
     const targetAt = (extra: number): ShotTarget => ({ kind: base.kind, position: { ...base.position,
-      x: base.kind === 'Pass' ? sign * Math.min(FIELD_HALF_LENGTH - 0.55, Math.abs(base.position.x) + extra) : base.position.x } });
+      x: base.kind === 'Pass' ? sign * Math.min(FIELD_HALF_LENGTH - 0.55, Math.abs(base.position.x) + extra + (this.geometry.passLandingExtra ?? 0)) : base.position.x } });
     // Re-select arcs at 20 Hz; recompute motion compensation and yaw from current physics every tick.
     const cached = this.selection;
     if (cached && cached.alliance === this.alliance && cached.kind === base.kind && this.fuel.time < cached.until) {
