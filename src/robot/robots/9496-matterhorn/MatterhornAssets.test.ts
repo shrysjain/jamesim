@@ -12,6 +12,15 @@ beforeAll(async()=>{await MeshoptDecoder.ready;doc=await new NodeIO().registerEx
 const node=(name:string)=>doc.getRoot().listNodes().find(n=>n.getExtras().mechanism===name)!;
 function bounds(root:Node){const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity],inv=new Matrix4().fromArray(root.getWorldMatrix()).invert();root.traverse(n=>{const m=inv.clone().multiply(new Matrix4().fromArray(n.getWorldMatrix()));for(const p of n.getMesh()?.listPrimitives()??[]){const a=p.getAttribute('POSITION')!;for(let i=0;i<a.getCount();i++){const v=new Vector3().fromArray(a.getElement(i,[])).applyMatrix4(m).toArray();for(let k=0;k<3;k++){lo[k]=Math.min(lo[k],v[k]);hi[k]=Math.max(hi[k],v[k]);}}}});return{lo,hi,size:hi.map((x,k)=>x-lo[k])};}
 describe('Matterhorn owner-supplied CAD',()=>{
+ it('uses smoke-gray translucent hopper panels on both fixed and sliding assemblies',()=>{
+  const material=doc.getRoot().listMaterials().find(m=>m.getName()==='smoke-gray-hopper')!;
+  expect(material).toBeTruthy();expect(material.getAlphaMode()).toBe('BLEND');
+  expect(material.getBaseColorFactor()).toEqual([.12,.13,.14,.42]);expect(material.getMetallicFactor()).toBe(0);
+  for(const assembly of ['chassis','hopper']){
+   let found=false;node(assembly).traverse(n=>{for(const p of n.getMesh()?.listPrimitives()??[])if(p.getMaterial()===material)found=true;});
+   expect(found,assembly).toBe(true);
+  }
+ });
  it('records the exact upload and prepared runtime integrity without shipping the original',()=>{
   const source=JSON.parse(readFileSync('assets/robots/9496-matterhorn/sources.json','utf8'));
   expect(source.onshape).toContain('768d7890bafac55a2a891aae');expect(source.files[0]).toMatchObject({bytes:214524968,sha256:'e004d5b5288c78d4373953f311d5d2c47f766d346536f182c3b1494c6851a552'});

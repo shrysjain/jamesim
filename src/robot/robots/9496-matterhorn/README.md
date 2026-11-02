@@ -22,7 +22,7 @@ pnpm build:release
 
 Preparation verifies the input hash; removes bolts, rivets, washers, bearings and other small hardware; preserves 381 visible source occurrences; normalizes axes; separates real moving geometry; batches by assembly/material; simplifies CAD tessellation; and embeds Meshopt geometry. All four actual wheel/fork pairs are unsteered from the export's 45-degree pose, using the complete wheel bounds rather than one tessellation face. No raw CAD, original metadata, caches or preparation reports ship at runtime.
 
-Final CAD payload: **2,989,364 bytes / 617,644 rendered triangles / 120 primitives**. Shared ceilings remain 6 MiB / 650k / 160. `runtime.json` records the exact output hash and pending redistribution review. Existing owner-authorized noncommercial v1 publication applies; attachment, public access and code licensing are not treated as proof of CAD rights.
+Final CAD payload: **2,989,292 bytes / 617,626 rendered triangles / 121 primitives**. Shared ceilings remain 6 MiB / 650k / 160. `runtime.json` records the exact output hash and pending redistribution review. Existing owner-authorized noncommercial v1 publication applies; attachment, public access and code licensing are not treated as proof of CAD rights.
 
 ## Geometry versus estimates
 
@@ -43,8 +43,10 @@ Final CAD payload: **2,989,364 bytes / 617,644 rendered triangles / 120 primitiv
 | Hood | Fixed; no animated hood joint | Team explicitly confirms RPM-only distance adjustment |
 | Projectile elevation | 56 degrees | Fitted complementary-angle interpretation of the early hood discussion, not a measured release calibration |
 | Three lanes | Z −.17, 0, +.17 m | Fit within the measured .5255 m drum span |
-| Capacity | 40 full-size 150 mm fuel | Fitted, non-overlapping seed layout under an estimated retaining-net ceiling; not a measured real maximum |
-| Hopper floor/ceiling | Sloped floor and .603 m world retaining ceiling at nominal height | Conservative local contact fit. Net is absent from the upload and is not visually reconstructed or dynamically stretched |
+| Capacity | 49 full-size 150 mm fuel | Fitted, non-overlapping seed layout under an estimated retaining-net ceiling; not a measured real maximum |
+| Hopper floor/ceiling | Sloped floor and .723 m world retaining ceiling at nominal height | Conservative local contact fit. Net is absent from the upload and is not visually reconstructed or dynamically stretched |
+| Rear storage limit | X = −.006 m, ahead of the CAD shooter housing | Bounds the complete 75 mm-radius fuel, so stored spheres cannot enter the drum or motor/sideplate region |
+| Hopper panel finish | Smoke-gray RGBA `[.12, .13, .14, .42]`, nonmetallic, double-sided alpha blend | User-requested visual finish on the five original hopper panels; hardware keeps its CAD material |
 | Intake / fire rate | 35 fuel/s / 18 shots/s nominal | Gameplay estimates; readiness/clearance/feed path constrain actual cadence |
 | Passing limit | 9 m | Range represented in team passing calibration; physical clearance still gates release |
 | Moving-accuracy rating | .90 | Relative uncertainty input, not a 90% hit guarantee |
@@ -82,6 +84,14 @@ The rigid-mount/turning follow-up was reused from existing project commit `61c41
 
 Focused checks cover real-field hub shots on both alliances, fixed hood/backward aim, legal passing, passive deployment, full-capacity actual intake/firing, loaded wall support, original fuel bodies/mass and no fabricated retraction/climb. Asset checks cover the upload hash, runtime integrity, actual MK5n mounts/axles, drum/flywheels, moving front and feeder hierarchy. Shared acceptance checks preload, intake, reverse, shooting, pause/restart and immutable definitions.
 
-A focused real RobotView WebGL review inspected stowed, half-deployed, expanded red/blue and full-40-fuel poses with no application errors. Browser artifacts remain ignored. The source export omits its net; retaining-ceiling shape, fixed release calibration, throughput, mass and contact envelopes need driver feedback. Detailed net deformation, motor gearing/control loops, roller compliance and every-CAD-surface collision are outside the shared model. The current live Onshape revision and CAD rights status remain as disclosed above.
+A focused real RobotView WebGL review inspected stowed, half-deployed, expanded red/blue and full-49-fuel poses with no application errors. Browser artifacts remain ignored. The source export omits its net; retaining-ceiling shape, fixed release calibration, throughput, mass and contact envelopes need driver feedback. Detailed net deformation, motor gearing/control loops, roller compliance and every-CAD-surface collision are outside the shared model. The current live Onshape revision and CAD rights status remain as disclosed above.
 
 Final checks: `pnpm test:robots` passed 28 tests across 7 files; `pnpm test:sim` passed 181 tests across 29 files. After the final CAD-fitted feeder path/spin-direction correction, 16 affected robot/asset/shared-acceptance checks passed. The final `pnpm build:release` passed asset integrity, TypeScript/Vite and the 12-asset production payload. The existing Rapier chunk advisory remains.
+
+## Hopper refinement — November 2, 2026
+
+Driver feedback requested a fuller hopper, rear containment and smoke-gray translucent sides. The fitted capacity increases from 40 to 49 non-overlapping full-size fuel. Seeds fill from bottom to top; the shared local solver still moves stored fuel. The storage rear moves from X=.112 to −.006 m to keep the entire sphere ahead of the shooter housing. The estimated retaining envelope rises from local Y=.38 to .50 m; the upload still omits the physical net, and the resulting capacity/ceiling are gameplay estimates rather than measured team specifications. The four original fixed/sliding side panels and front panel receive the smoke-gray translucent material during reproducible preparation, preserving metal hardware.
+
+Focused verification covers 49-fuel collection and complete firing with original bodies and payload mass, both-alliance real hub shots, passing, loaded wall escape, seeded and dynamic sphere clearance, full-load containment under acceleration/turning, and actual prepared panel material bindings.
+
+Refinement validation: 24 focused tests passed across the Matterhorn, shared hopper and robot-acceptance cases; `pnpm build:release` passed integrity, TypeScript/Vite and production-payload checks. The actual RobotView rendered full front/rear and empty rear poses with no page errors; the settled 49-fuel load had maximum rear sphere surface X=−.005990 m, ahead of the housing at −.0015 m. The existing Rapier chunk advisory remains.

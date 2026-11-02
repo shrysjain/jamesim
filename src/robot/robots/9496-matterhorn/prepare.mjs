@@ -32,18 +32,19 @@ function bounds(node){const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infin
 function axle(name,parent,point){
  if(!groups.has(name)){const base=new Vector3(...groups.get(parent).getWorldTranslation());group(name,new Vector3(...runtime(point)).sub(base).toArray(),parent);}return name;
 }
-function material(original,bumper=false){
+function material(original,bumper=false,panel=false){
  const rgba=original?.getBaseColorFactor()??[.55,.55,.55,1];
- const color=rgba.slice(0,3).map(x=>Math.round(x*20)/20),key=bumper?'bumper':color.join(',')+','+Math.round(rgba[3]*10)/10;
+ const color=rgba.slice(0,3).map(x=>Math.round(x*20)/20),key=panel?'smoke-gray-hopper':bumper?'bumper':color.join(',')+','+Math.round(rgba[3]*10)/10;
  if(!materials.has(key)){
   const m=doc.createMaterial(key).setBaseColorFactor(bumper?[.03,.14,.52,1]:[...color,rgba[3]]).setMetallicFactor(bumper?0:.25).setRoughnessFactor(.72).setDoubleSided(true);
+  if(panel)m.setBaseColorFactor([.12,.13,.14,.42]).setMetallicFactor(0).setRoughnessFactor(.38).setAlphaMode('BLEND');
   if(rgba[3]<.99)m.setAlphaMode('BLEND');materials.set(key,m);
  }return materials.get(key);
 }
-function append(parent,node,transform,bumper=false){
+function append(parent,node,transform,bumper=false,panel=false){
  const origin=new Vector3(...groups.get(parent).getWorldTranslation()),nm=new Matrix3().getNormalMatrix(transform);
  for(const p of node.getMesh().listPrimitives()){
-  const mat=material(p.getMaterial(),bumper),key=parent+'/'+mat.getName();
+  const mat=material(p.getMaterial(),bumper,panel),key=parent+'/'+mat.getName();
   if(!batches.has(key))batches.set(key,{parent,mat,positions:[],normals:[],indices:[]});
   const b=batches.get(key),pos=p.getAttribute('POSITION'),normal=p.getAttribute('NORMAL'),base=b.positions.length/3;
   for(let i=0;i<pos.getCount();i++){v.fromArray(pos.getElement(i,[])).applyMatrix4(transform).sub(origin);b.positions.push(v.x,v.y,v.z);
@@ -87,7 +88,8 @@ for(const node of source.getRoot().listNodes())if(node.getMesh()){
   const points=[[.1175,-.1264],[.1268,-.0732],[.1362,-.02],[.1456,.0331],[.155,.0863],[.1643,.1395],[.1737,.1926],[.1831,.2458],[.1925,.299]],i=points.findIndex(([y,z])=>Math.hypot(b.center[1]-y,b.center[2]-z)<.008);
   if(i>=0)parent=axle(`feeder-floor-${i}`,'chassis',[0,...points[i]]);
  }
- append(parent,node,matrix,path.includes('Bumper <1>')&&/^(Corner|Part 6)$/.test(name));report.kept++;
+ const panel=path.includes('Comp Hopper V5 <1>')&&/^(Fixed Panel|Slot Panel|Front Panel)(-Mirrored)?$/.test(name);
+ append(parent,node,matrix,path.includes('Bumper <1>')&&/^(Corner|Part 6)$/.test(name),panel);report.kept++;
 }
 if(moduleNames.size!==4)throw Error('Expected four actual MK5n modules');
 const accessor=(type,array)=>doc.createAccessor().setType(type).setArray(array).setBuffer(buffer);
