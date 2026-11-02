@@ -32,7 +32,7 @@ Team-code references: `TunerConstants.java` (drive speed, wheel radius, module c
 | Fold | 132° CAD collecting-to-exported pose | CAD; team command is 130°, a small reference/stop difference |
 | Horizontal hopper travel | .303211 m | Shipped Epsilon branch in team code; alternate code branch is .167250 m |
 | Vertical lid/hook travel | .2159 m (8.5 in) | Shipped Epsilon branch; alternate code branch is 8.25 in |
-| Managed climb | .159 m maximum lift, .20 m/s winch, .55 s deployment | Gameplay estimates in the shared hook/suspension model; retracts to simulated stow, not the team code’s 3 in Epsilon climb stop |
+| Managed climb | .159 m maximum lift, .20 m/s winch, .55 s deployment | Gameplay estimates in the shared hook/contact model; retracts to simulated stow, not the team code’s 3 in Epsilon climb stop |
 | Drum center | `[.28815, .25385, 0]` | CAD, relative to .223 m chassis reference |
 | Drum contact radius | .0455 m | Tessellated tread envelope; nominal team drum is 3.5 in |
 | Hood travel | 35° | Team 17.5–52.5° mechanism range |
@@ -41,7 +41,7 @@ Team-code references: `TunerConstants.java` (drive speed, wheel radius, module c
 | Capacity | 32 fuel | Conservative gameplay estimate with two non-overlapping layers below the lowered lid; **not a claimed real maximum** |
 | Intake / fire rate | 36 fuel/s / 24 shots/s nominal | Gameplay estimates; no user-supplied FRSim card or measured throughput available |
 | Empty mass / inertia | 55 kg / `[2.9, 5.5, 3.0]` kg·m² | Estimates, not CAD mass properties or a scale reading |
-| Acceleration / grip | 10 m/s² command / 1.05 | Gameplay estimates; shared tire/suspension/payload model remains active |
+| Acceleration / grip | 10 m/s² command / 1.05 | Gameplay estimates; shared tire/contact/payload model remains active |
 | Moving-shot rating | .90 | Explicit gameplay spread setting, not a measured 90% hit rate; shared physical release, no forced misses or in-flight correction |
 | Bumpers | Estimated 3.25 in thick, 4.5 in high; .8509 m outer X/Z | Both published CAD inputs omit bumper solids; reconstructed and disclosed, not claimed as measured |
 
@@ -83,15 +83,23 @@ This contribution needs narrowly scoped shared extensions because the pre-existi
 | `src/sim/Climber.ts` | Optional head-on approach and either lateral hook; original capture ground/speed/rung checks and Kepler defaults retained |
 | `src/App.tsx` | Show V help for manually retractable pivot intakes, correct Limestone climb guidance, capability text and CAD credit; no selector rewrite or active-play overlay |
 | `THIRD_PARTY_NOTICES.md` | Citrus CAD/source-chain attribution with pending review status |
+| `src/sim/SwerveChassis.ts` | Rigid tire proxies and shared faster manual yaw/steering response; numerical ground support remains |
+| `src/sim/Shooter.ts` | Normalize chassis aiming against the shared turn-rate scale, preserving feedback gains |
+| `src/view/RobotView.ts` | Preserve exact prepared wheel/fork translations during terrain lean, steering and spin |
+| `src/robot/defaults.ts` | Clarify that support defaults do not represent hardware suspension; numeric defaults unchanged |
+| `src/sim/RigidSwerve.test.ts`, `src/view/RobotView.test.ts` | Registry-wide fixed-mount, loaded turning, braking, precision and airborne regressions |
+| `docs/GAMEPLAY_TUNING.md` | Document accepted rigid-mount behavior and manual turning targets |
 
-All other additions are under this robot's module, per-robot asset records and exact runtime GLB path. No changes to shared defaults, common runtime manifest, dependency/lock files, build tooling, allowlists, camera, match timing or existing robot tuning. The moving-roof line is the likely overlap with parallel hopper work; preserve the incoming solver and apply only the optional ceiling offset. This branch does not include the other branch's cargo-weight edits or moving-shot/match-stop changes.
+All registered robots now retain rigid CAD module mounts, with faster manual turning (6.4 rad/s demand) and azimuth response (24 rad/s). The same follow-up is included on the separate Darwin preview branch. No changes to numeric support defaults, common runtime manifest, dependency/lock files, build tooling, allowlists, camera, match timing or per-team drive parameters. The moving-roof line is the likely overlap with parallel hopper work; preserve the incoming solver and apply only the optional ceiling offset. This branch does not include the other branch's cargo-weight edits or moving-shot/match-stop changes.
 
 ## Validation and limits
 
-Completed checks: `pnpm robot:branch --team=1678`; `pnpm test:robots` (7 files / 33 tests); `pnpm test:sim` (26 files / 165 tests); `pnpm build:release` (asset integrity, TypeScript/Vite and production payload all pass). Production retains the existing physics chunk-size advisory; no build budget was changed.
+Completed checks: `pnpm robot:branch --team=1678`; `pnpm test:robots` (7 files / 33 tests). Following the November 2 rigid-module/turning correction, `pnpm test:sim` passes 177 tests across 28 files, and `pnpm build:release` passes asset integrity, TypeScript/Vite and production-payload checks. Production retains the existing physics chunk-size advisory; no build budget was changed.
 
 `Limestone.test.ts` exercises its drive target, real perimeter, pivot/controller edges, full-load containment/mass/body conservation, pause/restart, moving roof contact, stationary blue/red physical hub hits, full-load three-lane cadence, moving shots, passing, real bump/trench support, roof shot obstruction, own-tower capture/L1 assessment/hold/release and rejected wrong-side/off-rung/opponent captures. `LimestoneAssets.test.ts` checks the actual wheel axle frames and hood/kicker hierarchy. Registry-wide acceptance also covers preload, collection, reverse, release and immutable definitions for all three robots.
 
 Focused isolated Chromium checks exercise selector → session → W/V/C events → Controls → alliance change → restart, with no page/network errors and original fuel IDs retained. Full-field drawing is disabled for the input check to avoid slow software-rendered field frames; separate real WebGL CAD renders check stowed/deployed poses, hood and vertical-stage articulation, bumper color and numbers. Browser check artifacts and raw CAD remain ignored.
+
+The November 2 actual-CAD browser check crosses real bump geometry with zero drift in all eight wheel/fork mount translations and active whole-chassis lean. Limestone reaches about 6.36 rad/s in the empty flat-floor turning check. Tire proxies stay rigidly mounted; the established ray-based contact support remains a numerical approximation, not hardware suspension. Existing shot and L1-climb regressions continue passing.
 
 The model is decimated release CAD with simplified collider envelopes, not full mesh-contact or motor/chain/roller simulation. Performance values explicitly labeled estimates need driver/spec feedback. The central between-upright climb is not claimed: reconstructed bumpers block that tight approach; tested outside-rung approaches work. Bumper-inclusive source/reference is still useful to refine that envelope. The managed fixed-joint L1 support retains the project's upright chassis behavior rather than simulating a free twisting/swinging single-hook hang. Lid capacity, automatic real-team trench/lid sequences and detailed net contact are not calibrated. The live Onshape workspace may have changed after the pinned exports; that cannot be checked through the blocked direct connection. CAD rights review remains pending.
