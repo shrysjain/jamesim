@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "robotId": "6800-downpour",
+  "team": 6800,
+  "teamName": "Valor",
+  "season": 2026,
+  "robotName": "Downpour",
+  "status": "awaiting-cad-export",
+  "baseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
+  "requestedCad": {
+    "url": "https://cad.onshape.com/documents/15cd41462dc24ff986a4e549/w/1b79a7ae373e0026664ccfff/e/8fdecbfb5ab3c774cb6a4551",
+    "documentId": "15cd41462dc24ff986a4e549",
+    "workspaceId": "1b79a7ae373e0026664ccfff",
+    "elementId": "8fdecbfb5ab3c774cb6a4551",
+    "immutableRevision": null,
+    "variantEvidence": "The official CAD-release opening post links this exact workspace for Downpour; Drizzle is linked separately under workspace 4d637c0ad0806dbfe69f6666."
+  },
+  "sources": [
+    {
+      "role": "official-cad-release",
+      "url": "https://www.chiefdelphi.com/t/frc-6800-valor-2026-robot-cad-release/520715",
+      "publicationDate": "2026-05-13",
+      "observations": [
+        "Identifies team 6800, season 2026 and robot Downpour.",
+        "Links the requested document/workspace/assembly.",
+        "Describes four-fuel-wide shooter; reverse shot was experimental and not used in matches."
+      ]
+    },
+    {
+      "role": "official-mechanism-and-code-discussion",
+      "url": "https://www.chiefdelphi.com/t/frc-6800-valor-2026-robot-cad-release/520715?page=2",
+      "observations": [
+        "Links team code; keeps later Downpour and earlier Drizzle references separate.",
+        "Post 28 reports 790:11 hood actuator gearing; no angular limits or launch rate inferred."
+      ]
+    },
+    {
+      "role": "team-linked-technical-packet",
+      "url": "https://drive.google.com/file/d/11rQrMwCIseY18JbKFytGLXSd__x1JP1S/view",
+      "status": "viewer-only; contents not inspected in this session"
+    },
+    {
+      "role": "team-linked-code",
+      "url": "https://git.valor6800.com/valor6800/2026/robot",
+      "status": "Official project landing page resolved, but source tree and constants not inspected."
+    },
+    {
+      "role": "secondary-research-pointer",
+      "url": "https://dmeglan.github.io/frc2026-rebuilt-dashboard/",
+      "status": "Identity pointer only; elevator/arm summary is not verified against requested CAD."
+    }
+  ],
+  "access": {
+    "checkedDate": "2026-11-02",
+    "onshapeWebReader": "Official link resolved to requested URL, zero lines of assembly data.",
+    "onshapeDirectRequest": "Proxy CONNECT 403 in selected restricted environment. Not evidence exports are disabled.",
+    "derivativeSearch": "No matching 6800 geometry found in TylerHandel/rebuilt-sim-2026 CAD README or repository code search; exact-document GitHub matches were tables/preview metadata, not geometry.",
+    "requiredResource": "GLB or STEP export of requested Downpour assembly, retaining hierarchy when possible."
+  },
+  "inputs": [],
+  "measurements": {},
+  "gameplayEstimates": {},
+  "runtime": {
+    "registered": false,
+    "preparedAsset": null,
+    "reason": "No complete source geometry available; do not register an unfinished placeholder."
+  },
+  "redistribution": {
+    "status": "pending",
+    "evidence": [],
+    "note": "Public source attribution is preserved; unrelated code licenses do not establish CAD rights."
+  }
+}
