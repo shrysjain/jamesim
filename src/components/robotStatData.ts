@@ -1,5 +1,6 @@
 import type { RobotDefinition } from '../robot/types';
-import { DEFAULT_DRIVE } from '../robot/defaults';
+/** Display fallback matching the simulator baseline; robot-owned drive tuning takes precedence. */
+const DEFAULT_DRIVE = { maxSpeed: 16.7 * .3048, acceleration: 33 * .3048, grip: 1.05 };
 
 export type RobotStat = { label: string; value: string; amount: number | null; maximum: number; note?: string };
 const feet = (meters: number) => meters / .3048;
