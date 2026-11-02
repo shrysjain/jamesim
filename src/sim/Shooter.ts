@@ -1,3 +1,4 @@
+import { sampleShotScatter } from './ShotScatter';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { FIELD_HALF_LENGTH, shotTarget } from '../field/targets';
 import type { Alliance, ShotTarget } from '../field/targets';
@@ -114,7 +115,7 @@ export class Shooter {
   solve(): AimSolution | null {
     const base = shotTarget(this.chassis.body.translation(), this.alliance), sign = this.alliance === 'blue' ? 1 : -1;
     const targetAt = (extra: number): ShotTarget => ({ kind: base.kind, position: { ...base.position,
-      x: base.kind === 'Pass' ? sign * Math.min(FIELD_HALF_LENGTH - 0.55, Math.abs(base.position.x) + extra) : base.position.x } });
+      x: base.kind === 'Pass' ? sign * Math.min(FIELD_HALF_LENGTH - 0.55, Math.abs(base.position.x) + extra + (this.geometry.passLandingExtra ?? 0)) : base.position.x } });
     // Re-select arcs at 20 Hz; recompute motion compensation and yaw from current physics every tick.
     const cached = this.selection;
     if (cached && cached.alliance === this.alliance && cached.kind === base.kind && this.fuel.time < cached.until) {
@@ -246,12 +247,14 @@ export class Shooter {
       // Reduce precision while translating; the released ball keeps its physical trajectory.
       const accuracy = this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? this.geometry.movingAccuracy ?? 1 : 1;
       const dispersion = 1 / clamp(accuracy, .05, 1);
-      const elevation = this.elevation + (this.random() - 0.5) * 0.008 * dispersion;
-      const yaw = (this.random() - 0.5) * 0.009 * dispersion;
+      const scatter = this.geometry.spread ? sampleShotScatter(this.geometry.spread, this.geometry.movingAccuracy ?? 1, this.chassis.telemetry.speed, this.chassis.body.angvel().y, () => this.random()) : null;
+      const elevation = this.elevation + (scatter?.elevation ?? (this.random() - 0.5) * 0.008 * dispersion);
+      const yaw = scatter?.yaw ?? (this.random() - 0.5) * 0.009 * dispersion;
       const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
-        this.rpm * this.speedPerRpm * (0.996 + this.random() * 0.008))), q);
+        this.rpm * this.speedPerRpm * (scatter?.speedFactor ?? (0.996 + this.random() * 0.008)))), q);
       const velocity = add(this.chassis.body.velocityAtPoint(position), exit);
       if (!this.fuel.release(f, position, velocity, true)) continue;
+      if (scatter) f.body.setAngvel(rotate(this.turretRotate(scatter.spin), q), true);
       this.payloadChanged();
       this.chassis.body.applyImpulseAtPoint(scale(exit, -FUEL_MASS), position, true);
       this.shotsFired++; this.shots.push({ id: f.id, lane: this.mechanism.lanes.indexOf(lane.z), time: this.fuel.time, position, velocity, target: this.solution.target, flightTime: this.solution.time });

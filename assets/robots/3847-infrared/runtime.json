@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "3847-infrared",
+  "group": {
+    "name": "Team 3847 Spectrum Infrared FM CAD",
+    "source": "https://github.com/Spectrum3847/2026-Spectrum/tree/8be90a6c1044d9433f6f7ade9dd0857871f7579b/advantagescope-custom-assets/Robot_FM",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/3847-infrared/robot.glb",
+        "bytes": 3497108,
+        "sha256": "bab38e1a4c8b94b6ec6d8ba0a3de4675b3d4d80d1135f36a87b0b324555d8794"
+      }
+    ]
+  }
+}

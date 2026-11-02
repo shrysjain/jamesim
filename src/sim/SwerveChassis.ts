@@ -98,7 +98,8 @@ export class SwerveChassis {
       const r = Math.min(shape.radius ?? 0, ...shape.halfExtents) * 0.95;
       const half = shape.halfExtents.map(v => v - r) as Vec3;
       const desc = (r ? RAPIER.ColliderDesc.roundCuboid(...half, r) : RAPIER.ColliderDesc.cuboid(...half))
-        .setDensity(0).setFriction(shape.part === 'chassis' && shape.halfExtents[1] < 0.01 ? 0.02 : 0.1).setRestitution(0.05).setCollisionGroups(CollisionGroups.chassis);
+        .setDensity(0).setFriction(shape.part === 'chassis' && shape.halfExtents[1] < 0.01 ? 0.02 : 0.05)
+        .setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min).setRestitution(0.05).setCollisionGroups(CollisionGroups.chassis);
       this.mechanismColliders.push({ collider: world.createCollider(desc, this.body), definition: shape });
     }
     this.setPose(COLLECTING_POSE);
