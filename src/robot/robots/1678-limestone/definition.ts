@@ -1,3 +1,4 @@
+// Performance evidence, estimate ranges and retained CAD limits: docs/ROBOT_PERFORMANCE_RESEARCH.md.
 import type { RobotDefinition, RobotCollider } from '../../types';
 import { STANDARD_SWERVE, swerveModules } from '../../defaults';
 import { LIMESTONE_VISUAL } from './visual';
@@ -14,7 +15,7 @@ export const LIMESTONE: RobotDefinition = {
   summary: 'Three-wide shooter · expanding hopper · L1 climb',
   model: '/assets/robots/1678-limestone/robot.glb', visual: LIMESTONE_VISUAL,
   mass: 55, inertia: [2.9, 5.5, 3.0], length: .8509, width: .8509,
-  drive: { maxSpeed: 4.39, acceleration: 10, grip: 1.05 },
+  drive: { maxSpeed: 4.39, acceleration: 9.5, grip: 1.10 },
   modules: swerveModules(.276225, .276225),
   intake: { pivot: [-.30465, -.0541, 0], stowedAngle: -132 * Math.PI / 180, manualRetraction: true },
   hopper: { stowTravel: .303211, coupledToIntake: true, autoLift: { loweredCapacity: 32 }, volume },
@@ -22,11 +23,12 @@ export const LIMESTONE: RobotDefinition = {
   shooterGeometry: {
     pivot: [.28815, .25385, 0], drumRadius: .0455, guideLength: .155, turretRadiansPerSecond: 3,
     minElevation: 37.5 * Math.PI / 180, maxElevation: 72.5 * Math.PI / 180,
-    movingAccuracy: .90, spread: { yaw: .035, elevation: .038, speed: .040, flyerChance: .12, backspin: 36 },
+    movingAccuracy: .35,
+    movingLimits: { hub: { speed: .8, turnRate: .25 }, pass: { speed: 1.5, turnRate: .25 } }, spread: { yaw: .035, elevation: .038, speed: .040, flyerChance: .12, backspin: 36 },
   },
   climb: { kind: 'side-hook-l1', approachAxis: 'x', hookOffsetsZ: [-.33, .33],
     hook: [.075, .303, 0], travel: .2159, maxLift: .159, rate: .20, deploySeconds: .55 },
-  mechanisms: { capacity: 70, intakeRate: 36, compress: true, lanes: [-.17, 0, .17], fireRate: 24,
+  mechanisms: { capacity: 70, intakeRate: 40, compress: true, lanes: [-.17, 0, .17], fireRate: 24,
     turret: false, movingShots: true, simultaneousIntake: true, climb: true },
   // Full-size seeds fit the raised juice press; partial loads occupy the lower layers first.
   cargoSlots: packedCargo({ ...volume, ceilingY: volume.ceilingY + volume.ceilingTravel }, [1, .025, .024, 0]).slice(0, 70),

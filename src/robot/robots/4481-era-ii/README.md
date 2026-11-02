@@ -1,5 +1,7 @@
 # 4481 Team Rembrandts — Era II (2026 Worlds)
 
+Performance update (November 2, 2026): [the lineup research audit](../../../../docs/ROBOT_PERFORMANCE_RESEARCH.md) supersedes earlier rate, drive/traction and motion-rating estimates below. CAD/capacity and previous validation descriptions remain historical evidence.
+
 Selectable, owner-supplied Worlds CAD robot with a linear intake, fuel-dependent shooting retraction, an independent lower bar, two intake rollers, rotating-floor indexer, fixed feed tower, finite-travel turret and adjustable hood. Uses the shared simulation, fuel bodies, controls, camera and match lifecycle.
 
 The user's exact [Onshape document/workspace/element](https://cad.onshape.com/documents/af9429d854eeaa98a1b3eeda/w/2554bb5ba18919b03a73491d/e/0bdb27080b01fd9a708ccf46) is the Worlds link in the [official release, post 521](https://www.chiefdelphi.com/t/frc-4481-team-rembrandts-2026-build-thread-open-alliance/507296?page=26). This is Era II, distinct from Regionals Era. The uploaded GLB's root is `TR26-00-1000_4481_Robot Worlds`.

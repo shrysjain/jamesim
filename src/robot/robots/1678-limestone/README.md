@@ -1,5 +1,7 @@
 # 1678 Citrus Circuits · Limestone (2026 REBUILT)
 
+Performance update (November 2, 2026): [the lineup research audit](../../../../docs/ROBOT_PERFORMANCE_RESEARCH.md) supersedes earlier rate, drive/traction and motion-rating estimates below. CAD/capacity and previous validation descriptions remain historical evidence.
+
 Adds the `1678-limestone` selector entry, articulated release CAD, four-module swerve, a slapdown intake with coupled horizontal hopper extension, local cargo, a fixed three-wide drum/adjustable hood, and managed L1 climbing with either outer hook. Uses the existing match, controls, fuel ownership and scoring systems. Based on `origin/main` commit `0d64cbb`; the integration follow-up now includes Darwin and the moving-shot/match-stop PR through normal merges.
 
 ## CAD identity and sources

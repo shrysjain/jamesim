@@ -31,7 +31,7 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(vector(geometry.pivot) && [geometry.drumRadius, geometry.guideLength, geometry.turretRadiansPerSecond].every(positive), 'Shooter geometry must be finite and positive.');
   check(!m.turret || !!geometry.turretPivot && vector(geometry.turretPivot), 'A turret requires its bearing pivot.');
   if (geometry.turretLimits) check(m.turret && geometry.turretLimits.length === 2 && geometry.turretLimits.every(Number.isFinite) && geometry.turretLimits[0] <= 0 && geometry.turretLimits[1] >= 0 && geometry.turretLimits[0] < geometry.turretLimits[1], 'Turret travel must contain neutral and have ordered finite stops.');
-  if (geometry.movingLimits) check(m.movingShots && [geometry.movingLimits.hub, geometry.movingLimits.pass].every(l => [l.speed, l.turnRate].every(positive)), 'Moving-shot limits require moving shots and positive speed/turn bounds.');
+  if (geometry.movingLimits) check((m.movingShots || !!m.movingPasses) && [geometry.movingLimits.hub, geometry.movingLimits.pass].every(l => [l.speed, l.turnRate].every(positive)), 'Motion limits require moving hub shots or passes and positive speed/turn bounds.');
   check(!geometry.feedPath || geometry.feedPath.every(vector), 'Feed path points must be finite.');
   check(!geometry.feedAcrossLanes || !m.turret && !!geometry.feedPath?.length, 'Full-width feeding requires a chassis-mounted shooter and feed path.');
   if (geometry.laneJitter !== undefined) check(Number.isFinite(geometry.laneJitter) && geometry.laneJitter >= 0 && !!geometry.feedAcrossLanes, 'Lane variation requires full-width feeding and a finite nonnegative half-width.');

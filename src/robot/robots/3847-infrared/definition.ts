@@ -1,3 +1,4 @@
+// Performance evidence, estimate ranges and retained CAD limits: docs/ROBOT_PERFORMANCE_RESEARCH.md.
 import type { RobotDefinition, RobotCollider } from '../../types';
 import { STANDARD_SWERVE, swerveModules } from '../../defaults';
 import { INFRARED_VISUAL } from './visual';
@@ -19,12 +20,12 @@ export const INFRARED: RobotDefinition = {
     pivot: [.2723, .4888 - .223, 0], drumRadius: .0389, guideLength: .17, turretRadiansPerSecond: 3,
     minElevation: 40.68 * Math.PI / 180, maxElevation: 81 * Math.PI / 180,
     feedAcrossLanes: true, laneJitter: .20 / 3,
-    movingAccuracy: .87, passRange: 9, passLandingExtra: .8,
+    movingAccuracy: .25, movingLimits: { hub: { speed: .65, turnRate: .25 }, pass: { speed: 1.5, turnRate: .25 } }, passRange: 9, passLandingExtra: .8,
     spread: { yaw: .035, elevation: .034, speed: .035, flyerChance: .10, backspin: 30 },
     // Along the bed, then on the hopper-facing side of the vertical rollers.
     feedPath: [[-.04, -.02, 0], [-.025, .2847 - .223, 0], [-.025, .3997 - .223, 0], [.08, .47 - .223, 0]],
   },
-  mechanisms: { capacity: INFRARED_CARGO.length, intakeRate: 35, compress: true, lanes: [-.40 / 3, 0, .40 / 3], fireRate: 15, feedSeconds: .28, turret: false, movingShots: true, simultaneousIntake: true, climb: false },
+  mechanisms: { capacity: INFRARED_CARGO.length, intakeRate: 30, compress: true, lanes: [-.40 / 3, 0, .40 / 3], fireRate: 14, feedSeconds: .28, turret: false, movingShots: true, simultaneousIntake: true, climb: false },
   cargoSlots: INFRARED_CARGO,
   pickup: { minX: -.74, maxX: -.46, halfWidth: .29, mouthX: -.61, ejectX: -.75 },
   colliders: [

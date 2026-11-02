@@ -1,5 +1,7 @@
 # Shot uncertainty and fuller hoppers — November 2, 2026
 
+The later [lineup performance audit](ROBOT_PERFORMANCE_RESEARCH.md) supersedes motion-quality/throughput estimates. Stationary spread profiles below are retained.
+
 The owner requested less consistent shots for every robot, distinct accuracy between teams, visible rebounds and larger usable hoppers. These changes supersede the earlier nearly perfect hit-rate acceptance and the old 55/50 capacity caps. They do not change fuel size, mass, ownership, tick rate or scoring.
 
 ## Evidence and limits
