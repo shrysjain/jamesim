@@ -1,6 +1,7 @@
 import type { RobotDefinition, RobotVisualDefinition } from './types';
 
-/** Shared suspension convention; these are defaults, not measured dimensions for a new team. */
+/** Numerical ground-support convention; CAD modules are rigid, without suspension travel.
+ * These support defaults are not measured dimensions for a new team. */
 export const STANDARD_SWERVE = {
   wheelRadius: .0508, mountY: -.06, springLength: .12, travel: .08, bumperCenterY: -.12616,
 } satisfies Pick<RobotDefinition, 'wheelRadius' | 'mountY' | 'springLength' | 'travel' | 'bumperCenterY'>;
