@@ -3,6 +3,7 @@ import type { Vec3 } from '../field/types';
 import { CollisionGroups } from './collisionGroups';
 import { REBLITZ, COLLECTING_POSE, partTransform } from '../robot/RobotDefinition';
 import type { RobotDefinition, RobotPose, RobotCollider } from '../robot/RobotDefinition';
+import { DEFAULT_DRIVE } from '../robot/defaults';
 
 type Vector = { x: number; y: number; z: number };
 type Quaternion = Vector & { w: number };
@@ -10,7 +11,7 @@ export type DriveInput = { forward: number; strafe: number; turn: number; slow: 
 export const NEUTRAL_INPUT: DriveInput = { forward: 0, strafe: 0, turn: 0, slow: false, brake: false };
 export type DriveTuning = { maxSpeed: number; acceleration: number; grip: number };
 // FRSim's 2910 baseline: 16.7 ft/s, 33 ft/s², approximately 130 lbf traction.
-export const DEFAULT_TUNING: DriveTuning = { maxSpeed: 16.7 * 0.3048, acceleration: 33 * 0.3048, grip: 1.05 };
+export const DEFAULT_TUNING: DriveTuning = DEFAULT_DRIVE;
 export const DRIVE_RESPONSE = { turnRate: 6.4, steerRate: 24 };
 export const CHASSIS = REBLITZ;
 export const DRIVE_SPAWNS = {

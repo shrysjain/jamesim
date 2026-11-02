@@ -1,5 +1,8 @@
 import type { RobotDefinition, RobotVisualDefinition } from './types';
 
+/** Shared simulator baseline for robots without definition-owned drive tuning. */
+export const DEFAULT_DRIVE = { maxSpeed: 16.7 * .3048, acceleration: 33 * .3048, grip: 1.05 };
+
 /** Numerical ground-support convention; CAD modules are rigid, without suspension travel.
  * These support defaults are not measured dimensions for a new team. */
 export const STANDARD_SWERVE = {
