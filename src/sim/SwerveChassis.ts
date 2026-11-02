@@ -11,6 +11,7 @@ export const NEUTRAL_INPUT: DriveInput = { forward: 0, strafe: 0, turn: 0, slow:
 export type DriveTuning = { maxSpeed: number; acceleration: number; grip: number };
 // FRSim's 2910 baseline: 16.7 ft/s, 33 ft/s², approximately 130 lbf traction.
 export const DEFAULT_TUNING: DriveTuning = { maxSpeed: 16.7 * 0.3048, acceleration: 33 * 0.3048, grip: 1.05 };
+export const DRIVE_RESPONSE = { turnRate: 6.4, steerRate: 24 };
 export const CHASSIS = REBLITZ;
 export const DRIVE_SPAWNS = {
   practice: { label: 'Blue practice', position: [6.1, 0.26, 2.1] as Vec3, yaw: 0 },
@@ -19,6 +20,7 @@ export const DRIVE_SPAWNS = {
   fuel: { label: 'Fuel approach', position: [2.1, 0.26, 1.5] as Vec3, yaw: 0 },
 } as const;
 export type DriveSpawn = keyof typeof DRIVE_SPAWNS;
+// `suspension` is the numerical ground-query distance, never a moving CAD mount.
 export type ModuleState = { x: number; z: number; angle: number; speed: number; suspension: number; grounded: boolean; load: number; point: Vector; force: Vector };
 export type DriveTelemetry = { speed: number; turnRate: number; grounded: number; tilt: number; x: number; z: number; heading: number };
 
@@ -34,7 +36,7 @@ const rotate = (v: Vector, q: Quaternion) => {
 const angleDelta = (to: number, from: number) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 const approach = (from: number, to: number, amount: number) => from + Math.max(-amount, Math.min(amount, to - from));
 
-/** Force-limited swerve, with a level chassis and assisted suspension over field bumps. */
+/** Force-limited swerve with rigid modules and stable numerical ground support. */
 export class SwerveChassis {
   readonly body: RAPIER.RigidBody;
   readonly modules: ModuleState[];
@@ -42,13 +44,15 @@ export class SwerveChassis {
   private mechanismColliders: { collider: RAPIER.Collider; definition: RobotCollider }[] = [];
   tuning = { ...DEFAULT_TUNING };
   input = { ...NEUTRAL_INPUT };
-  private wheels: RAPIER.Collider[] = [];
   private poseInitialized = false;
   private payloadMass = 0;
   private bumpHeight = 0;
   private bumpPitch = 0;
   private bumpRoll = 0;
   get totalMass() { return this.definition.mass + this.payloadMass; }
+  // Approximate tire-proxy center at the prepared chassis reference. CAD mounts
+  // stay exact in RobotView; these fuel-only proxies never slide on contact rays.
+  private get wheelCenterY() { return this.definition.wheelRadius - .223; }
   /** Terrain-only body lean; collision support stays stable against fuel. */
   get renderRotation(): Quaternion {
     const a = this.body.rotation(), sp = Math.sin(this.bumpPitch / 2), cp = Math.cos(this.bumpPitch / 2);
@@ -108,9 +112,9 @@ export class SwerveChassis {
     }
     this.setPose(COLLECTING_POSE);
     for (const module of this.modules) {
-      // Fuel-only wheel proxies avoid double-counting floor support with the ray springs.
-      this.wheels.push(world.createCollider(RAPIER.ColliderDesc.ball(0.046).setDensity(0).setFriction(0.05).setCollisionGroups(CollisionGroups.wheelFuel)
-        .setTranslation(module.x, this.definition.mountY - module.suspension, module.z), this.body));
+      // Rigid fuel-only tire proxies; ground support is solved separately.
+      world.createCollider(RAPIER.ColliderDesc.ball(0.046).setDensity(0).setFriction(0.05).setCollisionGroups(CollisionGroups.wheelFuel)
+        .setTranslation(module.x, this.wheelCenterY, module.z), this.body);
     }
     this.reset();
   }
@@ -163,10 +167,9 @@ export class SwerveChassis {
     this.body.setLinvel(vec(), true); this.body.setAngvel(vec(), true);
     this.body.resetForces(true); this.body.resetTorques(true);
     this.input = { ...NEUTRAL_INPUT };
-    this.modules.forEach((m, i) => {
+    this.modules.forEach(m => {
       m.angle = m.speed = m.load = 0; m.grounded = false; m.suspension = this.definition.springLength;
       m.point = vec(); m.force = vec();
-      this.wheels[i].setTranslationWrtParent(vec(m.x, this.definition.mountY - m.suspension, m.z));
     });
     this.world.propagateModifiedBodyPositionsToColliders();
   }
@@ -176,7 +179,7 @@ export class SwerveChassis {
     this.body.resetForces(false); this.body.resetTorques(false);
     const q = this.body.rotation(), position = this.body.translation();
     const up = rotate(vec(0, 1, 0), q), down = mul(up, -1);
-    // A shared, level suspension platform rides the actual bump mesh. Only bump
+    // A shared, level contact platform rides the actual bump mesh. Only bump
     // contacts are assisted; walls, trench posts and overhead beams stay solid.
     let terrain = 0;
     const rearReach = this.definition.pickup ? Math.abs(this.definition.pickup.ejectX) - (this.definition.intake.stowTravel ?? 0) * (1 - this.pose.intake) : this.definition.length / 2 + .06 + .2 * this.pose.intake;
@@ -216,7 +219,7 @@ export class SwerveChassis {
     const magnitude = Math.max(1, Math.hypot(forward, strafe));
     const scale = this.tuning.maxSpeed * (this.input.slow ? 0.32 : 1);
     forward = forward / magnitude * scale; strafe = strafe / magnitude * scale;
-    const omega = turnOverride * 4.8 * (this.input.slow ? 0.5 : 1);
+    const omega = turnOverride * DRIVE_RESPONSE.turnRate * (this.input.slow ? 0.5 : 1);
     const targets = this.modules.map((m) => ({ x: forward + omega * m.z, z: strafe - omega * m.x }));
     const desaturate = Math.max(1, ...targets.map((v) => Math.hypot(v.x, v.z) / this.tuning.maxSpeed));
     this.modules.forEach((m, i) => {
@@ -226,12 +229,12 @@ export class SwerveChassis {
       if (this.input.brake) { targetSpeed = 0; targetAngle = Math.atan2(m.z, m.x); }
       if (Math.abs(angleDelta(targetAngle, m.angle)) > Math.PI / 2) { targetAngle += Math.PI; targetSpeed *= -1; }
       const error = angleDelta(targetAngle, m.angle);
-      if (powered) m.angle += Math.max(-18 * dt, Math.min(18 * dt, error));
+      if (powered) m.angle += Math.max(-DRIVE_RESPONSE.steerRate * dt, Math.min(DRIVE_RESPONSE.steerRate * dt, error));
       targetSpeed *= Math.max(0, Math.cos(error));
       if (powered) m.speed = this.input.brake ? 0 : approach(m.speed, targetSpeed, this.tuning.acceleration * dt);
       const mount = add(position, rotate(vec(m.x, this.definition.mountY, m.z), q));
       const maxRay = this.definition.springLength + this.definition.travel + this.definition.wheelRadius;
-      // Fuel never acts as a suspension surface. It still collides with the frame and wheel proxies.
+      // Fuel never acts as a support surface. It still collides with the frame and wheel proxies.
       let hit = this.world.castRayAndGetNormal(new RAPIER.Ray(mount, down), maxRay, false,
         RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, undefined, undefined, this.body);
       if (this.bumpHeight > 0.001 && mount.y - this.bumpHeight < maxRay && mount.y - this.bumpHeight > -0.1) {
@@ -241,7 +244,6 @@ export class SwerveChassis {
       m.load = 0; m.force = vec();
       m.suspension = hit && m.grounded ? Math.max(0.025, hit.timeOfImpact - this.definition.wheelRadius) : this.definition.springLength + this.definition.travel;
       m.point = add(mount, mul(down, hit && m.grounded ? hit.timeOfImpact : maxRay));
-      this.wheels[i].setTranslationWrtParent(vec(m.x, this.definition.mountY - m.suspension, m.z));
       if (!hit || !m.grounded) return;
       const velocity = this.body.velocityAtPoint(m.point);
       const compression = this.definition.springLength - m.suspension;
@@ -260,17 +262,6 @@ export class SwerveChassis {
       tireForce = mul(tireForce, Math.min(1, limit / (Math.hypot(tireForce.x, tireForce.y, tireForce.z) || 1)));
       this.body.addForceAtPoint(tireForce, m.point, true);
       m.force = add(normalForce, tireForce);
-      if (this.bumpHeight > 0.001) {
-        // Let the visible modules reach the actual ramp independently while
-        // the assisted platform keeps the frame parallel to the carpet.
-        const surface = this.world.castRay(new RAPIER.Ray(mount, down), 0.4, false,
-          RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, undefined, undefined, this.body);
-        if (surface) {
-          m.suspension = Math.max(0.025, Math.min(0.3, surface.timeOfImpact - this.definition.wheelRadius));
-          m.point = add(mount, mul(down, surface.timeOfImpact));
-          this.wheels[i].setTranslationWrtParent(vec(m.x, this.definition.mountY - m.suspension, m.z));
-        }
-      }
     });
   }
 

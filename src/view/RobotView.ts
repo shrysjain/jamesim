@@ -7,7 +7,6 @@ import type { SwerveChassis } from '../sim/SwerveChassis';
 import { REBLITZ, ROBOTS, STARTING_POSE, partTransform } from '../robot/RobotDefinition';
 import type { RobotDefinition, RobotPart, SpinSource } from '../robot/RobotDefinition';
 import type { RobotSimulation } from '../sim/RobotSimulation';
-import { rotate, unrotate, v3 } from '../sim/vector';
 
 /** Prepared team CAD, batched around explicit mechanism frames offline. */
 export class RobotView {
@@ -129,8 +128,8 @@ export class RobotView {
       this.wheelRotation[i] -= m.speed * dt / d.wheelRadius;
       for (const suffix of ['wheel', 'fork']) {
         const node = this.nodes.get(`${id}-${suffix}`); if (!node) continue;
-        const local = unrotate(rotate(v3(m.x, d.mountY - m.suspension, m.z), physicalRotation), q);
-        node.position.set(local.x, local.y, local.z);
+        // The prepared CAD fixes each axle/fork to the frame. Terrain lean moves
+        // the whole robot; contact-query distances never articulate a module.
         const steer = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -m.angle);
         if (suffix === 'wheel') steer.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), this.wheelRotation[i]));
         node.quaternion.copy(steer);

@@ -4,6 +4,7 @@ import type { Alliance, ShotTarget } from '../field/targets';
 import { FUEL_LINEAR_DAMPING, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { FuelSystem } from './FuelSystem';
 import type { SwerveChassis } from './SwerveChassis';
+import { DRIVE_RESPONSE } from './SwerveChassis';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
 
@@ -188,7 +189,7 @@ export class Shooter {
     if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) return undefined;
     // Own yaw only while requested. Translation and tire/traction limits remain in SwerveChassis.
     if (this.mechanism.turret) return undefined;
-    return clamp((9 * this.solution.yawError + 1.8 * this.solution.trackingRate - 0.8 * this.chassis.body.angvel().y) / 4.8, -0.75, 0.75);
+    return clamp((9 * this.solution.yawError + 1.8 * this.solution.trackingRate - 0.8 * this.chassis.body.angvel().y) / DRIVE_RESPONSE.turnRate, -0.75, 0.75);
   }
 
   private get stable() {
