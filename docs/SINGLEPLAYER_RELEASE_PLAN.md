@@ -1,5 +1,7 @@
 # Jamesim v1 singleplayer release
 
+Historical v1 plan. The current setup-first flow supersedes direct timed entry; see [stage 19.5](STAGE_19_5.md).
+
 Plan date: November 1, 2026. Steps 1–5 have now been implemented and checked locally to the extent recorded in [release acceptance](SINGLEPLAYER_ACCEPTANCE.md). The user has now approved the local preview and authorized preparing the noncommercial v1 publication, deferring license review. The prepared runtime pack and Vercel import details are recorded in [V1_PUBLICATION.md](V1_PUBLICATION.md). The user will import/deploy in Vercel; no hosting project has been created by the agent. The original planning text below is historical where superseded by that publication decision.
 
 ## The release we are building

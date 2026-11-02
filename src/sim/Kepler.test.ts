@@ -87,7 +87,7 @@ describe('CAD-backed Kepler player flow', () => {
  it('switches models without retaining old bodies or losing fuel, on both alliances', async () => {
   const s = await FieldSimulation.create(asset, seeds, true);
   try {
-   for (const robot of ['1690-kepler', '2910-reblitz', '4414-high-tide', '1690-kepler'] as const) for (const alliance of ['blue', 'red'] as const) {
+   for (const robot of ['1690-kepler', '2910-reblitz', '1690-kepler'] as const) for (const alliance of ['blue', 'red'] as const) {
     s.startMatch({ ...DEFAULT_MATCH, robot, alliance }); run(s, .6);
     expect(s.robot!.definition.id).toBe(robot); expect(s.robotController!.held.length).toBe(8);
     expect(s.fuelSystem.records.length).toBe(12); expect(s.robot!.telemetry.grounded).toBe(4);
@@ -152,12 +152,12 @@ describe('CAD-backed Kepler player flow', () => {
   const s = await FieldSimulation.create(asset, [], true);
   try {
    s.startMatch({ ...DEFAULT_MATCH, robot: '1690-kepler', preloads: 0 });
-   s.robot!.teleport([6.7, .26, -.288925]); run(s, 1); const r = s.robotController!;
-   r.input.climb = true; run(s, 5); expect(r.climber.attached).toBe(true);
+   s.robot!.teleport([7.187, .26, -1.13], -Math.PI/2); run(s, 1); const r = s.robotController!;
+   r.requestClimbToggle(); run(s, 1); r.requestClimbToggle(); run(s, 2); expect(r.climber.attached).toBe(true);
    expect(r.climber.telemetry.lift).toBeCloseTo(.212); expect(r.climber.level).toBe(1);
    s.match.endEarly(); run(s, 3.1); expect(s.match.telemetry.blue.autoTower).toBe(15);
-   s.startMatch({ ...DEFAULT_MATCH, robot: '1690-kepler', preloads: 0 }); s.robot!.teleport([6.7, .26, -.288925]); run(s, 1);
-   r.input.climb = true; run(s, 3); r.input.climb = false; r.input.lower = true; run(s, 2);
+   s.startMatch({ ...DEFAULT_MATCH, robot: '1690-kepler', preloads: 0 }); s.robot!.teleport([7.187, .26, -1.13], -Math.PI/2); run(s, 1);
+   r.requestClimbToggle(); run(s, 1); r.requestClimbToggle(); run(s, 2); r.requestClimbToggle(); run(s, 2);
    expect(r.climber.attached).toBe(false); expect(r.climber.level).toBe(0);
   } finally { s.dispose(); }
  });

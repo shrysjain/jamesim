@@ -1,4 +1,3 @@
-import type { RobotDefinition } from '../robot/RobotDefinition';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { FIELD_HALF_LENGTH, shotTarget } from '../field/targets';
 import type { Alliance, ShotTarget } from '../field/targets';
@@ -17,7 +16,6 @@ export const SHOOTER = {
   hoodRadiansPerSecond: 140 * DEG, feedSeconds: 0.10, laneInterval: 0.125, fireRate: 32, movingThreshold: 0.18, passRange: 33 * 0.3048,
   yawTolerance: 1.5 * DEG, hoodTolerance: 1 * DEG,
 };
-const DEFAULT_GEOMETRY: NonNullable<RobotDefinition['shooterGeometry']> = { pivot: [.282575, .25325, 0], drumRadius: SHOOTER.drumRadius, guideLength: .155, turretRadiansPerSecond: 3 };
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 const approach = (from: number, to: number, amount: number) => from + clamp(to - from, -amount, amount);
 export type AimSolution = { target: ShotTarget; speed: number; elevation: number; yawError: number; trackingRate: number; time: number; obstructed: boolean };
@@ -39,7 +37,7 @@ export function flightPosition(position: Vector, velocity: Vector, seconds: numb
 /** Definition-owned feed lanes and flywheel geometry, with chassis or turret aiming. */
 export class Shooter {
   turretYaw = 0;
-  get geometry() { return this.chassis.definition.shooterGeometry ?? DEFAULT_GEOMETRY; }
+  get geometry() { return this.chassis.definition.shooterGeometry; }
   private get minElevation() { return this.geometry.minElevation ?? SHOOTER.minElevation; }
   private get maxElevation() { return this.geometry.maxElevation ?? SHOOTER.maxElevation; }
   /** Rotate every point about the bearing axis, including an offset flywheel axle. */
@@ -70,7 +68,8 @@ export class Shooter {
   private nextFeedAt = 0;
   private nextLaunchAt = 0;
   private laneState: { z: number; id: number | null; age: number; duration: number; offset: number; availableAt: number; lastShotAt: number; start: Vector }[] = [];
-  private makeLanes() { return this.mechanism.lanes.map(z => ({ z, id: null as number | null, age: 0, duration: SHOOTER.feedSeconds, offset: 0, availableAt: 0, lastShotAt: -Infinity, start: v3() })); }
+  // One slot per conventional lane; a pipelined channel can hold several visible balls in transit.
+  private makeFeedSlots() { return this.mechanism.lanes.flatMap(z => Array.from({ length: this.geometry.feedPath ? 8 : 1 }, () => z)).map(z => ({ z, id: null as number | null, age: 0, duration: SHOOTER.feedSeconds, offset: 0, availableAt: 0, lastShotAt: -Infinity, start: v3() })); }
   private random() { this.randomState = (Math.imul(this.randomState, 1664525) + 1013904223) >>> 0; return this.randomState / 0x100000000; }
   private normalRandom() {
     // Continuous bounded release variation; no target-based forced miss or hit correction.
@@ -84,7 +83,7 @@ export class Shooter {
     this.feedOrder = [...this.laneOrder];
   }
 
-  constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem, private owner: string, private payloadChanged: () => void) { this.laneState = this.makeLanes(); this.elevation = this.maxElevation; }
+  constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem, private owner: string, private payloadChanged: () => void) { this.laneState = this.makeFeedSlots(); this.elevation = this.maxElevation; }
   get hood() { return (this.maxElevation - this.elevation) / (this.maxElevation - this.minElevation); }
   /** Measured drum tangent plus 155 mm of guide clearance; not the bumper edge. */
   muzzleLocal(elevation: number, z: number) {
@@ -185,7 +184,7 @@ export class Shooter {
     this.rpm = approach(this.rpm, targetRpm, dt * (targetRpm > this.rpm ? SHOOTER.rpmPerSecond : SHOOTER.coastPerSecond));
     if (powered) this.elevation = approach(this.elevation, this.solution?.elevation ?? this.maxElevation, dt * SHOOTER.hoodRadiansPerSecond);
     this.drumAngle = (this.drumAngle + this.rpm * 2 * Math.PI / 60 * dt) % (2 * Math.PI);
-    if (this.laneState.some(l => l.id !== null)) this.feederAngle += 40 * dt;
+    if (requested || this.laneState.some(l => l.id !== null)) this.feederAngle += 40 * dt;
     if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) return undefined;
     // Own yaw only while requested. Translation and tire/traction limits remain in SwerveChassis.
     if (this.mechanism.turret) return undefined;
@@ -203,6 +202,22 @@ export class Shooter {
       && Math.abs(this.rpm * this.speedPerRpm - this.solution.speed) < Math.max(0.12, this.solution.speed * 0.02);
   }
 
+  private feedPoints(start: Vector, end: Vector) { return [start, ...(this.geometry.feedPath ?? []).map(p => v3(...p)), end]; }
+  private feedLength(start: Vector, end: Vector) {
+    const p = this.feedPoints(start, end);
+    return p.slice(1).reduce((sum, point, i) => sum + Math.hypot(point.x-p[i].x, point.y-p[i].y, point.z-p[i].z), 0);
+  }
+  private feedPosition(start: Vector, end: Vector, t: number) {
+    const points = this.feedPoints(start, end);
+    let distance = this.feedLength(start, end) * t;
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i-1], b = points[i], length = Math.hypot(b.x-a.x, b.y-a.y, b.z-a.z);
+      if (distance <= length) return lerp(a, b, length ? distance / length : 1);
+      distance -= length;
+    }
+    return { ...end };
+  }
+
   postStep(dt: number, requested: boolean) {
     // Re-evaluate after physics so crossing the zone line or rotating this tick cannot fire on stale aim.
     this.active = requested; this.solution = requested ? this.solve() : null;
@@ -216,7 +231,7 @@ export class Shooter {
         f = this.fuel.ownedBy(this.owner).filter(fuel => fuel.state === 'stored').sort((a, b) => b.local.x - a.local.x || Math.abs(a.local.z - lane.z) - Math.abs(b.local.z - lane.z) || a.id - b.id)[0] ?? null;
         if (f) {
           lane.id = f.id; lane.age = 0; lane.start = { ...f.local }; f.state = 'feeding';
-          lane.duration = (this.mechanism.feedSeconds ?? SHOOTER.feedSeconds) * (1 + (this.random() - 0.5) * .24);
+          lane.duration = this.geometry.feedPath ? Math.max(this.mechanism.feedSeconds ?? .25, this.feedLength(lane.start, this.muzzleLocal(this.elevation, lane.z)) / 3.2) : SHOOTER.feedSeconds * (1 + (this.random() - .5) * .24);
           lane.offset = (this.random() - 0.5) * 0.016;
           this.nextFeedAt = Math.max(this.nextFeedAt, this.fuel.time - dt) + (0.8 + this.random() * 0.4) / this.mechanism.fireRate;
           this.feedOrder.shift();
@@ -226,7 +241,7 @@ export class Shooter {
       lane.age = clamp(lane.age + (requested ? dt : -dt), 0, lane.duration);
       const t = lane.age / lane.duration, z = lane.z + lane.offset;
       const end = this.muzzleLocal(this.elevation, z), control = this.turretPoint(v3(-.102575, -.13325, z));
-      f.local = lerp(lerp(lane.start, control, t), lerp(control, end, t), t);
+      f.local = this.geometry.feedPath ? this.feedPosition(lane.start, end, t) : lerp(lerp(lane.start, control, t), lerp(control, end, t), t);
       if (!requested && lane.age === 0) { f.state = 'stored'; lane.id = null; continue; }
       if (t < 1 || !this.ready || !requested || !this.solution || this.fuel.time < this.nextLaunchAt || this.fuel.time < lane.lastShotAt + (this.mechanism.turret ? Math.min(1 / this.mechanism.fireRate, this.mechanism.feedSeconds ?? Infinity) : SHOOTER.laneInterval) - 1e-7) continue;
       const position = this.muzzle(z), q = this.chassis.renderRotation;
@@ -257,7 +272,7 @@ export class Shooter {
       this.shotsFired++; this.shots.push({ id: f.id, lane: this.mechanism.lanes.indexOf(lane.z), time: this.fuel.time, position, velocity, target: this.solution.target, flightTime: this.solution.time });
       if (this.shots.length > 64) this.shots.shift();
       this.rpm = Math.max(0, this.rpm - SHOOTER.rpmDropPerBall);
-      this.nextLaunchAt = this.fuel.time + 0.016;
+      this.nextLaunchAt = this.mechanism.turret ? Math.max(this.nextLaunchAt, this.fuel.time - dt) + 1 / this.mechanism.fireRate : this.fuel.time + .016;
       lane.lastShotAt = this.fuel.time;
       lane.id = null; lane.availableAt = this.fuel.time;
     }
@@ -284,6 +299,6 @@ export class Shooter {
       : !this.ready ? 'Spinning up' : feeding ? 'Feeding' : 'Ready';
     return { active: this.active, mode, target: solution?.target.kind ?? null, rpm: this.rpm, targetRpm: solution ? solution.speed / this.speedPerRpm : 0,
       elevation: this.elevation / DEG, yawError: (solution?.yawError ?? 0) / DEG, shots: this.shotsFired, feeding,
-      lanes: this.laneState.map(l => l.id === null ? 0 : l.age / l.duration) };
+      lanes: this.mechanism.lanes.map(z => Math.max(0, ...this.laneState.filter(l => l.z === z && l.id !== null).map(l => l.age / l.duration))) };
   }
 }

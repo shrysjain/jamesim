@@ -1,3 +1,5 @@
+import { normalizeStart } from './SessionConfig';
+import type { StartPosition } from './SessionConfig';
 import { ROBOTS } from '../robot/RobotDefinition';
 import type { RobotId } from '../robot/RobotDefinition';
 import type { Alliance } from '../field/targets';
@@ -9,7 +11,7 @@ export const EVENT_PROFILES = {
   districtChampionship: { label: 'District championship', energized: 240, supercharged: 360, traversal: 50 },
   championship: { label: 'FIRST Championship', energized: 360, supercharged: 500, traversal: 50 },
 } as const;
-export type MatchConfig = { profile: keyof typeof EVENT_PROFILES; preloads: number; seed: number; alliance?: Alliance; spawn?: 'left' | 'center' | 'right'; robot?: RobotId; humanSupply?: boolean };
+export type MatchConfig = { profile: keyof typeof EVENT_PROFILES; preloads: number; seed: number; alliance?: Alliance; spawn?: 'left' | 'center' | 'right'; robot?: RobotId; humanSupply?: boolean; start?: StartPosition };
 export const DEFAULT_MATCH: MatchConfig = { profile: 'regional', preloads: 8, seed: 2026, spawn: 'left' };
 export type MatchPhase = 'Practice' | 'Auto' | 'Auto scoring' | 'Transition' | 'Shift 1' | 'Shift 2' | 'Shift 3' | 'Shift 4' | 'Endgame' | 'Final scoring' | 'Complete';
 const PHASES: { phase: MatchPhase; start: number; end: number; drive: boolean }[] = [
@@ -56,8 +58,9 @@ export class MatchRules {
   start(config: MatchConfig) {
     this.reset(); this.mode = 'match';
     this.config = { alliance: config.alliance === 'red' ? 'red' : 'blue', spawn: config.spawn === 'right' || config.spawn === 'center' ? config.spawn : 'left', humanSupply: config.humanSupply === true, robot: config.robot && Object.hasOwn(ROBOTS, config.robot) ? config.robot : '2910-reblitz', profile: Object.hasOwn(EVENT_PROFILES, config.profile) ? config.profile : 'regional',
-      preloads: Number.isFinite(config.preloads) ? Math.max(0, Math.min(8, Math.floor(config.preloads))) : 8, seed: config.seed >>> 0 };
+      preloads: Number.isFinite(config.preloads) ? Math.max(0, Math.min(8, Math.floor(config.preloads))) : 8, seed: config.seed >>> 0, start: normalizeStart(config.start, config.alliance ?? 'blue', config.spawn) };
   }
+  enterPractice() { const config = this.config; this.reset(); this.config = config; }
   reset() {
     this.mode = 'practice'; this.tick = 0; this.scores = { blue: emptyScore(), red: emptyScore() };
     this.seen.clear(); this.stoppedAt = null; this.firstInactive = this.selectionReason = null;

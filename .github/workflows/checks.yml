@@ -21,6 +21,6 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:unit
+      - run: pnpm test:sim
       - run: pnpm build:release
       # Validate the complete runtime payload without deploying it.

@@ -6,6 +6,7 @@ import type { DriveSpawn } from './SwerveChassis';
 import { FuelSystem, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { Fuel } from './FuelSystem';
 import type { RobotDefinition, RobotPose } from '../robot/RobotDefinition';
+import { REBLITZ_CARGO, REBLITZ_FEEDER_POCKET } from '../robot/robots/2910-reblitz/cargo';
 import { REBLITZ, STARTING_POSE } from '../robot/RobotDefinition';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
@@ -13,25 +14,18 @@ import { Shooter } from './Shooter';
 import type { ShooterTelemetry } from './Shooter';
 import { GameplayContacts } from './GameplayContacts';
 
-export type MechanismInput = { intake: boolean; reverse: boolean; shoot?: boolean; toggleIntake?: boolean; climb?: boolean; lower?: boolean; supply?: boolean };
+export type MechanismInput = { intake: boolean; reverse: boolean; shoot?: boolean; toggleIntake?: boolean; climb?: boolean; supply?: boolean };
 export const NEUTRAL_MECHANISMS: MechanismInput = { intake: false, reverse: false, shoot: false };
-/** Close-packed 150 mm fuel: 54 in three staggered layers plus one feeder pocket.
- * The managed packing uses 151 mm center spacing; no smaller rendered balls. */
-const spacing = 0.151, rowPitch = spacing * Math.sqrt(3) / 2, layerPitch = spacing * Math.sqrt(2 / 3);
-export const STORAGE_SLOTS: Vector[] = [0, 1, 2].flatMap(layer =>
-  [0, 1, 2, 3].flatMap(row => Array.from({ length: layer === 1 ? 4 : 5 }, (_, column) =>
-    v3(-0.56 + row * spacing + (column % 2) * spacing / 2 + (layer === 1 ? spacing / 2 : 0),
-      -0.022 + layer * layerPitch, (column - 2) * rowPitch + (layer === 1 ? rowPitch / 3 : 0)))
-    .filter(p => p.x < 0)));
-export const FEEDER_POCKET = STORAGE_SLOTS.length;
-STORAGE_SLOTS.push(v3(0.13, 0.04, 0));
+/** Compatibility exports for existing 2910 benches; every robot now supplies its own cargo layout. */
+export const STORAGE_SLOTS: Vector[] = REBLITZ_CARGO.map(([x, y, z]) => v3(x, y, z));
+export const FEEDER_POCKET = REBLITZ_FEEDER_POCKET;
 export const INTAKE = { capacity: STORAGE_SLOTS.length, deploySeconds: 0.18, compressSeconds: 0.45, transferSeconds: 0.3, capturePerSecond: 50, ejectPerSecond: 12 };
 /** Eight balls fit with the mechanism fully in; excess cargo limits compression. */
 export const cargoExtension = (count: number, capacity = INTAKE.capacity) => Math.max(0, Math.min(1, (count - 8) / Math.max(1, capacity - 8)));
 export type MechanismTelemetry = {
   count: number; capacity: number; transferring: number; stored: number; loose: number;
   mode: 'Stowed' | 'Deployed' | 'Deploying' | 'Compressing' | 'Intaking' | 'Holding' | 'Full' | 'Reversing' | 'Outlet blocked' | 'Spilling' | 'Pose preview';
-  climb: { status: string; attached: boolean; level: number; lift: number; attachment: Vector | null };
+  climb: Climber['telemetry'];
   intakeStatus: 'Retracted' | 'Extended' | 'Extending' | 'Retracting' | 'Cargo limited';
   mass: number; intake: number; hopper: number; hood: number; preview: boolean;
   feeding: number; airborne: number; shooter: ShooterTelemetry;
@@ -46,7 +40,7 @@ export class RobotSimulation {
   readonly shooter: Shooter;
   readonly contacts: GameplayContacts;
   readonly hopper: HopperDynamics;
-  readonly owner = 'robot-0';
+
   input = { ...NEUTRAL_MECHANISMS };
   inspectionPose: RobotPose | null = null;
   rollerAngle = 0;
@@ -63,10 +57,10 @@ export class RobotSimulation {
   private outletBlocked = false;
   private payloadSignature = '';
 
-  constructor(private world: RAPIER.World, readonly fuel: FuelSystem, private fieldElements: Map<number, string>, definition: RobotDefinition = REBLITZ) {
-    this.storageSlots = definition.cargoSlots?.map(([x, y, z]) => v3(x, y, z)) ?? STORAGE_SLOTS.slice(0, definition.mechanisms.capacity).map(p => ({ ...p }));
+  constructor(private world: RAPIER.World, readonly fuel: FuelSystem, private fieldElements: Map<number, string>, definition: RobotDefinition = REBLITZ, readonly owner = 'robot-0') {
+    this.storageSlots = definition.cargoSlots.map(([x, y, z]) => v3(x, y, z));
     if (this.storageSlots.length !== definition.mechanisms.capacity) throw new Error(`Invalid cargo layout for ${definition.id}`);
-    this.pickup = definition.pickup ?? { minX: -.79, maxX: -.44, halfWidth: .29, mouthX: -.53, ejectX: -.755 };
+    this.pickup = definition.pickup;
     this.hopper = new HopperDynamics(definition);
     this.chassis = new SwerveChassis(world, definition, fieldElements);
     this.climber = new Climber(world, this.chassis, fieldElements);
@@ -81,7 +75,7 @@ export class RobotSimulation {
     const p = this.storageSlots[slot];
     // Initial preload/transfer packing; stored cargo then evolves in HopperDynamics.
     // Keep the original feeder entry pocket fixed on 2910.
-    return { ...p, x: p.x + (this.chassis.definition.id === REBLITZ.id && slot === FEEDER_POCKET ? 0 : this.chassis.definition.hopper.stowTravel * (1 - this.chassis.pose.intake)) };
+    return { ...p, x: p.x + (slot === this.chassis.definition.hopper.fixedSlot ? 0 : this.chassis.definition.hopper.stowTravel * (1 - this.chassis.pose.intake)) };
   }
   preload(ids: number[]) {
     for (const id of ids.slice(0, 8)) {
@@ -92,7 +86,7 @@ export class RobotSimulation {
     }
     this.updatePayload();
   }
-  clearInput() { this.input = { ...NEUTRAL_MECHANISMS }; this.toggleHeld = false; this.pendingIntakeToggles = 0; this.captureCredit = this.ejectCredit = 0; this.shooter.stopRequest(); }
+  clearInput() { this.input = { ...NEUTRAL_MECHANISMS }; this.toggleHeld = false; this.pendingIntakeToggles = 0; this.captureCredit = this.ejectCredit = 0; this.shooter.stopRequest(); this.climber.clearInput(); }
   inspect(pose: RobotPose | null) {
     this.clearInput(); this.inspectionPose = pose ? { ...pose } : null;
     if (pose) this.chassis.setPose(pose);
@@ -113,6 +107,7 @@ export class RobotSimulation {
     this.shooter.reset(false);
     this.updatePayload();
   }
+  requestClimbToggle() { this.climber.requestToggle(); }
   requestIntakeToggle() { if (this.chassis.definition.intake.stowTravel) this.pendingIntakeToggles++; }
   preStep(dt: number) {
     if (this.actuatorsEnabled && !this.inspectionPose && this.pendingIntakeToggles % 2 === 1) this.intakeOut = !this.intakeOut;
@@ -127,7 +122,7 @@ export class RobotSimulation {
       const approach = (v: number, target: number, seconds: number) => v + Math.max(-dt / seconds, Math.min(dt / seconds, target - v));
       const compress = shoot || (!!this.chassis.definition.intake.stowTravel && !this.intakeOut && !this.input.intake && !this.input.reverse);
       const manual = this.chassis.definition.intake.manualRetraction && !this.intakeOut && !demand;
-      const target = manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? cargoExtension(held.length, this.capacity) : 1;
+      const target = demand ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? cargoExtension(held.length, this.capacity) : 1;
       this.intakeTarget = target;
       const intake = approach(this.chassis.pose.intake, target, target < this.chassis.pose.intake ? INTAKE.compressSeconds : INTAKE.deploySeconds);
       const hopper = this.chassis.definition.hopper.stowTravel && this.chassis.definition.intake.stowTravel ? intake : approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
@@ -152,6 +147,7 @@ export class RobotSimulation {
     });
     this.updatePayload();
     if (!this.climber.attached) this.chassis.step(dt, aimTurn, this.actuatorsEnabled);
+    else { this.chassis.body.resetForces(false); this.chassis.body.resetTorques(false); }
   }
   postStep(dt: number) {
     if (this.inspectionPose || !this.actuatorsEnabled) return;

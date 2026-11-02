@@ -1,10 +1,11 @@
+import { readRuntimeManifest } from './runtime-manifest.ts';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { resolve, sep } from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const manifest = JSON.parse(await readFile(resolve(root, 'assets/runtime-manifest.json'), 'utf8'));
+const manifest = readRuntimeManifest(root);
 const release = process.argv.includes('--release'), errors = [];
 let count = 0, bytes = 0;
 if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.groups)) throw new Error('Invalid runtime asset manifest.');

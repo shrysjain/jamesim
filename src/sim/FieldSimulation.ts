@@ -1,3 +1,4 @@
+import { defaultStart } from './SessionConfig';
 import { HumanPlayer } from './HumanPlayer';
 import { ROBOTS } from '../robot/RobotDefinition';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -93,7 +94,7 @@ export class FieldSimulation {
         }
       }
       const robot = this.robotController;
-      if (robot) robot.climber.step(STEP, !!robot.input.climb, !!robot.input.lower, this.match.actuatorsEnabled, robot.shooter.alliance);
+      if (robot) robot.climber.step(STEP, !!robot.input.climb, this.match.actuatorsEnabled, robot.shooter.alliance);
       this.robotController?.preStep(STEP);
       this.robotController?.contacts.displaceFuel();
       this.hubs.beforeStep();
@@ -152,7 +153,7 @@ export class FieldSimulation {
       this.world.removeRigidBody(this.robotController.chassis.body);
       this.robotController = new RobotSimulation(this.world, this.fuelSystem, this.colliderElements, definition);
     }
-    this.configureRobot(config);
+    this.configureRobot(this.match.config);
     const neutral = this.fuelSystem.records.filter(f => Math.abs(f.body.translation().x) < 1.1 && f.body.translation().y < 0.15).slice(-this.match.config.preloads);
     if (this.match.config.preloads) this.robotController?.preload(neutral.map(f => f.id));
     if (config.humanSupply) this.humanPlayer.stock();
@@ -160,9 +161,13 @@ export class FieldSimulation {
   }
   configureRobot(config: MatchConfig) {
     const r = this.robotController; if (!r) return;
-    const sign = config.alliance === 'red' ? -1 : 1;
     r.shooter.alliance = config.alliance === 'red' ? 'red' : 'blue';
-    r.chassis.teleport([sign * 6.1, 0.26, sign * (config.spawn === 'right' ? -2.1 : config.spawn === 'center' ? -0.288925 : 2.1)], sign === 1 ? 0 : Math.PI);
+    const start = config.start ?? defaultStart(config.alliance ?? 'blue', config.spawn);
+    r.chassis.teleport([start.x, .26, start.z], start.yaw);
+  }
+  startSession(config: MatchConfig, practice = false) {
+    this.startMatch(config);
+    if (practice) this.match.enterPractice();
   }
   restartMatch() { this.startMatch({ ...this.match.config }); }
 

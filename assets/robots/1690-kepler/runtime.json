@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "1690-kepler",
+  "group": {
+    "name": "Orbit 1690 Kepler CAD",
+    "source": "https://www.chiefdelphi.com/t/frc-orbit-1690-2026-robot-cad-release/520673",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/1690-kepler/robot.glb",
+        "bytes": 1755316,
+        "sha256": "170dd1d532e6d079fffa99a34cfaf9992ca5d7876190cbceb140803eeddd9211"
+      }
+    ]
+  }
+}

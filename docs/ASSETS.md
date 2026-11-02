@@ -2,7 +2,7 @@
 
 The repository includes the prepared field/model data, 2910 runtime model, six match sounds and fonts needed for a complete clean-clone build. Original STEP/GLB exports, binders, conversion reports and QA captures remain local and excluded.
 
-The project owner explicitly authorized noncommercial v1 publication on November 1, 2026, deferring license review. This supersedes the earlier local-only restriction. See [the decision and Vercel instructions](V1_PUBLICATION.md). Redistribution-review statuses in `assets/runtime-manifest.json` remain factual and unchanged; this is a project-owner publication decision, not a new third-party license.
+The project owner explicitly authorized noncommercial v1 publication on November 1, 2026, deferring license review. This supersedes the earlier local-only restriction. See [the decision and Vercel instructions](V1_PUBLICATION.md). Redistribution-review statuses in `assets/runtime-manifest.json` and per-robot `assets/robots/<id>/runtime.json` remain factual and unchanged; this is a project-owner publication decision, not a new third-party license.
 
 ## Required files
 

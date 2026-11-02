@@ -28,21 +28,6 @@
       ]
     },
     {
-      "name": "2910 ReBlitz CAD",
-      "source": "https://www.chiefdelphi.com/t/2910-cad-and-tech-binder-release-2026/521705",
-      "redistribution": {
-        "status": "pending",
-        "evidence": []
-      },
-      "files": [
-        {
-          "path": "public/assets/robots/2910-reblitz/robot.glb",
-          "bytes": 4140124,
-          "sha256": "ac11fc6cf402f1ae4679d2b698d1272c820d9b985e62a842a76099c00edd3891"
-        }
-      ]
-    },
-    {
       "name": "FRC match audio",
       "source": "https://github.com/Team254/cheesy-arena/tree/248d9de497e701223e2cdbc986a19bbfea054c21/static/audio",
       "redistribution": {
@@ -127,21 +112,6 @@
           "path": "public/fonts/OFL-BarlowCondensed.txt",
           "bytes": 4377,
           "sha256": "186d750eb496a4c17a76385f82be6aea2ac1cf2de074a811d63786cf374ea73f"
-        }
-      ]
-    },
-    {
-      "name": "Orbit 1690 Kepler CAD",
-      "source": "https://www.chiefdelphi.com/t/frc-orbit-1690-2026-robot-cad-release/520673",
-      "redistribution": {
-        "status": "pending",
-        "evidence": []
-      },
-      "files": [
-        {
-          "path": "public/assets/robots/1690-kepler/robot.glb",
-          "bytes": 1745856,
-          "sha256": "8e505119b1c09d0d4f18916f21b16147a7387776a6ebd45dbfd3f42a76a6864d"
         }
       ]
     }
