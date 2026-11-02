@@ -70,6 +70,15 @@ export class SwerveChassis {
     this.body.setAngvel(vec(), true);
   }
 
+  /** Match-time hold: stop ground drift while retaining falling and climbing motion. */
+  holdDisabledDrive() {
+    this.stopDrive();
+    if (this.modules.some(m => m.grounded && m.load > 1)) {
+      const velocity = this.body.linvel();
+      this.body.setLinvel(vec(0, velocity.y, 0), true);
+    }
+  }
+
   /** Keep the physical frame upright; terrain lean belongs only to rendering. */
   enforceUpright() {
     const q = this.body.rotation(), angular = this.body.angvel();
@@ -98,6 +107,8 @@ export class SwerveChassis {
       const r = Math.min(shape.radius ?? 0, ...shape.halfExtents) * 0.95;
       const half = shape.halfExtents.map(v => v - r) as Vec3;
       const desc = (r ? RAPIER.ColliderDesc.roundCuboid(...half, r) : RAPIER.ColliderDesc.cuboid(...half))
+        // Tire traction is solved below. Let the low-friction frame slide on
+        // walls instead of averaging its friction up to the field material.
         .setDensity(0).setFriction(shape.part === 'chassis' && shape.halfExtents[1] < 0.01 ? 0.02 : 0.05)
         .setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min).setRestitution(0.05).setCollisionGroups(CollisionGroups.chassis);
       this.mechanismColliders.push({ collider: world.createCollider(desc, this.body), definition: shape });
@@ -113,8 +124,8 @@ export class SwerveChassis {
 
   /** Update the articulated collision proxies for simulation or pose inspection. */
   setPose(pose: RobotPose) {
-    const next = { intake: Math.max(0, Math.min(1, pose.intake)), hopper: Math.max(0, Math.min(1, pose.hopper)), hood: Math.max(0, Math.min(1, pose.hood)) };
-    if (this.poseInitialized && next.intake === this.pose.intake && next.hopper === this.pose.hopper && next.hood === this.pose.hood) return;
+    const next = { intake: Math.max(0, Math.min(1, pose.intake)), hopper: Math.max(0, Math.min(1, pose.hopper)), hood: Math.max(0, Math.min(1, pose.hood)), climber: Math.max(0, Math.min(1, pose.climber ?? 0)) };
+    if (this.poseInitialized && next.intake === this.pose.intake && next.hopper === this.pose.hopper && next.hood === this.pose.hood && next.climber === this.pose.climber) return;
     this.poseInitialized = true; this.pose = next;
     for (const { collider, definition: shape } of this.mechanismColliders) {
       const { angle, pivot, shift, rise } = partTransform(this.definition, shape.part, this.pose);

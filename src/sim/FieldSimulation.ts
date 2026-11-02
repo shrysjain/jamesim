@@ -87,13 +87,14 @@ export class FieldSimulation {
           r.clearInput(); r.chassis.stopDrive();
         }
         r.actuatorsEnabled = this.match.actuatorsEnabled;
+        if (!r.actuatorsEnabled) r.chassis.holdDisabledDrive();
         if (!this.match.driverEnabled) {
           r.chassis.input = { ...NEUTRAL_INPUT }; r.input = { intake: false, reverse: false,
             shoot: false };
         }
       }
       const robot = this.robotController;
-      if (robot) robot.climber.step(STEP, !!robot.input.climb, this.match.actuatorsEnabled, robot.shooter.alliance);
+      if (robot) robot.climber.step(STEP, !!robot.input.climb, this.match.actuatorsEnabled, robot.shooter.alliance, robot.hopperLiftTarget, robot.hopperMinimumLift);
       this.robotController?.preStep(STEP);
       this.robotController?.contacts.displaceFuel();
       this.hubs.beforeStep();
@@ -125,6 +126,7 @@ export class FieldSimulation {
         }
       }
       this.match.advance();
+      if (!this.match.actuatorsEnabled) this.robot?.holdDisabledDrive();
       if (this.match.phase === 'Complete') { this.setRunning(false); break; }
     }
     this.physicsMs = performance.now() - start;
