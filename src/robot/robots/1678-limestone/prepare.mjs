@@ -7,7 +7,7 @@ import { Document, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { weld, prune, meshopt } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
-import { Matrix4, Matrix3, Vector3, BoxGeometry } from 'three';
+import { Matrix4, Matrix3, Vector3, BoxGeometry, CylinderGeometry } from 'three';
 const id = '1678-limestone', input = `assets/source/robots/${id}`;
 const sources = JSON.parse(await readFile(`assets/robots/${id}/sources.json`, 'utf8'));
 await mkdir(input, { recursive: true });
@@ -22,6 +22,7 @@ await Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]);
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
 const doc = new Document(), buffer = doc.createBuffer(), scene = doc.createScene('1678 Citrus Circuits · Limestone');
 const groups = new Map(), batches = new Map(), materials = new Map(), report = { inputs: {}, solids: {}, assignments: {} };
+const rollerShells = new Map();
 const offset = .223, pivot = [.30465, .1689, 0], drum = [-.28815, .47685, 0];
 const frame = new Matrix4().makeRotationY(Math.PI).setPosition(0, -offset, 0);
 // CAD has a 132° folded intake. Bake the collecting pose; the runtime folds it back exactly once.
@@ -77,7 +78,22 @@ function put(s, parent, transform, mat) {
     p.push(...new Vector3(...s.pts[i]).applyMatrix4(transform).sub(origin).toArray());
     n.push(...new Vector3(...s.normals[i]).applyMatrix3(nm).normalize().toArray());
   }
-  append(parent, p, n, s.indices.map(i => map.get(i)), mat);
+  // The two thin bars and three hood rollers contain coincident long shells,
+  // with different triangulations. Face deduplication alone cannot remove
+  // their depth fighting. Rebuild only those cylindrical surfaces from their
+  // measured envelope; keep the original short end hardware and axle frames.
+  if (/^(intake-roller-[12]|hood-roller-[012])$/.test(parent) && s.max[2] - s.min[2] > .5) {
+    const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    for (let i = 0; i < p.length; i += 3) for (let k = 0; k < 3; k++) {
+      lo[k] = Math.min(lo[k], p[i + k]); hi[k] = Math.max(hi[k], p[i + k]);
+    }
+    const diameter = Math.max(hi[0] - lo[0], hi[1] - lo[1]);
+    if (diameter > (parent.startsWith('intake') ? .025 : .05)) throw new Error(`Unexpected roller envelope: ${parent}`);
+    const shell = rollerShells.get(parent) ?? { lo: [...lo], hi: [...hi], mat, diameter, replacedSolids: 0 };
+    for (let k = 0; k < 3; k++) { shell.lo[k] = Math.min(shell.lo[k], lo[k]); shell.hi[k] = Math.max(shell.hi[k], hi[k]); }
+    if (diameter > shell.diameter) { shell.diameter = diameter; shell.mat = mat; }
+    shell.replacedSolids++; rollerShells.set(parent, shell);
+  } else append(parent, p, n, s.indices.map(i => map.get(i)), mat);
   report.assignments[parent] = (report.assignments[parent] ?? 0) + 1;
 }
 function axle(name, parent, position, transform = frame) {
@@ -139,6 +155,15 @@ function shape(parent, geometry, matrix, mat) {
   const a = geometry.getAttribute('position'), n = geometry.getAttribute('normal'), p = [], normals = [], nm = new Matrix3().getNormalMatrix(matrix);
   for (let i = 0; i < a.count; i++) { p.push(...new Vector3().fromBufferAttribute(a,i).applyMatrix4(matrix).toArray()); normals.push(...new Vector3().fromBufferAttribute(n,i).applyMatrix3(nm).normalize().toArray()); }
   append(parent, p, normals, Array.from(geometry.index.array), mat); geometry.dispose();
+}
+if (rollerShells.size !== 5) throw new Error('Expected two intake and three hood roller shells');
+report.rebuiltRollerShells = {};
+for (const [parent, shell] of rollerShells) {
+  const size = shell.hi.map((v, k) => v - shell.lo[k]), center = shell.lo.map((v, k) => (v + shell.hi[k]) / 2);
+  const radius = Math.max(size[0], size[1]) / 2;
+  shape(parent, new CylinderGeometry(radius, radius, size[2], 48),
+    new Matrix4().makeTranslation(...center).multiply(new Matrix4().makeRotationX(Math.PI / 2)), shell.mat);
+  report.rebuiltRollerShells[parent] = { radius, length: size[2], center, replacedSolids: shell.replacedSolids };
 }
 // Bumpers are absent from both published CAD exports: explicit estimated 3.25-inch envelopes.
 const bumper = material('bumper', [.025,.13,.52,1], 0, .95), frameHalf = 27*.0254/2, thickness = .08255, outside = frameHalf+thickness;

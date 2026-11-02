@@ -22,6 +22,21 @@ function localBounds(root: Node){
   };visit(root);return {min,max};
 }
 describe('Limestone CAD articulation',()=>{
+  it('uses one long cylindrical surface per intake bar and hood roller, keeping short end hardware',()=>{
+    for(const id of ['intake-roller-1','intake-roller-2','hood-roller-0','hood-roller-1','hood-roller-2']){
+      const root=assembly(id),inv=new Matrix4().fromArray(root.getWorldMatrix()).invert();let shells=0;
+      root.traverse(node=>{
+        const matrix=inv.clone().multiply(new Matrix4().fromArray(node.getWorldMatrix()));
+        for(const p of node.getMesh()?.listPrimitives()??[]){
+          const pos=p.getAttribute('POSITION')!,idx=p.getIndices()!.getArray()!;
+          const z=Array.from({length:pos.getCount()},(_,i)=>new Vector3().fromArray(pos.getElement(i,[])).applyMatrix4(matrix).z);
+          let longFaces=0;for(let i=0;i<idx.length;i+=3){const a=[z[idx[i]],z[idx[i+1]],z[idx[i+2]]];if(Math.max(...a)-Math.min(...a)>.45)longFaces++;}
+          if(longFaces){expect(longFaces).toBe(96);shells++;}
+        }
+      });
+      expect(shells,id).toBe(1);
+    }
+  });
   it('keeps thin intake rollers free of coincident faces that flicker while spinning',()=>{
     for(const id of ['intake-roller-1','intake-roller-2']){
       const root=assembly(id), inv=new Matrix4().fromArray(root.getWorldMatrix()).invert(),faces=new Set<string>();let triangles=0,duplicates=0;
@@ -33,8 +48,14 @@ describe('Limestone CAD articulation',()=>{
           for(let i=0;i<idx.length;i+=3){const key=[vertices[idx[i]],vertices[idx[i+1]],vertices[idx[i+2]]].sort().join('|');triangles++;if(faces.has(key))duplicates++;faces.add(key);}
         }
       });
-      expect(triangles).toBeGreaterThan(1000);expect(duplicates).toBeLessThan(triangles*.01);
-      const bounds=localBounds(root);expect(bounds.max[0]-bounds.min[0]).toBeLessThan(.02);expect(bounds.max[2]-bounds.min[2]).toBeGreaterThan(.6);
+      // Rebuilt shaft shells replace four overlapping CAD solids per bar.
+      // Keep the original short end hardware, with one smooth outer cylinder.
+      expect(triangles).toBeGreaterThan(190);expect(triangles).toBeLessThan(600);
+      expect(duplicates).toBeLessThan(triangles*.01);
+      const bounds=localBounds(root);
+      expect(bounds.max[0]-bounds.min[0]).toBeCloseTo(.01825,4);
+      expect(bounds.max[1]-bounds.min[1]).toBeCloseTo(.01825,4);
+      expect(bounds.max[2]-bounds.min[2]).toBeCloseTo(.66091,4);
     }
   });
   it('normalizes every actual MK5n wheel axle to +Z at the declared suspension mounts',()=>{

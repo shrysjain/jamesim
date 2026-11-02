@@ -51,14 +51,18 @@ describe('physical shooting uncertainty', () => {
         s.robot!.teleport(moving ? [7.2, .26, 2.8] : [6.2, .26, 1.5], Math.PI);
         const r = s.robotController!; r.input.intake = true; run(s, .8); r.input.intake = false;
         for (const [i, f] of s.fuelSystem.records.entries()) { s.fuelSystem.capture(f, r.owner, i, r.storageSlots[i]); f.state = 'stored'; }
-        r.input.shoot = true; if (moving) r.chassis.input = { ...NEUTRAL_INPUT, strafe: .05 };
+        // Re•Blitz requires stationary firing. Its second sample tests the
+        // farther position; sustained drive would pin its deployed intake
+        // against the alliance wall while it is trying to finish chassis aim.
+        r.input.shoot = true;
+        if (moving && ROBOTS[id].mechanisms.movingShots) r.chassis.input = { ...NEUTRAL_INPUT, strafe: .05 };
         let spin = 0;
         for (let i = 0; i < 1200; i++) { s.update(1 / 120); if (!spin && r.shooter.shots.length) { const a = s.fuel[r.shooter.shots[0].id].angvel(); spin = Math.hypot(a.x, a.y, a.z); } }
-        expect(r.shooter.shotsFired, JSON.stringify(r.shooter.telemetry)).toBe(count);
+        expect(r.shooter.shotsFired, JSON.stringify({ ...r.shooter.telemetry, moving, position: r.chassis.body.translation(), velocity: r.chassis.body.linvel(), angular: r.chassis.body.angvel(), grounded: r.chassis.telemetry.grounded })).toBe(count);
         expect(new Set(r.shooter.shots.map(e => e.id)).size).toBe(count); expect(spin).toBeGreaterThan(5);
         expect(s.fuel.map(f => f.handle)).toEqual(handles); hits.push(s.hubs.telemetry.blue.hits);
       }
-      console.log('Physical accuracy sample', JSON.stringify({ id, count, stationaryHits: hits[0], distantMovingHits: hits[1] }));
+      console.log('Physical accuracy sample', JSON.stringify({ id, count, stationaryHits: hits[0], distantHits: hits[1], movingShots: ROBOTS[id].mechanisms.movingShots }));
       expect(hits[0]).toBeGreaterThanOrEqual(Math.floor(count * .5));
       expect(hits[1]).toBeGreaterThanOrEqual(Math.floor(count * .25));
       expect(hits[0] + hits[1]).toBeLessThan(count * 2);
