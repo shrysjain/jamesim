@@ -51,6 +51,8 @@ export class FuelSystem {
     if (fuel.owner === null) return false;
     fuel.body.setTranslation(position, false); fuel.body.setLinvel(velocity, false);
     fuel.body.setAngvel(v3(), false); fuel.body.setRotation({ x: 0, y: 0, z: 0, w: 1 }, false);
+    fuel.body.collider(0).setCollisionGroups(CollisionGroups.fuel);
+    fuel.body.collider(0).setRestitution(fuelRestitution(fuel.id));
     fuel.body.setEnabled(true); fuel.body.wakeUp();
     fuel.state = airborne ? 'airborne' : 'loose'; fuel.owner = null; fuel.slot = -1; fuel.age = 0; fuel.availableAt = this.time + 0.4;
     this.world.propagateModifiedBodyPositionsToColliders();
@@ -74,6 +76,7 @@ export class FuelSystem {
       f.state = 'loose'; f.owner = null; f.slot = -1; f.age = 0; f.availableAt = 0;
       f.local = v3(); f.start = v3(); f.body.setEnabled(true);
       f.body.collider(0).setCollisionGroups(CollisionGroups.fuel);
+      f.body.collider(0).setRestitution(fuelRestitution(f.id));
       f.body.setTranslation(v3(...this.initial[i]), false); f.body.setLinvel(v3(), false); f.body.setAngvel(v3(), false);
       f.body.setRotation({ x: 0, y: 0, z: 0, w: 1 }, false); f.body.sleep();
     });

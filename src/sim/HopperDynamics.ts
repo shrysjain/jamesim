@@ -7,6 +7,7 @@ import type { Rotation, Vector } from './vector';
 type Motion = { position: Vector; velocity: Vector; angularVelocity: Vector; rotation: Rotation };
 type HopperFuel = Pick<Fuel, 'id' | 'state' | 'local'>;
 type Particle = { fuel: HopperFuel; velocity: Vector; previous: Vector };
+type ExternalContact = (position: Vector, velocity: Vector) => void;
 const cross = (a: Vector, b: Vector) => v3(a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x);
 const clamp = (value: number, limit: number) => Math.max(-limit, Math.min(limit, value));
 
@@ -20,7 +21,7 @@ export class HopperDynamics {
   get volume(): HopperVolume { return this.definition.hopper.volume!; }
   reset() { this.particles.clear(); this.lastMotion = null; }
 
-  step(dt: number, held: HopperFuel[], pose: RobotPose, motion: Motion) {
+  step(dt: number, held: HopperFuel[], pose: RobotPose, motion: Motion, externalContact?: ExternalContact) {
     const ids = new Set(held.filter(f => f.state === 'stored').map(f => f.id));
     for (const id of this.particles.keys()) if (!ids.has(id)) this.particles.delete(id);
     for (const fuel of held) if (fuel.state === 'stored' && !this.particles.has(fuel.id)) {
@@ -46,7 +47,7 @@ export class HopperDynamics {
         const rotational = add(cross(alpha, p.fuel.local), add(cross(omega, cross(omega, p.fuel.local)), scale(cross(omega, p.velocity), 2)));
         const force = sub(sub(gravity, acceleration), rotational);
         p.velocity.x += clamp(force.x, 35)*h; p.velocity.y += clamp(force.y, 35)*h; p.velocity.z += clamp(force.z, 35)*h;
-        const drag = Math.exp(-.8*h);
+        const drag = Math.exp(-(this.volume.rim ? 1.8 : .8)*h);
         p.velocity = scale(p.velocity, drag);
         p.fuel.local = add(p.fuel.local, scale(p.velocity, h));
       }
@@ -65,6 +66,9 @@ export class HopperDynamics {
           b.x += n.x*correction; b.y += n.y*correction; b.z += n.z*correction;
         }
         for (const p of balls) this.constrain(p.fuel.local, front, width, pose);
+        if (externalContact && iteration === 11) {
+          for (const p of balls) externalContact(p.fuel.local,p.velocity);
+        }
       }
       if (this.volume.rim) this.contactVelocities(balls, front);
       for (const p of balls) {
@@ -92,13 +96,29 @@ export class HopperDynamics {
     }
     return spills;
   }
+  /** Chassis motion is integrated after the local solver. Recheck static field
+   * contacts at the completed pose so rendered cargo cannot lag into a beam. */
+  resolveExternalContacts(held: HopperFuel[], pose: RobotPose, contact: ExternalContact) {
+    const spills: { id: number; velocity: Vector }[] = [], front = this.front(pose);
+    for (const f of held) if (f.state === 'stored') {
+      const velocity = this.particles.get(f.id)?.velocity ?? v3();
+      contact(f.local, velocity);
+      if (f.local.x >= front && f.local.x <= this.volume.backX && Math.abs(f.local.z) <= this.volume.halfWidth) continue;
+      spills.push({ id: f.id, velocity: { ...velocity } }); this.particles.delete(f.id);
+    }
+    return spills;
+  }
   front(pose: RobotPose) { return this.volume.frontX + this.volume.frontTravel*(1-(this.definition.hopper.intakeCurve ? pose.hopper : pose.intake)); }
   floor(x: number) { return this.volume.floorY + (this.volume.floorSlope ?? 0)*x; }
   private contactVelocities(balls: Particle[], front: number) {
     const rim = this.volume.rim!;
     const stop = (velocity: Vector, normal: Vector) => {
       const closing = velocity.x*normal.x+velocity.y*normal.y+velocity.z*normal.z;
-      if (closing < 0) { velocity.x -= closing*normal.x; velocity.y -= closing*normal.y; velocity.z -= closing*normal.z; }
+      if (closing < 0) {
+        velocity.x -= closing*normal.x; velocity.y -= closing*normal.y; velocity.z -= closing*normal.z;
+        const speed = Math.hypot(velocity.x,velocity.y,velocity.z), friction = Math.min(1,-closing*.25/(speed || 1));
+        velocity.x *= 1-friction; velocity.y *= 1-friction; velocity.z *= 1-friction;
+      }
     };
     for (let iteration = 0; iteration < 4; iteration++) {
       for (let i = 0; i < balls.length; i++) for (let j = i+1; j < balls.length; j++) {
@@ -106,7 +126,12 @@ export class HopperDynamics {
         if (distance < 1e-8 || distance > FUEL_RADIUS*2+.001) continue;
         const normal = scale(delta, 1/distance), relative = sub(b.velocity, a.velocity);
         const closing = relative.x*normal.x+relative.y*normal.y+relative.z*normal.z;
-        if (closing < 0) { a.velocity = add(a.velocity, scale(normal, closing/2)); b.velocity = sub(b.velocity, scale(normal, closing/2)); }
+        if (closing < 0) {
+          a.velocity = add(a.velocity, scale(normal, closing/2)); b.velocity = sub(b.velocity, scale(normal, closing/2));
+          const tangent = sub(relative,scale(normal,closing)), speed = Math.hypot(tangent.x,tangent.y,tangent.z);
+          const friction = scale(tangent,Math.min(.5,-closing*.2/(2*(speed || 1))));
+          a.velocity = add(a.velocity,friction); b.velocity = sub(b.velocity,friction);
+        }
       }
       for (const { fuel: { local: p }, velocity } of balls) {
         for (const [axis, plane, inward, top] of [
