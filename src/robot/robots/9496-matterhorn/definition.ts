@@ -14,8 +14,10 @@ export const MATTERHORN: RobotDefinition = {
   drive:{maxSpeed:14.4*.3048,acceleration:10,grip:1.05},modules:swerveModules(.276225,.276225),
   // Team confirms a passive drop: no powered retraction or climb is advertised.
   intake:{pivot:[-.32385,.18415-.223,0],stowedAngle:-115*Math.PI/180},
-  hopper:{stowTravel:.3048,volume:{frontX:-.618,backX:.112,halfWidth:.307,
-    floorY:-.0705,floorSlope:-.1764,ceilingY:.38,frontTravel:.3048}},
+  // Keep stored spheres ahead of the shooter housing, including its side plates.
+  // The higher retaining envelope is a gameplay fit, not measured net geometry.
+  hopper:{stowTravel:.3048,volume:{frontX:-.618,backX:-.006,halfWidth:.307,
+    floorY:-.0705,floorSlope:-.1764,ceilingY:.50,frontTravel:.3048}},
   hood:{pivot:[.127,.454025-.223,0],maxAngle:0},
   shooterGeometry:{pivot:[.127,.454025-.223,0],drumRadius:.0508,guideLength:.155,turretRadiansPerSecond:3,
     yawOffset:Math.PI,fixedElevation:56*Math.PI/180,passRange:9,movingAccuracy:.90,
