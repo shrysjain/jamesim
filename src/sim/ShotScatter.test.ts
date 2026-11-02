@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { ROBOTS } from '../robot/registry';
 import type { RobotId } from '../robot/registry';
 import type { CollisionAsset } from '../field/types';
+import { HUB_CENTER_X } from '../field/targets';
 import { FieldSimulation } from './FieldSimulation';
 import { DEFAULT_MATCH } from './MatchRules';
 import { NEUTRAL_INPUT } from './SwerveChassis';
@@ -48,7 +49,13 @@ describe('physical shooting uncertainty', () => {
       const handles = s.fuel.map(f => f.handle);
       for (const moving of [false, true]) {
         s.startSession({ ...DEFAULT_MATCH, robot: id, preloads: 0 }, true);
-        s.robot!.teleport(moving ? [7.2, .26, 2.8] : [6.2, .26, 1.5], Math.PI);
+        const spawn: [number, number, number] = moving ? [7.2, .26, 2.8] : [6.2, .26, 1.5];
+        const offset = ROBOTS[id].shooterGeometry.yawOffset;
+        // The full-load accuracy bench should not first spin a reverse-facing,
+        // open-hopper robot through half a turn and spill its test ammunition.
+        // Turn-induced spilling and fixed-hood chassis aiming have separate cases.
+        const yaw = offset === undefined ? Math.PI : Math.atan2(spawn[2], HUB_CENTER_X - spawn[0]) - offset;
+        s.robot!.teleport(spawn, yaw);
         const r = s.robotController!; r.input.intake = true; run(s, .8); r.input.intake = false;
         for (const [i, f] of s.fuelSystem.records.entries()) { s.fuelSystem.capture(f, r.owner, i, r.storageSlots[i]); f.state = 'stored'; }
         // Re•Blitz requires stationary firing. Its second sample tests the
