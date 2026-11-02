@@ -8,7 +8,7 @@ import {MATTERHORN_CARGO} from './cargo';
 export const MATTERHORN: RobotDefinition = {
   ...STANDARD_SWERVE,
   id:'9496-matterhorn',teamNumber:'9496',name:'9496 LYNK · Matterhorn',
-  summary:'Fixed hood · passive intake · three-wide shooter',
+  summary:'Fixed hood · passive intake · full-width shooter',
   model:'/assets/robots/9496-matterhorn/robot.glb',visual:MATTERHORN_VISUAL,
   mass:66,inertia:[3.5,6,3.8],length:.83185,width:.8382,bumperCenterY:.1003-.223,
   drive:{maxSpeed:14.4*.3048,acceleration:10,grip:1.05},modules:swerveModules(.276225,.276225),
@@ -21,12 +21,13 @@ export const MATTERHORN: RobotDefinition = {
     rim:{front:.308,back:.34,sides:.31}}},
   hood:{pivot:[.127,.454025-.223,0],maxAngle:0},
   shooterGeometry:{pivot:[.127,.454025-.223,0],drumRadius:.0508,guideLength:.155,turretRadiansPerSecond:3,
+    feedAcrossLanes:true,laneJitter:.185/3,
     yawOffset:Math.PI,fixedElevation:56*Math.PI/180,passRange:9,movingAccuracy:.90,
     spread:{yaw:.030,elevation:.035,speed:.035,flyerChance:.10,backspin:30},
     // Fit full-size fuel inside the curved rear guide. Contact at the roller
     // nip approximates soft-fuel compression, not a rigid CAD contact solver.
     feedPath:[[.17,-.02,0],[.224,.2801-.223,0],[.224,.3881-.223,0],[.208,.523-.223,0]]},
-  mechanisms:{capacity:MATTERHORN_CARGO.length,intakeRate:35,compress:false,lanes:[-.17,0,.17],fireRate:18,
+  mechanisms:{capacity:MATTERHORN_CARGO.length,intakeRate:35,compress:false,lanes:[-.37/3,0,.37/3],fireRate:18,
     turret:false,movingShots:true,simultaneousIntake:true,climb:false},
   cargoSlots:MATTERHORN_CARGO,
   pickup:{minX:-.66,maxX:-.49,halfWidth:.29,mouthX:-.58,ejectX:-.70},
