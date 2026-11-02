@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "robotId": "1114-simbot-tim",
+  "team": 1114,
+  "season": 2026,
+  "name": "Simbot Tim",
+  "status": "research-only-awaiting-complete-cad",
+  "runtimeRegistered": false,
+  "baseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
+  "cad": {
+    "url": "https://cad.onshape.com/documents/7959d159451177786d52dd9a/w/535bc31b66b0cc442967f1d0/e/a263c1a625ed8cf2484ae82f",
+    "documentId": "7959d159451177786d52dd9a",
+    "workspaceId": "535bc31b66b0cc442967f1d0",
+    "elementId": "a263c1a625ed8cf2484ae82f",
+    "revisionStatus": "workspace URL; immutable CAD revision not yet available",
+    "verification": "Exact URL is the CAD link in the official Team 1114 Chief Delphi release. Viewer body unavailable to this session; no claim that export is disabled.",
+    "completeGeometryObtained": false
+  },
+  "primarySources": [
+    {
+      "url": "https://www.chiefdelphi.com/t/team-1114-simbotics-2026-simbot-tim-cad-release/522887",
+      "purpose": "Official team release identifies season, robot, exact CAD link and final competition changes."
+    },
+    {
+      "url": "https://www.simbotics.org/robots/2026-tim/",
+      "purpose": "Official team robot page corroborates robot, season and released CAD/code."
+    }
+  ],
+  "code": {
+    "repository": "https://github.com/Simbotics/2026-Simbot-Tim",
+    "commit": "b02f50832cc0ca7694798f61d41cf230edfd62b8",
+    "role": "Parameter and mechanism evidence only; not copied simulator implementation. Code license does not establish CAD rights.",
+    "files": [
+      {
+        "path": "src/main/java/frc/robot/config/RobotConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/config/RobotConstants.java",
+        "bytes": 1463,
+        "sha256": "12b9d5e3d2c2d9c19eb787c56ee9a9b49241272e14e196edc977a4216f2a7516"
+      },
+      {
+        "path": "src/main/java/frc/robot/generated/TunerConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/generated/TunerConstants.java",
+        "bytes": 14238,
+        "sha256": "4a6d0176f4096d1b5749f76680d3e393b44ccddb9ef45a41c224e3e6323a5818"
+      },
+      {
+        "path": "src/main/java/frc/robot/subsystems/intake/IntakeConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/subsystems/intake/IntakeConstants.java",
+        "bytes": 4766,
+        "sha256": "75050fe145df4686365db417d1e469b68757be2f2c375d9e747d648f9722ff38"
+      },
+      {
+        "path": "src/main/java/frc/robot/subsystems/shooter/ShooterConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/subsystems/shooter/ShooterConstants.java",
+        "bytes": 4886,
+        "sha256": "534249b903b062c9e4927ece3dc4334d074832a544b21ff353d11a434ea8834f"
+      },
+      {
+        "path": "src/main/java/frc/robot/subsystems/indexer/IndexerConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/subsystems/indexer/IndexerConstants.java",
+        "bytes": 4475,
+        "sha256": "00fcba7e613d948940d6c0cebb3473feb5ad0a98728a488bd51e6f42b1d20bdc"
+      },
+      {
+        "path": "src/main/java/frc/robot/commands/intake/AgitateIntake.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/commands/intake/AgitateIntake.java",
+        "bytes": 5831,
+        "sha256": "20aacc7be3000ba4c99b819b472ec21656bda29b5e8ccb280c373e1227510097"
+      },
+      {
+        "path": "src/main/java/frc/robot/commands/indexer/Shoot.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/commands/indexer/Shoot.java",
+        "bytes": 3639,
+        "sha256": "8cbdd0aaebe6ca761886d24641a20880f5eea00ed1d5ef730b80178232112938"
+      },
+      {
+        "path": "src/main/java/frc/robot/util/ShootMoveLUT.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/util/ShootMoveLUT.java",
+        "bytes": 17271,
+        "sha256": "75e0994713c48da9058b0610cbbce6a4f4b1acba6f749007bc0ac069bca034eb"
+      }
+    ]
+  },
+  "redistribution": {
+    "status": "pending",
+    "evidence": [],
+    "note": "No CAD clearance inferred from official code license. Preserve owner-authorized noncommercial v1 publication policy; source export still required."
+  },
+  "unmeasured": [
+    "CAD bumper/frame envelope",
+    "mass/inertia",
+    "shooter drum radius and center",
+    "hood and intake pivots",
+    "hopper internal bounds and capacity",
+    "feed path and lane span",
+    "mechanism node names",
+    "kinematic travel direction and packaging clearance"
+  ],
+  "validation": {
+    "branchGuard": "passed: pnpm robot:branch --team=1114",
+    "simulation": "not run: no gameplay implementation or prepared runtime CAD",
+    "browser": "not run: robot is not registered",
+    "assetBudget": "not applicable: no runtime asset generated"
+  },
+  "partialGeometry": {
+    "repository": "https://github.com/ryanabraham1/frc-3d-sim",
+    "commit": "1af807d17dcbf012c5810cc3fc7b1fa731ec5b74",
+    "url": "https://github.com/ryanabraham1/frc-3d-sim/blob/1af807d17dcbf012c5810cc3fc7b1fa731ec5b74/public/models/robots/2026/simbot-tim-1114.glb",
+    "upstreamFilename": "S26-A000.glb",
+    "upstreamAssembly": "S26-IN-A200",
+    "scope": "Intake/hopper subassembly only; not a complete robot.",
+    "documentation": "https://github.com/ryanabraham1/frc-3d-sim/blob/1af807d17dcbf012c5810cc3fc7b1fa731ec5b74/docs/ROBOT-CAD-IMPORTS.md",
+    "bytes": 571316,
+    "sha256": "aa2745c28e27df4c10b5c478876975311bf136123d45ff498a7a3f1f8141a759",
+    "trianglesReported": 110678,
+    "localIgnoredInput": "assets/source/robots/1114-simbot-tim/partial-cad/intake-hopper.glb",
+    "use": "Retained only as an ignored research input. Not registered, rendered, or copied into production. No simulation implementation copied.",
+    "missing": "Chassis, four complete swerve modules, shooter drum, hood and complete assembly mates/pivots. Source documentation describes procedural replacements for these; those are not accepted as real CAD.",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    }
+  },
+  "sourceParameters": {
+    "classification": "Official code configuration; not CAD measurements or guaranteed measured real-world performance. Coordinate conversion and source unit conventions require complete CAD verification.",
+    "bumperLengthMetres": {
+      "value": 0.76,
+      "symbol": "RobotConstants.ROBOT_LENGTH"
+    },
+    "bumperWidthMetres": {
+      "value": 0.92,
+      "symbol": "RobotConstants.ROBOT_WIDTH"
+    },
+    "driveSpeedAt12VoltsMetresPerSecond": {
+      "value": 4.02,
+      "symbol": "TunerConstants.kSpeedAt12Volts"
+    },
+    "wheelRadiusMetres": {
+      "value": 0.0508,
+      "symbol": "TunerConstants.kWheelRadius"
+    },
+    "moduleSourceLocationsMetres": {
+      "values": [
+        [
+          0.24765,
+          0.3175
+        ],
+        [
+          0.24765,
+          -0.3175
+        ],
+        [
+          -0.24765,
+          0.3175
+        ],
+        [
+          -0.24765,
+          -0.3175
+        ]
+      ],
+      "sourceUnits": "\u00b19.75 inches X and \u00b112.5 inches Y in WPILib; not yet mapped into Jamesim axes"
+    },
+    "hoodLowerBoundDegrees": {
+      "value": 42,
+      "symbol": "ShooterConstants.HOOD_LOWER_BOUND"
+    },
+    "hoodUpperBoundDegrees": {
+      "value": 74,
+      "symbol": "ShooterConstants.HOOD_UPPER_BOUND"
+    },
+    "hoodZeroAngleDegrees": {
+      "value": 74.484,
+      "symbol": "ShooterConstants.HOOD_ZERO_ANGLE"
+    },
+    "slideDropMetres": {
+      "value": 0.34417,
+      "symbol": "IntakeConstants.SLIDE_DROP",
+      "sourceInches": 13.55
+    },
+    "slideRaiseMetres": {
+      "value": 0.16256,
+      "symbol": "IntakeConstants.SLIDE_RAISE",
+      "sourceInches": 6.4
+    },
+    "slideEndpointDifferenceMetres": {
+      "value": 0.18161,
+      "derivation": "13.55\u22126.4 inches; not independently verified as final mechanical stroke"
+    },
+    "climber": {
+      "finalCompetitionRobot": false,
+      "evidence": "Official release author, posts5\u20136: removed before first event and remained absent."
+    },
+    "movingShotPrediction": {
+      "verified": false,
+      "evidence": "ShootMoveLUT.calculate returns distance-only result before commented velocity/latency prediction. Do not infer enabled prediction from filename."
+    },
+    "hopperAgitation": {
+      "evidence": "AgitateIntake.execute: after650ms of ready shooting, pulls slide toward MIN_AGITATION_POSITION2 (6.3in); on end restores SLIDE_DROP. Experimental oscillation code is commented out."
+    }
+  }
+}
