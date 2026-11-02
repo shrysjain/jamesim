@@ -56,6 +56,7 @@ export class RobotSimulation {
   private overturnedFor = 0;
   private outletBlocked = false;
   private payloadSignature = '';
+  private readonly cargoShape = new RAPIER.Ball(FUEL_RADIUS);
 
   constructor(private world: RAPIER.World, readonly fuel: FuelSystem, private fieldElements: Map<number, string>, definition: RobotDefinition = REBLITZ, readonly owner = 'robot-0') {
     this.storageSlots = definition.cargoSlots.map(([x, y, z]) => v3(x, y, z));
@@ -146,21 +147,49 @@ export class RobotSimulation {
       const body = this.chassis.body, q = this.chassis.renderRotation;
       const spills = this.hopper.step(dt, held, this.chassis.pose, {
         position: body.translation(), velocity: body.linvel(), angularVelocity: body.angvel(), rotation: q,
-      });
-      for (const spill of spills) {
-        const f = this.fuel.records[spill.id];
-        if (f.owner !== this.owner || f.state !== 'stored') continue;
-        const position = add(body.translation(), rotate(f.local, q));
-        const velocity = add(body.velocityAtPoint(position), rotate(spill.velocity, q));
-        this.fuel.release(f, position, velocity);
-      }
+      }, this.chassis.definition.hopper.volume.rim ? this.hopperFieldContact : undefined);
+      this.releaseSpills(spills);
     }
     this.updatePayload();
     if (!this.climber.attached) this.chassis.step(dt, aimTurn, this.actuatorsEnabled);
     else { this.chassis.body.resetForces(false); this.chassis.body.resetTorques(false); }
   }
+  private releaseSpills(spills: ReturnType<HopperDynamics['step']>) {
+    const body = this.chassis.body, q = this.chassis.renderRotation;
+    for (const spill of spills) {
+      const f = this.fuel.records[spill.id];
+      if (f.owner !== this.owner || f.state !== 'stored') continue;
+      const position = add(body.translation(), rotate(f.local, q));
+      const velocity = add(body.velocityAtPoint(position), rotate(spill.velocity, q));
+      if (this.fuel.release(f, position, velocity)) f.body.collider(0).setRestitution(.18);
+    }
+  }
+  /** Owned bodies are disabled, so protruding open-hopper spheres query the
+   * same static CAD colliders used by free fuel, including trench roofs/posts. */
+  private hopperFieldContact = (local: Vector, velocity: Vector) => {
+    const body = this.chassis.body, q = this.chassis.renderRotation;
+    let position = add(body.translation(),rotate(local,q));
+    this.world.intersectionsWithShape(position,q,this.cargoShape,collider => {
+      const contact = collider.contactShape(this.cargoShape,position,q,0);
+      if (!contact || contact.distance >= 0) return true;
+      const normal = contact.normal1;
+      position = add(position,scale(normal,-contact.distance+.0002));
+      const pointVelocity = body.velocityAtPoint(position), worldVelocity = add(pointVelocity,rotate(velocity,q));
+      const closing = worldVelocity.x*normal.x+worldVelocity.y*normal.y+worldVelocity.z*normal.z;
+      if (closing < 0) {
+        const resolved = unrotate(sub(sub(worldVelocity,scale(normal,closing)),pointVelocity),q);
+        Object.assign(velocity,resolved);
+      }
+      Object.assign(local,unrotate(sub(position,body.translation()),q));
+      return true;
+    },RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+    undefined,undefined,body,c=>this.fieldElements.has(c.handle));
+  };
   postStep(dt: number) {
     if (this.inspectionPose || !this.actuatorsEnabled) return;
+    if (this.chassis.definition.hopper.volume?.rim) {
+      this.releaseSpills(this.hopper.resolveExternalContacts(this.held, this.chassis.pose, this.hopperFieldContact));
+    }
     const up = rotate(v3(0, 1, 0), this.chassis.body.rotation());
     this.overturnedFor = up.y < 0.4 ? this.overturnedFor + dt : 0;
     const spilling = this.overturnedFor > 0.25;
