@@ -22,6 +22,21 @@ function localBounds(root: Node){
   };visit(root);return {min,max};
 }
 describe('Limestone CAD articulation',()=>{
+  it('keeps thin intake rollers free of coincident faces that flicker while spinning',()=>{
+    for(const id of ['intake-roller-1','intake-roller-2']){
+      const root=assembly(id), inv=new Matrix4().fromArray(root.getWorldMatrix()).invert(),faces=new Set<string>();let triangles=0,duplicates=0;
+      root.traverse(node=>{
+        const matrix=inv.clone().multiply(new Matrix4().fromArray(node.getWorldMatrix()));
+        for(const p of node.getMesh()?.listPrimitives()??[]){
+          const pos=p.getAttribute('POSITION')!,idx=p.getIndices()!.getArray()!;
+          const vertices=Array.from({length:pos.getCount()},(_,i)=>new Vector3().fromArray(pos.getElement(i,[])).applyMatrix4(matrix).toArray().map(v=>Math.round(v*1e5)).join(','));
+          for(let i=0;i<idx.length;i+=3){const key=[vertices[idx[i]],vertices[idx[i+1]],vertices[idx[i+2]]].sort().join('|');triangles++;if(faces.has(key))duplicates++;faces.add(key);}
+        }
+      });
+      expect(triangles).toBeGreaterThan(1000);expect(duplicates).toBeLessThan(triangles*.01);
+      const bounds=localBounds(root);expect(bounds.max[0]-bounds.min[0]).toBeLessThan(.02);expect(bounds.max[2]-bounds.min[2]).toBeGreaterThan(.6);
+    }
+  });
   it('normalizes every actual MK5n wheel axle to +Z at the declared suspension mounts',()=>{
     for(const m of LIMESTONE.modules){
       const wheel=assembly(`${m.name}-wheel`),fork=assembly(`${m.name}-fork`);

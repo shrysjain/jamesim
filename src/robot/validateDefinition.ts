@@ -17,6 +17,8 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(m.lanes.length > 0 && new Set(m.lanes).size === m.lanes.length && m.lanes.every(Number.isFinite), 'At least one unique, finite shooter lane is required.');
   check(d.cargoSlots.length === m.capacity && d.cargoSlots.every(vector), 'Provide one finite cargo seed per capacity slot.');
   check(d.hopper.fixedSlot === undefined || Number.isInteger(d.hopper.fixedSlot) && d.hopper.fixedSlot >= 0 && d.hopper.fixedSlot < m.capacity, 'Fixed cargo slot is outside capacity.');
+  if (d.hopper.autoLift) check(!!d.climb && (d.hopper.volume?.ceilingTravel ?? 0) > 0 && Number.isInteger(d.hopper.autoLift.loweredCapacity) && d.hopper.autoLift.loweredCapacity > 0 && d.hopper.autoLift.loweredCapacity < m.capacity,
+    'Automatic hopper lift requires the real vertical stage and a valid lowered capacity.');
   check(vector(d.intake.pivot) && vector(d.hood.pivot) && Number.isFinite(d.intake.stowedAngle) && Number.isFinite(d.hood.maxAngle), 'Mechanism transforms must be finite.');
   check(d.colliders.length > 0 && d.colliders.every(c => ['chassis', 'intake', 'hopper', 'hood', 'climber'].includes(c.part) && vector(c.center) && c.halfExtents.every(positive) && (c.radius === undefined || Number.isFinite(c.radius) && c.radius >= 0)), 'Collider envelopes must be finite with positive extents.');
   check(Object.values(d.pickup).every(Number.isFinite) && d.pickup.minX < d.pickup.maxX && positive(d.pickup.halfWidth), 'Pickup bounds must be finite and ordered.');

@@ -1,7 +1,9 @@
-import type { Vec3 } from '../../../field/types';
 import type { RobotDefinition, RobotCollider } from '../../types';
 import { STANDARD_SWERVE, swerveModules } from '../../defaults';
 import { LIMESTONE_VISUAL } from './visual';
+import { packedCargo } from '../../cargoPacking';
+const volume = { frontX: -.644, backX: .225, halfWidth: .310, floorY: -.089, floorSlope: -.25,
+  ceilingY: .317, ceilingTravel: .2159, frontTravel: .303211 };
 
 /** 1678-26c release CAD. Team code verifies wheelbase, speed and actuator travels.
  * Empty mass/inertia, collection/fire rates, capacity and launch-angle fit are gameplay estimates;
@@ -15,26 +17,19 @@ export const LIMESTONE: RobotDefinition = {
   drive: { maxSpeed: 4.39, acceleration: 10, grip: 1.05 },
   modules: swerveModules(.276225, .276225),
   intake: { pivot: [-.30465, -.0541, 0], stowedAngle: -132 * Math.PI / 180, manualRetraction: true },
-  hopper: { stowTravel: .303211, coupledToIntake: true, volume: {
-    frontX: -.644, backX: .225, halfWidth: .310, floorY: -.089, floorSlope: -.25,
-    ceilingY: .317, ceilingTravel: .2159, frontTravel: .303211,
-  } },
+  hopper: { stowTravel: .303211, coupledToIntake: true, autoLift: { loweredCapacity: 32 }, volume },
   hood: { pivot: [.28815, .25385, 0], maxAngle: 35 * Math.PI / 180 },
   shooterGeometry: {
     pivot: [.28815, .25385, 0], drumRadius: .0455, guideLength: .155, turretRadiansPerSecond: 3,
     minElevation: 37.5 * Math.PI / 180, maxElevation: 72.5 * Math.PI / 180,
-    movingAccuracy: .90,
+    movingAccuracy: .90, spread: { yaw: .035, elevation: .038, speed: .040, flyerChance: .12, backspin: 36 },
   },
   climb: { kind: 'side-hook-l1', approachAxis: 'x', hookOffsetsZ: [-.33, .33],
     hook: [.075, .303, 0], travel: .2159, maxLift: .159, rate: .20, deploySeconds: .55 },
-  mechanisms: { capacity: 32, intakeRate: 36, compress: true, lanes: [-.17, 0, .17], fireRate: 24,
+  mechanisms: { capacity: 70, intakeRate: 36, compress: true, lanes: [-.17, 0, .17], fireRate: 24,
     turret: false, movingShots: true, simultaneousIntake: true, climb: true },
-  // Two layers fit under the lowered lid. Seeds are entry positions, never a pinned visual stack.
-  cargoSlots: Array.from({ length: 32 }, (_, i): Vec3 => {
-    const layer = Math.floor(i / 16), row = Math.floor(i % 16 / 4), column = i % 4;
-    const x = -.398 + row * .151 + (column % 2) * .0755;
-    return [x, -.089 - .25 * x + .080 + layer * .1511, (column - 1.5) * .151];
-  }).sort((a,b) => a[0]-b[0]),
+  // Full-size seeds fit the raised juice press; partial loads occupy the lower layers first.
+  cargoSlots: packedCargo({ ...volume, ceilingY: volume.ceilingY + volume.ceilingTravel }, [1, .025, .024, 0]).slice(0, 70),
   pickup: { minX: -.665, maxX: -.48, halfWidth: .30, mouthX: -.56, ejectX: -.685 },
   colliders: [
     ...[-1,1].flatMap((sign): RobotCollider[] => [

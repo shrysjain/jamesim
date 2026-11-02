@@ -94,7 +94,7 @@ export class FieldSimulation {
         }
       }
       const robot = this.robotController;
-      if (robot) robot.climber.step(STEP, !!robot.input.climb, this.match.actuatorsEnabled, robot.shooter.alliance);
+      if (robot) robot.climber.step(STEP, !!robot.input.climb, this.match.actuatorsEnabled, robot.shooter.alliance, robot.hopperLiftTarget, robot.hopperMinimumLift);
       this.robotController?.preStep(STEP);
       this.robotController?.contacts.displaceFuel();
       this.hubs.beforeStep();
