@@ -35,6 +35,7 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
     check(d.climb.hookOffsetsZ === undefined || d.climb.hookOffsetsZ.length > 0 && d.climb.hookOffsetsZ.every(Number.isFinite), 'Hook offsets must be finite and nonempty.');
   }
   if (d.hopper.volume?.ceilingTravel !== undefined) check(!!d.climb && positive(d.hopper.volume.ceilingTravel) && d.hopper.volume.ceilingTravel === d.climb.travel, 'Moving hopper roof must match its climber stage.');
+  if (d.hopper.intakeCurve) check(d.hopper.intakeCurve.length >= 2 && d.hopper.intakeCurve[0] === 0 && d.hopper.intakeCurve.at(-1) === 1 && d.hopper.intakeCurve.every((v,i,a) => Number.isFinite(v) && v >= 0 && v <= 1 && (i === 0 || v >= a[i-1])), 'Hopper linkage samples must run monotonically from zero to one.');
   const v = d.visual, names = v.requiredNodes;
   check(names.includes('chassis') && new Set(names).size === names.length, 'Declare unique required mechanism nodes, including chassis.');
   const bindings = [...Object.values(v.poseNodes), v.turret, v.turretHood, v.kicker?.node, v.climber].filter((n): n is string => !!n);

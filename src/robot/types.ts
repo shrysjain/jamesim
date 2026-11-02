@@ -18,7 +18,8 @@ export type RobotDefinition = {
   drive?: { maxSpeed: number; acceleration: number; grip: number };
   modules: { name: string; x: number; z: number }[];
   intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean };
-  hopper: { stowTravel: number; coupledToIntake?: boolean; autoLift?: { loweredCapacity: number }; volume?: HopperVolume; fixedSlot?: number };
+  hopper: { stowTravel: number; coupledToIntake?: boolean; autoLift?: { loweredCapacity: number }; intakeCurve?: number[];
+    volume?: HopperVolume; fixedSlot?: number };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
   climb?: { kind: 'side-hook-l1'; approachAxis?: 'x' | 'z'; hookOffsetsZ?: number[]; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };

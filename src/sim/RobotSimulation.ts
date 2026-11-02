@@ -1,3 +1,4 @@
+import { linkedHopperExtension } from '../robot/poses';
 import { HopperDynamics } from './HopperDynamics';
 import { Climber } from './Climber';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -82,7 +83,7 @@ export class RobotSimulation {
     const p = this.storageSlots[slot];
     // Initial preload/transfer packing; stored cargo then evolves in HopperDynamics.
     // Keep the original feeder entry pocket fixed on 2910.
-    return { ...p, x: p.x + (slot === this.chassis.definition.hopper.fixedSlot ? 0 : this.chassis.definition.hopper.stowTravel * (1 - this.chassis.pose.intake)) };
+    return { ...p, x: p.x + (slot === this.chassis.definition.hopper.fixedSlot ? 0 : this.chassis.definition.hopper.stowTravel * (1 - (this.chassis.definition.hopper.intakeCurve ? this.chassis.pose.hopper : this.chassis.pose.intake))) };
   }
   preload(ids: number[]) {
     for (const id of ids.slice(0, 8)) {
@@ -132,7 +133,7 @@ export class RobotSimulation {
       const target = demand ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? cargoExtension(held.length, this.capacity) : 1;
       this.intakeTarget = target;
       const intake = approach(this.chassis.pose.intake, target, target < this.chassis.pose.intake ? INTAKE.compressSeconds : INTAKE.deploySeconds);
-      const hopper = (this.chassis.definition.hopper.coupledToIntake || this.chassis.definition.hopper.stowTravel && this.chassis.definition.intake.stowTravel) ? intake : approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
+      const hopper = this.chassis.definition.hopper.intakeCurve ? linkedHopperExtension(this.chassis.definition, intake) : (this.chassis.definition.hopper.coupledToIntake || this.chassis.definition.hopper.stowTravel && this.chassis.definition.intake.stowTravel) ? intake : approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
       if (hopper === 1 && intake === 1) this.deployed = true;
       if (this.chassis.definition.intake.passiveKicker && intake > .1) this.kickerDeployment = Math.min(1, this.kickerDeployment + dt / .25);
       this.chassis.setPose({ intake, hopper, hood: this.shooter.hood, climber: this.climber.telemetry.extension });

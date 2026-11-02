@@ -1,6 +1,6 @@
 # 1678 Citrus Circuits · Limestone (2026 REBUILT)
 
-Adds the `1678-limestone` selector entry, articulated release CAD, four-module swerve, a slapdown intake with coupled horizontal hopper extension, local cargo, a fixed three-wide drum/adjustable hood, and managed L1 climbing with either outer hook. Uses the existing match, controls, fuel ownership and scoring systems. Based on `origin/main` commit `0d64cbb`; no dependency on the separate moving-shot/match-stop PR.
+Adds the `1678-limestone` selector entry, articulated release CAD, four-module swerve, a slapdown intake with coupled horizontal hopper extension, local cargo, a fixed three-wide drum/adjustable hood, and managed L1 climbing with either outer hook. Uses the existing match, controls, fuel ownership and scoring systems. Based on `origin/main` commit `0d64cbb`; the integration follow-up now includes Darwin and the moving-shot/match-stop PR through normal merges.
 
 ## CAD identity and sources
 
@@ -116,3 +116,9 @@ The latest focused browser review filled all 65/60/70 slots through actual mouth
 The wall-contact follow-up passes empty/full sliding and reversing checks plus both real perimeter sides for all registered robots. Tire-force traction and collision envelopes remain active.
 
 The model is decimated release CAD with simplified collider envelopes, not full mesh-contact or motor/chain/roller simulation. Performance values explicitly labeled estimates need driver/spec feedback. The central between-upright climb is not claimed: reconstructed bumpers block that tight approach; tested outside-rung approaches work. Bumper-inclusive source/reference is still useful to refine that envelope. The managed fixed-joint L1 support retains the project's upright chassis behavior rather than simulating a free twisting/swinging single-hook hang. The 70-fuel raised capacity, load-dependent press target and spread profile are fitted gameplay estimates; automatic real-team trench/lid sequences and detailed net contact are not calibrated. The live Onshape workspace may have changed after the pinned exports; that cannot be checked through the blocked direct connection. CAD rights review remains pending.
+
+## Compatible PR integration
+
+This branch now includes Darwin and the moving-shot/match-stop changes. Both robots remain selectable. Optional linkage samples coexist with the coupled hopper, automatic press and climbing fields; shared pose/storage and roof logic preserve both mechanisms. Registry, controls and CAD attribution include both teams. Shared integration additionally includes `docs/KEPLER.md`, `src/sim/MovingShotsAndStop.test.ts` and all Darwin integration points documented in its module README. Merge order: moving-shot/match-stop, Darwin, then Citrus. No main merge, force-push, dependency changes or asset regeneration were performed during conflict resolution. Prior full-suite/build results above predate this merge; current focused integration results are recorded in the PR.
+
+Combined integration validation: 59 targeted tests across 8 files pass (both robot modules, shot scatter, disabled stopping and all-robot wall contact). `pnpm build:release` passes TypeScript, asset integrity and the 13-asset production payload. Full suites and another browser run were not repeated during this budget-limited integration.
