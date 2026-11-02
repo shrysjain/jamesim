@@ -82,7 +82,7 @@ Final payload: **3,088,188 bytes; 512,969 rendered triangles; 108 primitives**. 
 | `src/sim/HopperDynamics.ts` | Only choose the correct linked front pose for this definition; no gravity, friction, cargo-weight or solver changes |
 | `src/App.tsx` | V help eligibility, brief capability guidance and CAD credit; preserve Citrus credits/guidance if integrating both contributions |
 | `THIRD_PARTY_NOTICES.md` | Official CAD provenance and pending rights status |
-| `src/sim/SwerveChassis.ts` | Rigid tire proxies and shared faster manual yaw/steering response; numerical ground support remains |
+| `src/sim/SwerveChassis.ts` | Rigid tire proxies, faster manual yaw/steering response and low-friction frame contact using Rapier minimum combination; numerical ground support remains |
 | `src/sim/Shooter.ts` | Normalize chassis aiming against the shared turn-rate scale, sample release uncertainty/spin and retain pass clearance and full-load shot history |
 | `src/view/RobotView.ts` | Retain exact prepared wheel/fork translations during terrain lean, steering and spin |
 | `src/robot/defaults.ts` | Clarify that support defaults do not represent hardware suspension; numeric defaults unchanged |
@@ -95,18 +95,21 @@ Final payload: **3,088,188 bytes; 512,969 rendered triangles; 108 primitives**. 
 | `src/robot/robots/1690-kepler/definition.ts` | Requested 60-fuel packing and independent Kepler spread profile |
 | `src/sim/Kepler.test.ts`, `src/sim/Shooter.test.ts`, `src/sim/MatchSimulation.test.ts`, `src/sim/SessionFeatures.test.ts` | Revised full-capacity and physical uncertainty expectations; scoring remains tied to actual processed fuel |
 | `docs/SHOT_TUNING.md` | Source limitations, estimated profiles and capacity rationale |
+| `src/sim/WallContact.test.ts` | Empty/full wall sliding, normal reversal and both real perimeter sides; no escape teleports or weakened boundaries |
 
 All registered robots retain rigid CAD module mounts and the faster manual turning follow-up. The shared accuracy/capacity changes are also included on the separate Citrus preview branch; they are estimated gameplay tuning rather than copied team performance measurements. Camera, match timing, dependencies and per-team drive parameters remain as before. The V/help lines overlap with Citrus; retain the common manual-pivot eligibility once. Preserve incoming hopper solver work and apply only the optional pose selection. Merge spread profiles and revised scoring expectations with any parallel moving-shot work rather than replacing it wholesale. Runtime records and CAD preparation files remain robot-owned.
 
 ## Verification and remaining limits
 
-Final November 2 checks: `pnpm robot:branch --team=6328` passed; `pnpm test:robots` passed 35 tests across 8 files; `pnpm test:sim` passed 185 tests across 30 files; `pnpm build:release` passed asset integrity, TypeScript/Vite compilation and production-payload validation. The existing large Rapier chunk warning remains. Intended capacity and accuracy assertions now match the requested behavior; conservation and physical scoring checks remain.
+Final November 2 checks: `pnpm robot:branch --team=6328` passed; `pnpm test:robots` passed 35 tests across 8 files; `pnpm test:sim` passed 194 tests across 31 files; `pnpm build:release` passed asset integrity, TypeScript/Vite compilation and production-payload validation. The existing large Rapier chunk warning remains. Intended capacity and accuracy assertions now match the requested behavior; conservation and physical scoring checks remain.
 
 `Darwin.test.ts` covers the nonlinear linkage, validation, full-size packing, loaded motion and payload conservation, pause/restart, real intake/reverse on both alliances, stationary/moving physical hub hits, three-lane full-load cadence, physical passing landings, actual bump/trench support, blocked trench shots and field perimeter. `DarwinAssets.test.ts` checks all assemblies, roof and roller hierarchy, normalized MK5i/MK5n axles and pinned provenance. Shared registry acceptance covers both alliances with immutable definitions and original fuel bodies.
 
 Focused isolated Chromium checks exercise setup/selection, W/V/Space events, visible control help, actual red/blue bumper materials and restart conservation. Full-field drawing is disabled during input checks to avoid slow software-rendered field frames; separate real RobotView WebGL renders inspect stowed, deployed, partial-linkage and low-hood poses, badges and colors. Raw exports/reports/screenshots remain ignored.
 
 The November 2 real-CAD browser check also traverses actual bump geometry for all three registered robots: each wheel/fork remains at its exact prepared translation (zero mount drift), whole-chassis terrain lean remains active, and Darwin reaches about 6.36 rad/s in the empty flat-floor turning check. Tire proxies are rigid; the stable ray-based contact solver is an approximation, not physical module suspension.
+
+The wall-contact follow-up reproduces the owner’s reported sticking before the fix and verifies small-command sliding, backing away and turning after clearance. Low-friction frame surfaces now retain their intended material coefficient instead of averaging it up with the field; tire traction and collider envelopes are preserved.
 
 The latest browser review fills all 65/60/48 slots through actual mouth collection and renders the original CAD with full hoppers. Shared distribution tests cover bounded unbiased release variation, deterministic resets, original-body spin and differing physical rebounds.
 
