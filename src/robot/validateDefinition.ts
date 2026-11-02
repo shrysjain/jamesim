@@ -24,6 +24,8 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(vector(geometry.pivot) && [geometry.drumRadius, geometry.guideLength, geometry.turretRadiansPerSecond].every(positive), 'Shooter geometry must be finite and positive.');
   check(!m.turret || !!geometry.turretPivot && vector(geometry.turretPivot), 'A turret requires its bearing pivot.');
   check(!geometry.feedPath || geometry.feedPath.every(vector), 'Feed path points must be finite.');
+  check(!geometry.feedAcrossLanes || !m.turret && !!geometry.feedPath?.length, 'Full-width feeding requires a chassis-mounted shooter and feed path.');
+  if (geometry.laneJitter !== undefined) check(Number.isFinite(geometry.laneJitter) && geometry.laneJitter >= 0 && !!geometry.feedAcrossLanes, 'Lane variation requires full-width feeding and a finite nonnegative half-width.');
   check(m.climb === !!d.climb, 'Climb capability and physics profile must agree.');
   if (d.climb) check(d.climb.kind === 'side-hook-l1' && [d.climb.maxLift, d.climb.rate, d.climb.travel, d.climb.deploySeconds].every(positive) && vector(d.climb.hook), 'Unsupported or invalid climber profile.');
   const v = d.visual, names = v.requiredNodes;

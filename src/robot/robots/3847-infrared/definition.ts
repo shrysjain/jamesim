@@ -1,7 +1,7 @@
 import type { RobotDefinition, RobotCollider } from '../../types';
-import type { Vec3 } from '../../../field/types';
 import { STANDARD_SWERVE, swerveModules } from '../../defaults';
 import { INFRARED_VISUAL } from './visual';
+import { INFRARED_CARGO } from './cargo';
 
 /** 2026 Final Machine. CAD and team-code measurements versus tuning estimates: README.md. */
 export const INFRARED: RobotDefinition = {
@@ -18,18 +18,14 @@ export const INFRARED: RobotDefinition = {
   shooterGeometry: {
     pivot: [.2723, .4888 - .223, 0], drumRadius: .0389, guideLength: .17, turretRadiansPerSecond: 3,
     minElevation: 40.68 * Math.PI / 180, maxElevation: 81 * Math.PI / 180,
+    feedAcrossLanes: true, laneJitter: .20 / 3,
     movingAccuracy: .87, passRange: 9, passLandingExtra: .8,
     spread: { yaw: .035, elevation: .034, speed: .035, flyerChance: .10, backspin: 30 },
     // Along the bed, then on the hopper-facing side of the vertical rollers.
     feedPath: [[-.04, -.02, 0], [-.025, .2847 - .223, 0], [-.025, .3997 - .223, 0], [.08, .47 - .223, 0]],
   },
-  mechanisms: { capacity: 32, intakeRate: 35, compress: true, lanes: [-.1397, .1397], fireRate: 15, feedSeconds: .28, turret: false, movingShots: true, simultaneousIntake: true, climb: false },
-  // Full-sized staggered spheres. Physics evolves these seed positions immediately.
-  cargoSlots: Array.from({ length: 32 }, (_, i): Vec3 => {
-    const layer = Math.floor(i / 16), row = Math.floor(i % 16 / 4), column = i % 4;
-    const x = -.54 + row * .151;
-    return [x, -.10 - .18 * x + .077 + layer * .151, (column - 1.5) * .151];
-  }).sort((a, b) => b[0] - a[0]),
+  mechanisms: { capacity: INFRARED_CARGO.length, intakeRate: 35, compress: true, lanes: [-.40 / 3, 0, .40 / 3], fireRate: 15, feedSeconds: .28, turret: false, movingShots: true, simultaneousIntake: true, climb: false },
+  cargoSlots: INFRARED_CARGO,
   pickup: { minX: -.74, maxX: -.46, halfWidth: .29, mouthX: -.61, ejectX: -.75 },
   colliders: [
     ...[-1, 1].flatMap((sign): RobotCollider[] => [

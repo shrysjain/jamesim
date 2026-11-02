@@ -22,7 +22,7 @@ export type RobotDefinition = {
   climb?: { kind: 'side-hook-l1'; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };
   cargoSlots: Vec3[];
   pickup: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
-  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; passLandingExtra?: number; movingAccuracy?: number; spread?: ShotSpread; feedPath?: Vec3[] };
+  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; passLandingExtra?: number; movingAccuracy?: number; spread?: ShotSpread; feedPath?: Vec3[]; feedAcrossLanes?: boolean; laneJitter?: number };
   mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; movingShots: boolean; simultaneousIntake?: boolean; climb: boolean };
 };
 

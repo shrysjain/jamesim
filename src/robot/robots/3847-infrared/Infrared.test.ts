@@ -14,7 +14,7 @@ const seeds=(n:number)=>Array.from({length:n},(_,i):[number,number,number]=>[0,.
 function fill(s:FieldSimulation){const r=s.robotController!;for(const [i,f]of s.fuelSystem.records.entries()){s.fuelSystem.capture(f,r.owner,i,r.storageSlots[i]);f.state='stored';}}
 describe('3847 Infrared FM',()=>{
  it('validates full-size non-overlapping cargo packing',()=>{
-  expect(validateRobotDefinition(D)).toEqual([]);expect(D.mechanisms.capacity).toBe(32);expect(D.mechanisms.climb).toBe(false);
+  expect(validateRobotDefinition(D)).toEqual([]);expect(D.mechanisms.capacity).toBe(39);expect(D.mechanisms.climb).toBe(false);
   expect(D.mechanisms.turret).toBe(false);const v=D.hopper.volume!;
   for(const [i,p]of D.cargoSlots.entries()){
    expect(p[0]-.075).toBeGreaterThanOrEqual(v.frontX-1e-8);expect(p[0]+.075).toBeLessThanOrEqual(v.backX+1e-8);
@@ -42,11 +42,15 @@ describe('3847 Infrared FM',()=>{
   }finally{s.dispose();}
  });
  it('collects to its full cap and fires the whole hopper without replacing bodies or payload',async()=>{
-  const s=await FieldSimulation.create(floor,seeds(36),true);
+  const s=await FieldSimulation.create(floor,seeds(43),true);
   try{s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);run(s,.6);const r=s.robotController!,handles=s.fuel.map(b=>b.handle);r.input.intake=true;
-   for(let i=0;i<240&&r.held.length<32;i++){const f=s.fuelSystem.records.find(f=>f.owner===null)!;f.body.setTranslation(r.toWorld({x:-.58,y:-.147,z:0}),true);f.body.setLinvel({x:0,y:0,z:0},true);s.world.propagateModifiedBodyPositionsToColliders();s.update(1/120);}
-   expect(r.held).toHaveLength(32);expect(r.telemetry.mass).toBeCloseTo(D.mass+32*.215,3);r.input.intake=false;r.input.shoot=true;run(s,9);
-   expect(r.shooter.shotsFired,JSON.stringify(r.shooter.telemetry)).toBe(32);expect(r.held).toHaveLength(0);
+   for(let i=0;i<240&&r.held.length<39;i++){const f=s.fuelSystem.records.find(f=>f.owner===null)!;f.body.setTranslation(r.toWorld({x:-.58,y:-.147,z:0}),true);f.body.setLinvel({x:0,y:0,z:0},true);s.world.propagateModifiedBodyPositionsToColliders();s.update(1/120);}
+   expect(r.held).toHaveLength(39);
+   r.input.intake=false;run(s,1);const v=D.hopper.volume!;
+   for(const f of r.held){expect(f.local.x-.075).toBeGreaterThanOrEqual(v.frontX-.001);expect(f.local.x+.075).toBeLessThanOrEqual(v.backX+.001);expect(Math.abs(f.local.z)+.075).toBeLessThanOrEqual(v.halfWidth+.001);expect(f.local.y+.075).toBeLessThanOrEqual(v.ceilingY+.001);}
+   expect(Math.max(...r.held.map(f=>f.local.y))+.075).toBeGreaterThan(v.ceilingY-.04);
+   expect(r.telemetry.mass).toBeCloseTo(D.mass+39*.215,3);r.input.intake=false;r.input.shoot=true;run(s,9);
+   expect(r.shooter.shotsFired,JSON.stringify(r.shooter.telemetry)).toBe(39);expect(r.held).toHaveLength(0);
    expect(r.telemetry.mass).toBeCloseTo(D.mass,3);expect(s.fuel.map(b=>b.handle)).toEqual(handles);
   }finally{s.dispose();}
  },30000);
@@ -59,7 +63,7 @@ describe('3847 Infrared FM',()=>{
   }finally{s.dispose();}
  });
  it('retains floor/wall support and fixed wheel mounts under loaded driving',async()=>{
-  const s=await FieldSimulation.create(field,seeds(32),true);
+  const s=await FieldSimulation.create(field,seeds(39),true);
   try{s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);run(s,.6);fill(s);const r=s.robotController!;
    r.chassis.teleport([6.1,.26,2.1]);r.chassis.input={...NEUTRAL_INPUT,strafe:1};run(s,1.5);
    expect(Math.abs(r.chassis.body.translation().z)+D.width/2).toBeLessThan(4.13);
