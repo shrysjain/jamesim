@@ -1,5 +1,5 @@
 import type { RobotDefinition } from '../robot/types';
-import { robotFeatures, robotStats } from './robotStats';
+import { robotFeatures, robotStats } from './robotStatData';
 
 export function RobotStats({ robot, compact = false }: { robot: RobotDefinition; compact?: boolean }) {
   const stats = robotStats(robot);
