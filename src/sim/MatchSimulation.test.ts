@@ -24,8 +24,12 @@ describe('timed match and shared physics integration', () => {
       run(s, 1); expect(s.robotController!.shooter.shotsFired).toBe(0); expect(s.robotController!.held).toHaveLength(8);
       s.robotController!.input = { intake: false, reverse: false, shoot: true };
       run(s, 5);
-      expect(s.robotController!.shooter.shotsFired).toBe(8); expect(s.match.telemetry.blue.auto).toBe(8);
-      expect(s.hubs.telemetry.blue).toMatchObject({ hits: 8, processed: 8, returned: 8 });
+      expect(s.robotController!.shooter.shotsFired).toBe(8);
+      const { hits, processed, returned } = s.hubs.telemetry.blue;
+      // Real launch scatter can miss. Match scoring still counts only the fuel
+      // physically processed by the hub, never the number of requested shots.
+      expect(hits).toBeGreaterThanOrEqual(6); expect(hits).toBeLessThanOrEqual(8);
+      expect(processed).toBe(hits); expect(returned).toBe(processed); expect(s.match.telemetry.blue.auto).toBe(processed);
       expect(s.robot!.input.forward).toBe(0); expect(s.robot!.telemetry.speed).toBeLessThan(0.03);
       expect(s.fuel.map(b => b.handle)).toEqual(handles); expect(s.fuelSystem.counts.loose).toBe(504);
     } finally { s.dispose(); }

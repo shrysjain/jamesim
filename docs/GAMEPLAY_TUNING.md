@@ -64,3 +64,25 @@ High Tide and the Tower trainer have been removed. The incoming local hopper dyn
 Wheel/fork assemblies retain their exact prepared CAD translations on every robot; only azimuth steering and wheel spin animate. Bump lean affects the complete chassis, including the modules. Fuel-only tire colliders also stay fixed relative to the physical frame. The established ray-based support solver remains a numerical ground-contact approximation, not articulated hardware suspension; its legacy `springLength`, `travel` and `suspension` values never reposition a module.
 
 Manual full-turn demand increases from 4.8 to 6.4 rad/s, with module steering response increasing from 18 to 24 rad/s. Tire traction, payload inertia, acceleration and wheel-speed desaturation still constrain actual rotation; no direct yaw velocity is prescribed. Precision mode retains half turn demand. Chassis aiming normalizes against the shared turn scale so the faster driver command does not silently increase its feedback gains.
+
+## Shot scatter and fuller hoppers — November 2
+
+The owner's follow-up supersedes the nearly perfect accuracy and old capacity caps. Re•Blitz now holds 65 full-size fuel, Kepler 60, Darwin 48 and Limestone 70 with its juice press raised. These are fitted gameplay capacities, not new claims about measured real-robot maxima. Shapes, fuel mass and the configured total supply remain unchanged. Initial non-overlapping seeds fill the existing CAD-derived envelopes and then evolve in local hopper physics.
+
+Shots use per-robot angle/speed variation, occasional wider release tails, motion-dependent uncertainty and physical spin. Stable per-fuel restitution differences produce varied rebounds. Scores and misses remain physical; timed AUTO records processed hub fuel rather than assuming every fired preload scores. See [the calibration notes](SHOT_TUNING.md) for the source limits and estimated profiles.
+
+On the Limestone preview branch, intake/reverse raises the actual climber-mounted juice press without arming tower capture. Its roof, collider and cargo ceiling move together. As cargo empties, the stage contracts while retaining sufficient headroom. C retains deliberate tower/climb control; a full hopper can prevent complete press retraction. The roller converter rebuilds the two thin intake bars and three hood-roller shells as clean cylinders fitted to their CAD envelopes, preserving the original end hardware and pivots. This supersedes the earlier exact-face-only flicker correction. WildStang is deferred while the owner prepares its GLB.
+
+## Wall contact follow-up — November 2
+
+Robot frame/mechanism colliders now use .05 friction (.02 on the thin bellypan) with Rapier's minimum combine rule. Previously the default average raised their effective wall friction to roughly .33–.38, preventing small sideways inputs from sliding along the boundary. The tire-force traction model, mass, collision envelopes, support rays and hopper solver remain unchanged. Frame contacts stay solid; no position nudges, teleporting or prescribed escape velocities are added.
+
+Registry-wide regressions reproduce wall pressure with small sideways commands, empty/full hoppers, both real perimeter sides, ordinary braking/reversal and turning after driving clear. Full-load shot tests retain their firing/conservation/hit assertions; the distant Re•Blitz fixture now respects its stationary-only shooting capability rather than holding drive into an intake/wall wedge. Other robots retain moving-shot samples.
+
+## Moving-shot uncertainty and match cutoff hold
+
+The moving-shot PR is integrated using the newer per-robot spread profiles as the single release distribution. Acceleration scales angular uncertainty; the 60 ms velocity estimate retains transient compensation error. Spin and recoil apply to original fuel bodies. This supersedes the older independent spread sampler without stacking both distributions.
+
+At AUTO, teleop and manual early-stop cutoffs, the chassis clears wheel commands and yaw, then zeros horizontal velocity while supported by grounded wheels. The hold runs at the cutoff tick and through disabled assessment, preventing momentum from carrying the robot across the carpet. Vertical falling, suspension settling and tower support remain physical, and unsupported airborne horizontal travel continues until landing. Pause and practice behavior are unchanged.
+
+Integration order is moving-shot/match-stop, Darwin, then Citrus. These branch merges do not merge into main. Local hopper contacts and per-fuel mass remain unchanged.

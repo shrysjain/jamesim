@@ -118,3 +118,12 @@ The wide shooter now uses the entire safe roller span rather than funneling ever
 Optional `shooterGeometry.feedAcrossLanes` / `laneJitter` are added to `types.ts` / `validateDefinition.ts` and read in `Shooter.ts`. Existing robots retain their original paths/offsets unless explicitly enabled; the validator limits this path mapping to chassis-mounted shooters. `FullWidthFeed.test.ts` follows each original fuel ID through its column to physical release, verifies both outer regions and center, safe roller bounds and variation between fixed points. These shared fields match the Spectrum contribution and must be retained once when integrating branches.
 
 The isolated baseline passed 11 focused team cases, the full 188-test simulation suite and release build. The latest committed Matterhorn cargo/field-contact refinement (`059bdd5`) was then fast-forwarded into the isolated worktree so final affected checks include that work without editing or discarding it. All 23 final team/asset/field-contact checks passed on the combined version, followed by a passing release build. Browser review of the real CAD showed multiple feeding columns and distributed physical shots with no page errors.
+
+
+## PR integration — November 2
+
+The branch normally merges the existing Citrus/Darwin/moving-shot PR ancestry so it can land after PRs #1, #2 and #3 without restoring older shared files. All robot entries, Citrus's juice press/hood/climb and linkage, moving-shot velocity estimation, grounded match-cutoff hold, rigid modules, wall sliding, Matterhorn's fixed-angle/reversed shooting, full-width feed, inlet and finite-rim/field contacts are retained.
+
+Normal free fuel retains the existing per-ID restitution variation from the earlier PRs. Matterhorn spill handoff still lowers restitution to .18; capture/relaunch/reset restore that same ball's normal per-ID value. The field-contact regression checks the restored per-ID value rather than the earlier fixed global constant. Optional rim handling and moving roof height coexist, so enclosed hoppers keep their press/ceiling behavior.
+
+Additional shared integration points include the normally merged `FuelSystem.ts`, `HopperDynamics.ts`, `RobotSimulation.ts`, `SwerveChassis.ts`, `Shooter.ts`, `types.ts`, validation, registry and controls/credits text; all earlier robot assets/entries are retained. Merge the earlier PRs with merge commits to preserve their ancestry, then this LYNK/Matterhorn PR, then Spectrum. These are branch merges only; main has not been changed by this work.

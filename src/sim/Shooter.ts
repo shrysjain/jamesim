@@ -4,8 +4,8 @@ import type { Alliance, ShotTarget } from '../field/targets';
 import { FUEL_LINEAR_DAMPING, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { FuelSystem } from './FuelSystem';
 import type { SwerveChassis } from './SwerveChassis';
-import {sampleShotScatter} from './ShotScatter';
 import { DRIVE_RESPONSE } from './SwerveChassis';
+import { DEFAULT_SHOT_SPREAD, sampleShotScatter } from './ShotScatter';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
 
@@ -63,6 +63,9 @@ export class Shooter {
   private blocked = false;
   private randomState = 29102026;
   private scatterState = 20261102;
+  private velocityEstimate: Vector | null = null;
+  private previousVelocity: Vector | null = null;
+  private motionAcceleration = 0;
   private feedOrder: number[] = [];
   private laneOrder: number[] = [];
   private nextFeedAt = 0;
@@ -161,7 +164,7 @@ export class Shooter {
       }
       candidates.sort((a, b) => a.cost - b.cost);
       blocked ??= candidates[0]?.solution ?? null;
-      for (const candidate of candidates) if (this.clearExit(0, candidate.solution.elevation) && this.clearTrajectory(candidate.muzzle, candidate.launch, candidate.solution.time)) {
+      for (const candidate of candidates) if (this.clearExit(0, candidate.solution.elevation) && this.clearTrajectory(candidate.muzzle, candidate.launch, candidate.solution.time, base.kind === 'Pass' ? .18 : .008)) {
         this.selection = { alliance: this.alliance, kind: base.kind, time: candidate.solution.time, extra, obstructed: false, until: this.fuel.time + 0.05 };
         return candidate.solution;
       }
@@ -173,12 +176,14 @@ export class Shooter {
     this.selection = null; return null;
   }
 
-  private clearTrajectory(position: Vector, velocity: Vector, time: number) {
+  private clearTrajectory(position: Vector, velocity: Vector, time: number, clearance = .008) {
     const steps = Math.ceil(time / 0.08), q = { x: 0, y: 0, z: 0, w: 1 };
     let from = position;
     for (let i = 1; i <= steps; i++) {
       const to = flightPosition(position, velocity, time * i / steps);
-      if (this.world.castShape(from, q, sub(to, from), new RAPIER.Ball(FUEL_RADIUS + 0.008), 0, 1, true,
+      // Pass arcs need headroom for release scatter over nets. Retain the small
+      // final margin so a floor landing can remain physically feasible.
+      if (this.world.castShape(from, q, sub(to, from), new RAPIER.Ball(FUEL_RADIUS + (i === steps ? .008 : clearance)), 0, 1, true,
         RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS)) return false;
       from = to;
     }
@@ -193,6 +198,11 @@ export class Shooter {
   }
 
   preStep(dt: number, requested: boolean, powered = true) {
+    const velocity = this.chassis.body.linvel();
+    const change = this.previousVelocity ? sub(velocity, this.previousVelocity) : v3();
+    this.motionAcceleration = Math.min(12, Math.hypot(change.x, change.y, change.z) / dt);
+    this.previousVelocity = { ...velocity };
+    this.velocityEstimate = this.velocityEstimate ? lerp(this.velocityEstimate, velocity, 1 - Math.exp(-dt / .06)) : { ...velocity };
     this.active = requested; this.blocked = false;
     this.solution = requested ? this.solve() : null;
     if (this.mechanism.turret && powered && this.solution) {
@@ -279,27 +289,24 @@ export class Shooter {
       const hit = this.world.castShape(sweepStart, q, scale(relative, 0.25), new RAPIER.Ball(FUEL_RADIUS + 0.002), 0, 1, true,
         RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
       if (hit || !this.clearExit(z)) { this.blocked = true; continue; }
-      // Small, repeatable wheel slip and release-angle differences break up
-      // ruler-straight rows while retaining the physical aiming solution.
-      // The card's percentage is an accuracy rating, not a forced hit/miss roll.
-      // Reduce precision while translating; the released ball keeps its physical trajectory.
-      const accuracy = this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? this.geometry.movingAccuracy ?? 1 : 1;
-      const dispersion = 1 / clamp(accuracy, .05, 1);
-      const scatter = this.geometry.spread ? sampleShotScatter(this.geometry.spread, this.geometry.movingAccuracy ?? .9,
-        this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom) : {
-        elevation: (this.random() - .5) * .008 * dispersion, yaw: (this.random() - .5) * .009 * dispersion,
-        speedFactor: .996 + this.random() * .008, spin: v3(),
-      };
-      const elevation = this.elevation + scatter.elevation, yaw = scatter.yaw;
+      const scatter = sampleShotScatter(this.geometry.spread ?? DEFAULT_SHOT_SPREAD, this.geometry.movingAccuracy ?? .9,
+        this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom);
+      const speed = this.chassis.telemetry.speed, turn = Math.abs(this.chassis.body.angvel().y);
+      const motion = this.mechanism.movingShots ? clamp(Math.max(0, speed-.1)/.4 + Math.max(0, turn-.1)/1.4, 0, 1) : 0;
+      // One spread distribution, with transient acceleration sensitivity.
+      const transient = 1 + motion * this.motionAcceleration * .04;
+      const elevation = this.elevation + scatter.elevation * transient, yaw = scatter.yaw * transient;
       const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
         this.rpm * this.speedPerRpm * scatter.speedFactor)), q);
-      const velocity = add(this.chassis.body.velocityAtPoint(position), exit);
+      // A 60 ms motion estimate leaves transient compensation error under acceleration/braking.
+      const estimationError = this.velocityEstimate ? scale(sub(this.chassis.body.linvel(), this.velocityEstimate), motion*.35) : v3();
+      const velocity = add(add(this.chassis.body.velocityAtPoint(position), exit), estimationError);
       if (!this.fuel.release(f, position, velocity, true)) continue;
-      if (this.geometry.spread) f.body.setAngvel(rotate(this.turretRotate(scatter.spin), q), true);
+      f.body.setAngvel(rotate(this.turretRotate(scatter.spin), q), true);
       this.payloadChanged();
-      this.chassis.body.applyImpulseAtPoint(scale(exit, -FUEL_MASS), position, true);
+      this.chassis.body.applyImpulseAtPoint(scale(add(exit, estimationError), -FUEL_MASS), position, true);
       this.shotsFired++; this.shots.push({ id: f.id, lane: this.mechanism.lanes.indexOf(lane.z), time: this.fuel.time, position, velocity, target: this.solution.target, flightTime: this.solution.time });
-      if (this.shots.length > 64) this.shots.shift();
+      if (this.shots.length > Math.max(64, this.mechanism.capacity)) this.shots.shift();
       this.rpm = Math.max(0, this.rpm - SHOOTER.rpmDropPerBall);
       this.nextLaunchAt = this.mechanism.turret ? Math.max(this.nextLaunchAt, this.fuel.time - dt) + 1 / this.mechanism.fireRate : this.fuel.time + .016;
       lane.lastShotAt = this.fuel.time;
@@ -311,7 +318,7 @@ export class Shooter {
       if (lane.id !== null) { const f = this.fuel.records[lane.id]; if (f.owner === this.owner && f.state === 'feeding') { f.state = 'stored'; f.local = { ...lane.start }; } }
       lane.id = null; lane.age = lane.availableAt = 0; lane.lastShotAt = -Infinity;
     }
-    this.turretYaw = 0;
+    this.turretYaw = 0; this.velocityEstimate = this.previousVelocity = null; this.motionAcceleration = 0;
     this.rpm = this.drumAngle = this.feederAngle = 0; this.elevation = this.maxElevation;
     this.solution = null; this.selection = null; this.active = this.blocked = false;
     this.feedOrder = []; this.laneOrder = []; this.nextFeedAt = this.nextLaunchAt = 0;

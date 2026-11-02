@@ -41,7 +41,7 @@ describe('session extensions', () => {
     try {
       const handles = s.fuel.map(f => f.handle);
       s.startMatch({ ...DEFAULT_MATCH, robot: '1690-kepler', alliance: 'red', spawn: 'left', preloads: 4 });
-      expect(s.robotController!.capacity).toBe(50); expect(s.robotController!.held.length).toBe(4);
+      expect(s.robotController!.capacity).toBe(60); expect(s.robotController!.held.length).toBe(4);
       expect(s.robotController!.shooter.alliance).toBe('red'); expect(s.robot!.body.translation().x).toBeLessThan(0);
       run(s, .5); s.restartMatch(); expect(s.match.elapsed).toBe(0); expect(s.robotController!.held.length).toBe(4);
       s.startMatch(DEFAULT_MATCH); expect(s.robot!.definition.id).toBe('2910-reblitz'); expect(s.fuel.map(f => f.handle)).toEqual(handles);
