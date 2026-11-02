@@ -8,7 +8,7 @@ import { defaultStart, normalizeStart } from '../sim/SessionConfig';
 import { FieldMap } from './FieldMap';
 import { RobotStats } from './RobotStats';
 import { RobotBrowser } from './RobotBrowser';
-import { robotIdentity } from './robotStats';
+import { robotIdentity } from './robotStatData';
 const RobotPreview = lazy(() => import('./RobotPreview'));
 
 export function SetupScreen({ config, practice: initialPractice, onStart, onSettings, onRules, controls, active }: {

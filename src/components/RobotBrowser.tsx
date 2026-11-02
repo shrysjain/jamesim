@@ -3,7 +3,7 @@ import { ROBOTS } from '../robot/registry';
 import type { RobotId } from '../robot/registry';
 import type { Alliance } from '../field/targets';
 import { RobotStats } from './RobotStats';
-import { robotIdentity, robotStats } from './robotStats';
+import { robotIdentity, robotStats } from './robotStatData';
 
 const RobotPreview = lazy(() => import('./RobotPreview'));
 const robots = Object.values(ROBOTS);
