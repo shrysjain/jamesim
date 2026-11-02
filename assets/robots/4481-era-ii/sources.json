@@ -105,7 +105,34 @@
     "script": "src/robot/robots/4481-era-ii/prepare.mjs",
     "embeddedFuelRemoved": 5,
     "hardwareAndSmallDetailsOmitted": 1833,
-    "pendingCADRightsReview": true
+    "pendingCADRightsReview": true,
+    "articulationCorrection": {
+      "opposedUpperFeederAxesNative": [
+        [
+          0.0526,
+          0.3511,
+          0.15
+        ],
+        [
+          0.2474,
+          0.3511,
+          0.15
+        ]
+      ],
+      "kickerParts": [
+        "TR26-IN-4013",
+        "TR26-IN-4014",
+        "TR26-IN-4015",
+        "TR26-IN-4021",
+        "TR26-IN-4103"
+      ],
+      "kickerHingeNative": [
+        0,
+        0.2175,
+        -0.22
+      ],
+      "kickerFoldDegreesEstimated": 110
+    }
   },
   "estimates": [
     "Empty mass/inertia and traction",
@@ -118,13 +145,21 @@
     "Inclined rear funnel and below-floor continuation of fixed cone/tower envelopes",
     "460 mm inlet preserves original lateral pickup columns",
     "Indexer animation and local floor friction share the same fixed-step actuator angle",
-    "18.8 m/s\u00b2 unloaded wheel braking response; powered acceleration remains source 9.4 m/s\u00b2, chassis force remains traction-limited"
+    "18.8 m/s\u00b2 unloaded wheel braking response; powered acceleration remains source 9.4 m/s\u00b2, chassis force remains traction-limited",
+    "110-degree passive kicker fold around CAD hinge [native X=0, Y=.2175, Z=-.22]"
   ],
   "validation": {
     "simulationTests": 323,
     "simulationFiles": 46,
     "releaseBuild": "passed",
     "browser": "CAD poses, all seven selector entries, Rembrandts/red start, visible bindings, keyboard resume, input smoke and return to setup; no page errors",
-    "baseIntegration": "88e062f2947aa7477f18ec14bb92b0d090d71810"
+    "baseIntegration": "88e062f2947aa7477f18ec14bb92b0d090d71810",
+    "fullSimulationBaselineCommit": "bef38ed",
+    "animationCorrection": {
+      "focusedTests": 47,
+      "testFiles": 8,
+      "releaseBuild": "passed",
+      "browser": "Folded preview, deployed kicker, quarter/half-turn feeder poses and red turret pose rendered with no page errors"
+    }
   }
 }

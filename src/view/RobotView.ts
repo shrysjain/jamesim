@@ -51,6 +51,7 @@ export class RobotView {
       node.position.set(pivot[0]+shift, pivot[1]+rise, pivot[2]); node.rotation.z = angle;
     }
     const climber = this.nodes.get(definition.visual.climber ?? ''); if (climber) climber.position.y = 0;
+    const kicker = this.nodes.get(definition.visual.kicker?.node ?? ''); if (kicker) kicker.rotation.z = 0;
   }
 
   setAlliance(alliance: Alliance) {
