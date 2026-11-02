@@ -8,6 +8,8 @@ export type HopperVolume = {
   frontTravel: number; ceilingTravel?: number; // roof follows the vertical climber/lid stage
   floorSlope?: number; slopedFront?: boolean;
 };
+/** Estimated launch standard deviations: radians, fractional speed, and rad/s backspin. */
+export type ShotSpread = { yaw: number; elevation: number; speed: number; flyerChance: number; backspin: number };
 export type RobotDefinition = {
   id: string; teamNumber: string; name: string; summary: string; model: string;
   visual: RobotVisualDefinition;
@@ -16,13 +18,13 @@ export type RobotDefinition = {
   drive?: { maxSpeed: number; acceleration: number; grip: number };
   modules: { name: string; x: number; z: number }[];
   intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean };
-  hopper: { stowTravel: number; coupledToIntake?: boolean; volume?: HopperVolume; fixedSlot?: number };
+  hopper: { stowTravel: number; coupledToIntake?: boolean; autoLift?: { loweredCapacity: number }; volume?: HopperVolume; fixedSlot?: number };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
   climb?: { kind: 'side-hook-l1'; approachAxis?: 'x' | 'z'; hookOffsetsZ?: number[]; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };
   cargoSlots: Vec3[];
   pickup: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
-  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number; feedPath?: Vec3[] };
+  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number; spread?: ShotSpread; feedPath?: Vec3[] };
   mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; movingShots: boolean; simultaneousIntake?: boolean; climb: boolean };
 };
 

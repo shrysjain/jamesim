@@ -17,6 +17,8 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(m.lanes.length > 0 && new Set(m.lanes).size === m.lanes.length && m.lanes.every(Number.isFinite), 'At least one unique, finite shooter lane is required.');
   check(d.cargoSlots.length === m.capacity && d.cargoSlots.every(vector), 'Provide one finite cargo seed per capacity slot.');
   check(d.hopper.fixedSlot === undefined || Number.isInteger(d.hopper.fixedSlot) && d.hopper.fixedSlot >= 0 && d.hopper.fixedSlot < m.capacity, 'Fixed cargo slot is outside capacity.');
+  if (d.hopper.autoLift) check(!!d.climb && (d.hopper.volume?.ceilingTravel ?? 0) > 0 && Number.isInteger(d.hopper.autoLift.loweredCapacity) && d.hopper.autoLift.loweredCapacity > 0 && d.hopper.autoLift.loweredCapacity < m.capacity,
+    'Automatic hopper lift requires the real vertical stage and a valid lowered capacity.');
   check(vector(d.intake.pivot) && vector(d.hood.pivot) && Number.isFinite(d.intake.stowedAngle) && Number.isFinite(d.hood.maxAngle), 'Mechanism transforms must be finite.');
   check(d.colliders.length > 0 && d.colliders.every(c => ['chassis', 'intake', 'hopper', 'hood', 'climber'].includes(c.part) && vector(c.center) && c.halfExtents.every(positive) && (c.radius === undefined || Number.isFinite(c.radius) && c.radius >= 0)), 'Collider envelopes must be finite with positive extents.');
   check(Object.values(d.pickup).every(Number.isFinite) && d.pickup.minX < d.pickup.maxX && positive(d.pickup.halfWidth), 'Pickup bounds must be finite and ordered.');
@@ -24,6 +26,8 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(vector(geometry.pivot) && [geometry.drumRadius, geometry.guideLength, geometry.turretRadiansPerSecond].every(positive), 'Shooter geometry must be finite and positive.');
   check(!m.turret || !!geometry.turretPivot && vector(geometry.turretPivot), 'A turret requires its bearing pivot.');
   check(!geometry.feedPath || geometry.feedPath.every(vector), 'Feed path points must be finite.');
+  if (geometry.spread) check(Object.values(geometry.spread).every(v => Number.isFinite(v) && v >= 0) && geometry.spread.flyerChance <= 1 && geometry.spread.speed < 1,
+    'Shot spread must be finite and nonnegative with valid probability and fractional speed.');
   check(m.climb === !!d.climb, 'Climb capability and physics profile must agree.');
   if (d.climb) check(d.climb.kind === 'side-hook-l1' && [d.climb.maxLift, d.climb.rate, d.climb.travel, d.climb.deploySeconds].every(positive) && vector(d.climb.hook), 'Unsupported or invalid climber profile.');
   if (d.climb) {

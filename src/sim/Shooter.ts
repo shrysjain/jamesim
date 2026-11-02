@@ -5,6 +5,7 @@ import { FUEL_LINEAR_DAMPING, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { FuelSystem } from './FuelSystem';
 import type { SwerveChassis } from './SwerveChassis';
 import { DRIVE_RESPONSE } from './SwerveChassis';
+import { DEFAULT_SHOT_SPREAD, sampleShotScatter } from './ShotScatter';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
 
@@ -61,6 +62,7 @@ export class Shooter {
   private active = false;
   private blocked = false;
   private randomState = 29102026;
+  private scatterState = 20261102;
   private feedOrder: number[] = [];
   private laneOrder: number[] = [];
   private nextFeedAt = 0;
@@ -69,6 +71,7 @@ export class Shooter {
   // One slot per conventional lane; a pipelined channel can hold several visible balls in transit.
   private makeFeedSlots() { return this.mechanism.lanes.flatMap(z => Array.from({ length: this.geometry.feedPath ? 8 : 1 }, () => z)).map(z => ({ z, id: null as number | null, age: 0, duration: SHOOTER.feedSeconds, offset: 0, availableAt: 0, lastShotAt: -Infinity, start: v3() })); }
   private random() { this.randomState = (Math.imul(this.randomState, 1664525) + 1013904223) >>> 0; return this.randomState / 0x100000000; }
+  private scatterRandom = () => { this.scatterState = (Math.imul(this.scatterState, 1664525) + 1013904223) >>> 0; return this.scatterState / 0x100000000; };
   private refillOrder() {
     if (!this.laneOrder.length) {
       this.laneOrder = this.laneState.map((_, i) => i);
@@ -129,7 +132,7 @@ export class Shooter {
       }
       candidates.sort((a, b) => a.cost - b.cost);
       blocked ??= candidates[0]?.solution ?? null;
-      for (const candidate of candidates) if (this.clearExit(0, candidate.solution.elevation) && this.clearTrajectory(candidate.muzzle, candidate.launch, candidate.solution.time)) {
+      for (const candidate of candidates) if (this.clearExit(0, candidate.solution.elevation) && this.clearTrajectory(candidate.muzzle, candidate.launch, candidate.solution.time, base.kind === 'Pass' ? .18 : .008)) {
         this.selection = { alliance: this.alliance, kind: base.kind, time: candidate.solution.time, extra, obstructed: false, until: this.fuel.time + 0.05 };
         return candidate.solution;
       }
@@ -141,12 +144,14 @@ export class Shooter {
     this.selection = null; return null;
   }
 
-  private clearTrajectory(position: Vector, velocity: Vector, time: number) {
+  private clearTrajectory(position: Vector, velocity: Vector, time: number, clearance = .008) {
     const steps = Math.ceil(time / 0.08), q = { x: 0, y: 0, z: 0, w: 1 };
     let from = position;
     for (let i = 1; i <= steps; i++) {
       const to = flightPosition(position, velocity, time * i / steps);
-      if (this.world.castShape(from, q, sub(to, from), new RAPIER.Ball(FUEL_RADIUS + 0.008), 0, 1, true,
+      // Pass arcs need headroom for release scatter over nets. Retain the small
+      // final margin so a floor landing can remain physically feasible.
+      if (this.world.castShape(from, q, sub(to, from), new RAPIER.Ball(FUEL_RADIUS + (i === steps ? .008 : clearance)), 0, 1, true,
         RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS)) return false;
       from = to;
     }
@@ -240,22 +245,18 @@ export class Shooter {
       const hit = this.world.castShape(sweepStart, q, scale(relative, 0.25), new RAPIER.Ball(FUEL_RADIUS + 0.002), 0, 1, true,
         RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
       if (hit || !this.clearExit(z)) { this.blocked = true; continue; }
-      // Small, repeatable wheel slip and release-angle differences break up
-      // ruler-straight rows while retaining the physical aiming solution.
-      // The card's percentage is an accuracy rating, not a forced hit/miss roll.
-      // Reduce precision while translating; the released ball keeps its physical trajectory.
-      const accuracy = this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? this.geometry.movingAccuracy ?? 1 : 1;
-      const dispersion = 1 / clamp(accuracy, .05, 1);
-      const elevation = this.elevation + (this.random() - 0.5) * 0.008 * dispersion;
-      const yaw = (this.random() - 0.5) * 0.009 * dispersion;
+      const scatter = sampleShotScatter(this.geometry.spread ?? DEFAULT_SHOT_SPREAD, this.geometry.movingAccuracy ?? .9,
+        this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom);
+      const elevation = this.elevation + scatter.elevation, yaw = scatter.yaw;
       const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
-        this.rpm * this.speedPerRpm * (0.996 + this.random() * 0.008))), q);
+        this.rpm * this.speedPerRpm * scatter.speedFactor)), q);
       const velocity = add(this.chassis.body.velocityAtPoint(position), exit);
       if (!this.fuel.release(f, position, velocity, true)) continue;
+      f.body.setAngvel(rotate(this.turretRotate(scatter.spin), q), true);
       this.payloadChanged();
       this.chassis.body.applyImpulseAtPoint(scale(exit, -FUEL_MASS), position, true);
       this.shotsFired++; this.shots.push({ id: f.id, lane: this.mechanism.lanes.indexOf(lane.z), time: this.fuel.time, position, velocity, target: this.solution.target, flightTime: this.solution.time });
-      if (this.shots.length > 64) this.shots.shift();
+      if (this.shots.length > Math.max(64, this.mechanism.capacity)) this.shots.shift();
       this.rpm = Math.max(0, this.rpm - SHOOTER.rpmDropPerBall);
       this.nextLaunchAt = this.mechanism.turret ? Math.max(this.nextLaunchAt, this.fuel.time - dt) + 1 / this.mechanism.fireRate : this.fuel.time + .016;
       lane.lastShotAt = this.fuel.time;
@@ -272,6 +273,7 @@ export class Shooter {
     this.solution = null; this.selection = null; this.active = this.blocked = false;
     this.feedOrder = []; this.laneOrder = []; this.nextFeedAt = this.nextLaunchAt = 0;
     this.randomState = 29102026;
+    this.scatterState = 20261102;
     if (clearShots) { this.shots.length = 0; this.shotsFired = 0; }
   }
   stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; }

@@ -34,17 +34,20 @@ export class Climber {
     const wheelBottom = this.chassis.body.translation().y + this.chassis.definition.mountY - Math.max(...this.chassis.modules.map(m => m.suspension)) - this.chassis.definition.wheelRadius;
     return supported ? 0 : bottom > 1.164082 ? 3 : bottom > .706882 ? 2 : wheelBottom > .01 ? 1 : 0;
   }
-  step(dt: number, pressed: boolean, enabled: boolean, alliance: Alliance) {
+  step(dt: number, pressed: boolean, enabled: boolean, alliance: Alliance, hopperTarget = 0, cargoMinimum = 0) {
     const config = this.chassis.definition.climb;
     if (!config) { this.clearInput(); return; }
     if (!enabled) { this.clearInput(); this.status = 'Disabled for assessment'; return; }
     const toggle = this.toggles + Number(pressed && !this.held);
     this.toggles = 0; this.held = pressed;
     if (toggle % 2) { this.raised = !this.raised; if (this.raised) this.captureArmed = true; if (this.attached && this.raised) this.releaseAtBottom = true; }
-    const target = this.raised ? 1 : 0;
+    if (toggle % 2 && !this.raised && !this.attached) this.captureArmed = false;
+    // This shared actuator also carries Limestone's juice press. Collection
+    // opens it without arming tower capture; occupied cargo limits compression.
+    const target = Math.max(cargoMinimum, this.raised ? 1 : this.attached ? 0 : hopperTarget);
     const extensionStep = this.attached ? dt * config.rate / config.travel : dt / config.deploySeconds;
     this.extension += Math.max(-extensionStep, Math.min(extensionStep, target - this.extension));
-    this.status = this.raised ? 'Climber up · approach your tower' : 'Climber down';
+    this.status = this.raised ? 'Climber up · approach your tower' : target > 0 ? 'Hopper expanding' : 'Climber down';
     const p = this.chassis.body.translation(), sign = alliance === 'blue' ? 1 : -1;
     // Kepler approaches along the rung. Limestone faces it with either outer
     // hook over a rung end, matching the team's A/E approach outside the uprights.

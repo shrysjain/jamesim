@@ -6,6 +6,7 @@ import { NEUTRAL_INPUT } from '../../../sim/SwerveChassis';
 import { HopperDynamics } from '../../../sim/HopperDynamics';
 import type { CollisionAsset, Vec3 } from '../../../field/types';
 import { LIMESTONE } from './definition';
+const CAPACITY = LIMESTONE.mechanisms.capacity;
 
 const field = JSON.parse(readFileSync('public/assets/field-collisions.json', 'utf8')) as CollisionAsset;
 const floor: CollisionAsset = { boxes: [{ element: 'floor', center: [0,-.1,0], halfExtents: [25,.1,25] }], meshes: [] };
@@ -46,21 +47,22 @@ describe('1678 Limestone',()=>{
       expect(r.held.map(f=>f.id).sort()).toEqual(original);
     }finally{s.dispose();}
   });
-  it('packs 32 full-size spheres, contains a loaded moving hopper and keeps every original body',async()=>{
+  it('packs its increased full-size capacity, contains a loaded moving hopper and keeps every original body',async()=>{
     const d=LIMESTONE,v=d.hopper.volume!;
     for(let i=0;i<d.cargoSlots.length;i++){
-      const p=d.cargoSlots[i]; expect(p[1]+.075).toBeLessThanOrEqual(v.ceilingY);
+      const p=d.cargoSlots[i]; expect(p[1]+.075).toBeLessThanOrEqual(v.ceilingY+v.ceilingTravel!);
       expect(p[1]-.075).toBeGreaterThanOrEqual(v.floorY+v.floorSlope!*p[0]);
       for(let j=i+1;j<d.cargoSlots.length;j++) expect(Math.hypot(...p.map((x,k)=>x-d.cargoSlots[j][k]))).toBeGreaterThan(.15);
     }
-    const s=await FieldSimulation.create(floor,seeds(32),true);
+    const s=await FieldSimulation.create(floor,seeds(CAPACITY),true);
     try{
       start(s,'blue',0); run(s,.6); const r=s.robotController!,handles=s.fuel.map(f=>f.handle);
+      r.input.intake=true;run(s,.7);r.input.intake=false;
       for(const [i,f]of s.fuelSystem.records.entries()){s.fuelSystem.capture(f,r.owner,i,r.storageSlots[i]);f.state='stored';}
       r.requestIntakeToggle(); r.chassis.input={...NEUTRAL_INPUT,forward:.4,strafe:.1,turn:.2};run(s,2);
-      expect(r.held).toHaveLength(32);expect(r.chassis.pose.intake).toBe(1);
-      for(const f of r.held){expect(Math.abs(f.local.z)+.075).toBeLessThanOrEqual(v.halfWidth+.002);expect(f.local.y+.075).toBeLessThanOrEqual(v.ceilingY+.002);}
-      expect(r.telemetry.mass).toBeCloseTo(d.mass+32*.215,3);expect(s.fuel.map(f=>f.handle)).toEqual(handles);
+      expect(r.held).toHaveLength(CAPACITY);expect(r.chassis.pose.intake).toBe(1);
+      for(const f of r.held){expect(Math.abs(f.local.z)+.075).toBeLessThanOrEqual(v.halfWidth+.002);expect(f.local.y+.075).toBeLessThanOrEqual(v.ceilingY+v.ceilingTravel!*(r.chassis.pose.climber??0)+.002);}
+      expect(r.telemetry.mass).toBeCloseTo(d.mass+CAPACITY*.215,3);expect(s.fuel.map(f=>f.handle)).toEqual(handles);
       const time=s.fuelSystem.time,positions=r.held.map(f=>({...f.local}));s.setRunning(false);run(s,.5);
       expect(s.fuelSystem.time).toBe(time);expect(r.held.map(f=>f.local)).toEqual(positions);
       start(s); expect(r.held).toHaveLength(8); expect(s.fuel.map(f=>f.handle)).toEqual(handles);
@@ -108,15 +110,16 @@ describe('1678 Limestone',()=>{
     }finally{s.dispose();}
   });
   it('feeds a full load through three staggered lanes at the declared gameplay cadence',async()=>{
-    const s=await FieldSimulation.create(floor,seeds(32),true);
+    const s=await FieldSimulation.create(floor,seeds(CAPACITY),true);
     try{
       start(s,'blue',0);run(s,.6);const r=s.robotController!;
+      r.input.intake=true;run(s,.7);r.input.intake=false;
       for(const [i,f]of s.fuelSystem.records.entries()){s.fuelSystem.capture(f,r.owner,i,r.storageSlots[i]);f.state='stored';}
       r.input.shoot=true;run(s,6);const shots=r.shooter.shots;
-      expect(shots).toHaveLength(32);expect(new Set(shots.map(f=>f.id)).size).toBe(32);
-      const rate=31/(shots.at(-1)!.time-shots[0].time);
+      expect(shots).toHaveLength(CAPACITY);expect(new Set(shots.map(f=>f.id)).size).toBe(CAPACITY);
+      const rate=(CAPACITY-1)/(shots.at(-1)!.time-shots[0].time);
       expect(rate).toBeGreaterThan(20);expect(rate).toBeLessThanOrEqual(24.5);
-      expect(r.held).toHaveLength(0);expect(s.fuelSystem.records).toHaveLength(32);
+      expect(r.held).toHaveLength(0);expect(s.fuelSystem.records).toHaveLength(CAPACITY);
     }finally{s.dispose();}
   });
   it('scores while translating and passes using physical fuel from outside the alliance zone',async()=>{

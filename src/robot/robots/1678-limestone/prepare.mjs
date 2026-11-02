@@ -178,6 +178,26 @@ for (const module of official.getRoot().listNodes().filter(n => /^SDS MK5n </.te
 if(modules!==4) throw new Error(`Expected four MK5n modules, found ${modules}`);
 function runtimeOfficial(p){return new Vector3(...p).applyMatrix4(officialFrame).toArray();}
 const accessor = (type, array) => doc.createAccessor().setType(type).setArray(array).setBuffer(buffer);
+// The release tessellation repeats coincident surfaces on the thin intake bars.
+// Remove duplicate roller faces across material batches to prevent depth fighting
+// while retaining the original surfaces, dimensions, normals and axle frames.
+let duplicateRollerFaces = 0;
+const rollerFaces = new Map();
+for (const b of [...batches.values()].sort((a,b) => {
+  const luminance = batch => batch.mat.getBaseColorFactor().slice(0,3).reduce((s,v)=>s+v,0);
+  return luminance(a)-luminance(b);
+})) if (b.parent.includes('roller-')) {
+  if (!rollerFaces.has(b.parent)) rollerFaces.set(b.parent,new Set());
+  const seen = rollerFaces.get(b.parent), indices = [];
+  const vertex = i => b.positions.slice(i*3,i*3+3).map(v=>Math.round(v*1e5)).join(',');
+  for (let i=0;i<b.indices.length;i+=3) {
+    const face=b.indices.slice(i,i+3), key=face.map(vertex).sort().join('|');
+    if (seen.has(key)) { duplicateRollerFaces++; continue; }
+    seen.add(key); indices.push(...face);
+  }
+  b.indices=indices;
+}
+report.duplicateRollerFacesRemoved = duplicateRollerFaces;
 for (const [key,b] of batches) groups.get(b.parent).addChild(doc.createNode(key).setMesh(doc.createMesh(key).addPrimitive(doc.createPrimitive()
   .setAttribute('POSITION',accessor('VEC3',new Float32Array(b.positions))).setAttribute('NORMAL',accessor('VEC3',new Float32Array(b.normals)))
   .setIndices(accessor('SCALAR',new Uint32Array(b.indices))).setMaterial(b.mat))));

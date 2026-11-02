@@ -70,6 +70,13 @@ export class RobotSimulation {
   }
   get mechanism() { return this.chassis.definition.mechanisms; }
   get capacity() { return this.mechanism.capacity; }
+  get hopperMinimumLift() {
+    const lift = this.chassis.definition.hopper.autoLift;
+    return lift ? Math.max(0, Math.min(1, (this.held.length - lift.loweredCapacity) / (this.capacity - lift.loweredCapacity))) : 0;
+  }
+  get hopperLiftTarget() {
+    return this.chassis.definition.hopper.autoLift && (this.input.intake || this.input.reverse) ? 1 : this.hopperMinimumLift;
+  }
   get held() { return this.fuel.ownedBy(this.owner); }
   private storedPosition(slot: number) {
     const p = this.storageSlots[slot];
