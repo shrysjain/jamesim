@@ -21,3 +21,6 @@ export const STANDARD_VISUAL = {
     { node: 'shooter-flywheel', source: 'shooter', factor: -6.7, axis: 'z' },
   ],
 } satisfies Pick<RobotVisualDefinition, 'bumperMaterial' | 'previewHeight' | 'numberSize' | 'numberOffset' | 'spin'>;
+
+/** Shared simulator baseline for robots without definition-owned drive tuning. */
+export const DEFAULT_DRIVE = { maxSpeed: 16.7 * .3048, acceleration: 33 * .3048, grip: 1.05 };
