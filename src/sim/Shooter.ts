@@ -234,7 +234,12 @@ export class Shooter {
       && Math.abs(this.rpm * this.speedPerRpm - this.solution.speed) < Math.max(0.12, this.solution.speed * 0.02);
   }
 
-  private feedPoints(start: Vector, end: Vector) { return [start, ...(this.geometry.feedPath ?? []).map(p => v3(...p)), end]; }
+  private feedPoints(start: Vector, end: Vector) {
+    // Wide fixed rollers feed along the selected release column, not one central
+    // throat. Use the actual muzzle Z so reversed shooters keep the same path.
+    const lateral = this.geometry.feedAcrossLanes ? end.z - this.geometry.pivot[2] : 0;
+    return [start, ...(this.geometry.feedPath ?? []).map(p => v3(p[0], p[1], p[2] + lateral)), end];
+  }
   private feedLength(start: Vector, end: Vector) {
     const p = this.feedPoints(start, end);
     return p.slice(1).reduce((sum, point, i) => sum + Math.hypot(point.x-p[i].x, point.y-p[i].y, point.z-p[i].z), 0);
@@ -263,8 +268,10 @@ export class Shooter {
         f = this.fuel.ownedBy(this.owner).filter(fuel => fuel.state === 'stored').sort((a, b) => b.local.x - a.local.x || Math.abs(a.local.z - lane.z) - Math.abs(b.local.z - lane.z) || a.id - b.id)[0] ?? null;
         if (f) {
           lane.id = f.id; lane.age = 0; lane.start = { ...f.local }; f.state = 'feeding';
-          lane.duration = this.geometry.feedPath ? Math.max(this.mechanism.feedSeconds ?? .25, this.feedLength(lane.start, this.muzzleLocal(this.elevation, lane.z)) / 3.2) : SHOOTER.feedSeconds * (1 + (this.random() - .5) * .24);
-          lane.offset = (this.random() - 0.5) * 0.016;
+          const wide = this.geometry.feedAcrossLanes;
+          if (wide) lane.offset = (this.random() - .5) * 2 * (this.geometry.laneJitter ?? .008);
+          lane.duration = this.geometry.feedPath ? Math.max(this.mechanism.feedSeconds ?? .25, this.feedLength(lane.start, this.muzzleLocal(this.elevation, lane.z + (wide ? lane.offset : 0))) / 3.2) : SHOOTER.feedSeconds * (1 + (this.random() - .5) * .24);
+          if (!wide) lane.offset = (this.random() - 0.5) * 0.016;
           this.nextFeedAt = Math.max(this.nextFeedAt, this.fuel.time - dt) + (0.8 + this.random() * 0.4) / this.mechanism.fireRate;
           this.feedOrder.shift();
         }

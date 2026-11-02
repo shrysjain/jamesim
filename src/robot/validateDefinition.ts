@@ -28,6 +28,8 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(vector(geometry.pivot) && [geometry.drumRadius, geometry.guideLength, geometry.turretRadiansPerSecond].every(positive), 'Shooter geometry must be finite and positive.');
   check(!m.turret || !!geometry.turretPivot && vector(geometry.turretPivot), 'A turret requires its bearing pivot.');
   check(!geometry.feedPath || geometry.feedPath.every(vector), 'Feed path points must be finite.');
+  check(!geometry.feedAcrossLanes || !m.turret && !!geometry.feedPath?.length, 'Full-width feeding requires a chassis-mounted shooter and feed path.');
+  if (geometry.laneJitter !== undefined) check(Number.isFinite(geometry.laneJitter) && geometry.laneJitter >= 0 && !!geometry.feedAcrossLanes, 'Lane variation requires full-width feeding and a finite nonnegative half-width.');
   check(geometry.yawOffset === undefined || Number.isFinite(geometry.yawOffset), 'Shooter yaw offset must be finite.');
   check(geometry.fixedElevation === undefined || Number.isFinite(geometry.fixedElevation) && geometry.fixedElevation > 0 && geometry.fixedElevation < Math.PI / 2, 'Fixed release elevation must lie above horizontal and below vertical.');
   if (geometry.spread) check(Object.values(geometry.spread).every(v => Number.isFinite(v) && v >= 0) && geometry.spread.flyerChance <= 1 && geometry.spread.speed < 1, 'Shot spread must be finite and nonnegative with valid probability and fractional speed.');
