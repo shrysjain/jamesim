@@ -19,7 +19,7 @@ export const INFRARED: RobotDefinition = {
     pivot: [.2723, .4888 - .223, 0], drumRadius: .0389, guideLength: .17, turretRadiansPerSecond: 3,
     minElevation: 40.68 * Math.PI / 180, maxElevation: 81 * Math.PI / 180,
     movingAccuracy: .87, passRange: 9, passLandingExtra: .8,
-    spread: { yaw: .029, elevation: .034, speed: .035, flyerChance: .10, backspin: 30 },
+    spread: { yaw: .035, elevation: .034, speed: .035, flyerChance: .10, backspin: 30 },
     // Along the bed, then on the hopper-facing side of the vertical rollers.
     feedPath: [[-.04, -.02, 0], [-.025, .2847 - .223, 0], [-.025, .3997 - .223, 0], [.08, .47 - .223, 0]],
   },
