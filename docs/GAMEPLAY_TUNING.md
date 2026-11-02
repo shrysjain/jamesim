@@ -25,7 +25,7 @@ Eight or fewer balls allow full intake compression. Required extension increases
 
 Pitch and roll are locked; yaw and vertical suspension remain physical. The simulation also projects physical rotation and angular velocity onto yaw before suspension queries and after each world step. Rotation locks alone allowed small off-axis errors to accumulate during loaded driving until the mechanism colliders supported the robot above the floor. This correction preserves linear velocity, height and yaw; it is not a height clamp or automatic respawn.
 
-Bump triangles provide a level, damped support platform sampled over the robot footprint. The modules visually reach toward their individual ramp surfaces. This avoids bellypan/intake beaching while preserving the bump's height change. The remaining field geometry still blocks the chassis normally.
+Bump triangles provide a level, damped support platform sampled over the robot footprint. The complete robot leans with the bump while its modules remain rigidly mounted at the prepared CAD positions. This avoids bellypan/intake beaching while preserving the bump's height change. The remaining field geometry still blocks the chassis normally.
 
 Low fuel is displaced horizontally by the bumper footprint, including when landing on it. Sweeps prevent displacement through the static field. A trapped ball may briefly overlap the underside until space opens; it cannot provide vertical chassis support. Fuel-to-fuel, carpet and field physics, airborne contacts and stable IDs remain active.
 
@@ -58,3 +58,9 @@ Both retained robot choices switch bumper materials between blue and red on sess
 ## Stage 19.5
 
 High Tide and the Tower trainer have been removed. The incoming local hopper dynamics and alliance-colored bumpers remain. Kepler now compresses its intake during shooting (intake/reverse extends it), and its single-lane feeder uses visible pipelined transit through definition-owned waypoints. C toggles hook deployment, tower capture and L1 winching/lowering; the original CAD sliding hook/stage is now separated from the batched body meshes and animated vertically. Capture requires alignment beside the low rung, and retraction takes up slack before lifting. See [current behavior and limits](STAGE_19_5.md).
+
+## Rigid swerve mounts and driver turning — November 2
+
+Wheel/fork assemblies retain their exact prepared CAD translations on every robot; only azimuth steering and wheel spin animate. Bump lean affects the complete chassis, including the modules. Fuel-only tire colliders also stay fixed relative to the physical frame. The established ray-based support solver remains a numerical ground-contact approximation, not articulated hardware suspension; its legacy `springLength`, `travel` and `suspension` values never reposition a module.
+
+Manual full-turn demand increases from 4.8 to 6.4 rad/s, with module steering response increasing from 18 to 24 rad/s. Tire traction, payload inertia, acceleration and wheel-speed desaturation still constrain actual rotation; no direct yaw velocity is prescribed. Precision mode retains half turn demand. Chassis aiming normalizes against the shared turn scale so the faster driver command does not silently increase its feedback gains.
