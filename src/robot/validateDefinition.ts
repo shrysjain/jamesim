@@ -54,7 +54,5 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   const walk = (value: unknown): boolean => typeof value === 'number' ? Number.isFinite(value) : value === null || ['string', 'boolean', 'undefined'].includes(typeof value) ? true : typeof value === 'object' && Object.values(value).every(walk);
   check(walk(d), 'Definitions must contain finite, serializable data only.');
   if (geometry.passLandingExtra !== undefined) check(Number.isFinite(geometry.passLandingExtra) && geometry.passLandingExtra >= 0, 'Pass landing inset must be finite and nonnegative.');
-  const spread = d.shooterGeometry.spread;
-  if (spread) check([spread.yaw, spread.elevation, spread.speed, spread.backspin].every(v => Number.isFinite(v) && v >= 0) && Number.isFinite(spread.flyerChance) && spread.flyerChance >= 0 && spread.flyerChance <= 1, 'Shot spread must be finite and nonnegative with a valid flyer probability.');
   return errors;
 }
