@@ -23,11 +23,11 @@ describe('4481 Rembrandts Era II Worlds',()=>{
    for(const q of D.cargoSlots.slice(i+1))expect(Math.hypot(...p.map((x,k)=>x-q[k]))).toBeGreaterThan(.15);
   }
  });
- it('passively deploys and keeps the intake out through shooting, reverse and unused V/C inputs',async()=>{
+ it('deploys, compresses a light load while shooting, and extends for reverse without V/C controls',async()=>{
   const s=await FieldSimulation.create(floor,seeds(8),true);
   try{s.startSession({...DEFAULT_MATCH,robot:D.id as '4481-era-ii',preloads:8},true);run(s,.7);const r=s.robotController!;
    expect(r.chassis.pose.intake).toBe(1);r.requestIntakeToggle();r.requestClimbToggle();r.input.shoot=true;run(s,.5);
-   expect(r.chassis.pose.intake).toBe(1);expect(r.climber.attached).toBe(false);r.input.shoot=false;r.input.reverse=true;run(s,.5);
+   expect(r.chassis.pose.intake).toBeLessThan(.05);expect(r.kickerDeployment).toBe(1);expect(r.climber.attached).toBe(false);r.input.shoot=false;r.input.reverse=true;run(s,.5);
    expect(r.chassis.pose.intake).toBe(1);expect(r.held.length).toBeLessThan(8);
   }finally{s.dispose();}
  });

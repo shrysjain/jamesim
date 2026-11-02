@@ -14,7 +14,8 @@ export const ERA_II: RobotDefinition = {
   springLength: .1122, bumperCenterY: -.10275,
   drive: { maxSpeed: 5.8, acceleration: 9.4, brakeAcceleration: 18.8, grip: 1.05 },
   modules: swerveModules(.27332,.27332),
-  // Passively deployed spring carriage. It stays out, including while shooting.
+  // The source carriage deploys passively. Owner-requested gameplay compression
+  // retracts it as shooting empties the hopper; the separate lower kicker stays down.
   // Travel is an estimate fitted along the measured inclined slide direction.
   intake: { pivot: [0,0,0], stowedAngle: 0, stowTravel: .26, stowRise: .095, manualRetraction: false, passiveKicker: true },
   hopper: ERA_HOPPER,
@@ -28,7 +29,7 @@ export const ERA_II: RobotDefinition = {
     spread: { yaw: .028, elevation: .032, speed: .032, flyerChance: .08, backspin: 28 },
     feedPath: [[-.038,-.015,0],[.06,.04,-.15],[.15,.115,-.15],[.15,.18,-.15]],
   },
-  mechanisms: { capacity: ERA_CARGO.length, intakeRate: 38, compress: false,
+  mechanisms: { capacity: ERA_CARGO.length, intakeRate: 38, compress: true,
     lanes: [0], fireRate: 16, feedSeconds: .28, turret: true, movingShots: true,
     simultaneousIntake: true, climb: false },
   cargoSlots: ERA_CARGO,

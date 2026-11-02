@@ -149,17 +149,42 @@
     "110-degree passive kicker fold around CAD hinge [native X=0, Y=.2175, Z=-.22]"
   ],
   "validation": {
-    "simulationTests": 323,
-    "simulationFiles": 46,
+    "simulationTests": 329,
+    "simulationFiles": 48,
     "releaseBuild": "passed",
     "browser": "CAD poses, all seven selector entries, Rembrandts/red start, visible bindings, keyboard resume, input smoke and return to setup; no page errors",
     "baseIntegration": "88e062f2947aa7477f18ec14bb92b0d090d71810",
-    "fullSimulationBaselineCommit": "bef38ed",
     "animationCorrection": {
       "focusedTests": 47,
       "testFiles": 8,
       "releaseBuild": "passed",
       "browser": "Folded preview, deployed kicker, quarter/half-turn feeder poses and red turret pose rendered with no page errors"
+    },
+    "fuelDependentRetraction": {
+      "fullHopperDischarge": "48 original fuel bodies fired as the intake retracts",
+      "fixedBar": "actual GLTF/RobotView bar transform and bounds unchanged through full carriage travel",
+      "controls": "collection/reverse extend; pause freezes; restart stows both mechanisms",
+      "releaseBuild": "passed",
+      "browser": "full/half/retracted carriage poses with lower bar deployed; no page errors",
+      "fullSimulationTests": 329,
+      "fullSimulationFiles": 48
+    },
+    "previousFullSimulation": {
+      "commit": "bef38ed",
+      "tests": 323,
+      "files": 46
+    }
+  },
+  "gameplayOverrides": {
+    "fuelDependentIntakeRetraction": {
+      "requestedBy": "project owner",
+      "trigger": "shooting, unless collecting or reversing",
+      "fullExtensionAtFuelCount": 48,
+      "fullRetractionAtOrBelowFuelCount": 8,
+      "movingTravelMeters": 0.26,
+      "movingRiseMeters": 0.095,
+      "lowerBar": "independent passive kicker remains deployed during carriage retraction",
+      "sourceDistinction": "Team release describes passive extension; automatic shooting compression is an owner-requested simulation behavior."
     }
   }
 }
