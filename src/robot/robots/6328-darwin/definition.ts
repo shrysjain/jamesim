@@ -1,7 +1,7 @@
-import type { Vec3 } from '../../../field/types';
 import type { RobotDefinition, RobotCollider } from '../../types';
 import { STANDARD_SWERVE, swerveModules } from '../../defaults';
 import { DARWIN_VISUAL } from './visual';
+import { DARWIN_CARGO } from './cargo';
 
 /** Official 6328-26C export, CAD frame normalized to shooter +X / intake −X.
  * CAD dimensions and team-code targets are separated from gameplay estimates in README.md. */
@@ -23,15 +23,12 @@ export const DARWIN: RobotDefinition = {
   },
   hood: { pivot: [.26392, .26307, 0], maxAngle: 31.2 * Math.PI / 180 },
   shooterGeometry: { pivot: [.26392, .26307, 0], drumRadius: .0508, guideLength: .155, turretRadiansPerSecond: 3,
-    minElevation: 48.8 * Math.PI / 180, maxElevation: 80 * Math.PI / 180, passRange: 17.16, movingAccuracy: .93 },
+    minElevation: 48.8 * Math.PI / 180, maxElevation: 80 * Math.PI / 180, passRange: 17.16, movingAccuracy: .93,
+    spread: { yaw: .032, elevation: .034, speed: .035, flyerChance: .10, backspin: 32 } },
   // No climber is present in the supplied Darwin exports/published subsystem tree.
-  mechanisms: { capacity: 40, intakeRate: 40, compress: true, lanes: [-.17, 0, .17], fireRate: 24,
+  mechanisms: { capacity: 48, intakeRate: 40, compress: true, lanes: [-.17, 0, .17], fireRate: 24,
     turret: false, movingShots: true, simultaneousIntake: true, climb: false },
-  cargoSlots: Array.from({length:40},(_,i): Vec3=>{
-    const layer=Math.floor(i/20),row=Math.floor(i%20/4),column=i%4;
-    const x=-.548+row*.151+(column%2)*.0755;
-    return [x,-.035-.1*x+.080+layer*.1511,(column-1.5)*.151];
-  }).sort((a,b)=>a[0]-b[0]),
+  cargoSlots: DARWIN_CARGO,
   pickup: { minX: -.72, maxX: -.50, halfWidth: .29, mouthX: -.60, ejectX: -.74 },
   colliders: [
     ...[-1,1].flatMap((sign): RobotCollider[]=>[

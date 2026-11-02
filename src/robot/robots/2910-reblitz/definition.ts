@@ -1,7 +1,7 @@
 import type { RobotDefinition, RobotCollider } from '../../types';
 import { STANDARD_SWERVE } from '../../defaults';
 import { REBLITZ_VISUAL } from './visual';
-import { REBLITZ_CARGO, REBLITZ_FEEDER_POCKET } from './cargo';
+import { REBLITZ_CARGO, REBLITZ_FEEDER_POCKET, REBLITZ_VOLUME } from './cargo';
 
 /** CAD dimensions in meters; empty mass/inertia remain estimates.
  * +X is the shooter end; the intake is at −X. Source (X,Y,Z) → (Y,Z−.21665,X).
@@ -9,11 +9,12 @@ import { REBLITZ_CARGO, REBLITZ_FEEDER_POCKET } from './cargo';
 export const REBLITZ: RobotDefinition = {
   id: '2910-reblitz', teamNumber: '2910', visual: REBLITZ_VISUAL, name: '2910 Re•Blitz', model: '/assets/robots/2910-reblitz/robot.glb',
   summary: 'Chassis aim · four shooting lanes',
-  mechanisms: { capacity: 55, intakeRate: 50, compress: true, lanes: [-0.2286, -0.0762, 0.0762, 0.2286], fireRate: 32, turret: false, movingShots: false, climb: false },
+  mechanisms: { capacity: REBLITZ_CARGO.length, intakeRate: 50, compress: true, lanes: [-0.2286, -0.0762, 0.0762, 0.2286], fireRate: 32, turret: false, movingShots: false, climb: false },
   ...STANDARD_SWERVE,
   cargoSlots: REBLITZ_CARGO,
   pickup: { minX: -.79, maxX: -.44, halfWidth: .29, mouthX: -.53, ejectX: -.755 },
-  shooterGeometry: { pivot: [.282575, .25325, 0], drumRadius: .0508, guideLength: .155, turretRadiansPerSecond: 3 },
+  shooterGeometry: { pivot: [.282575, .25325, 0], drumRadius: .0508, guideLength: .155, turretRadiansPerSecond: 3,
+    spread: { yaw: .026, elevation: .030, speed: .030, flyerChance: .08, backspin: 30 } },
   mass: 56, inertia: [3.1, 6.2, 3.5], length: 0.8509, width: 0.85725,
   modules: [
     { name: 'module-front-left', x: 0.282575, z: -0.276225 },
@@ -22,7 +23,7 @@ export const REBLITZ: RobotDefinition = {
     { name: 'module-rear-right', x: -0.282575, z: 0.276225 },
   ],
   intake: { pivot: [-0.27305, -0.0467875, 0], stowedAngle: -114 * Math.PI / 180 },
-  hopper: { stowTravel: 0.29845, fixedSlot: REBLITZ_FEEDER_POCKET, volume: { frontX: -.63897, backX: .30, halfWidth: .34845, floorY: -.10, ceilingY: .327, frontTravel: .29845, slopedFront: true } }, // measured between collecting and starting CAD configurations
+  hopper: { stowTravel: 0.29845, fixedSlot: REBLITZ_FEEDER_POCKET, volume: REBLITZ_VOLUME }, // measured between collecting and starting CAD configurations
   hood: { pivot: [0.282575, 0.25325, 0], maxAngle: 37 * Math.PI / 180 },
   colliders: [
     // Bumpers match the CAD envelope; contact surfaces use rounded edges.

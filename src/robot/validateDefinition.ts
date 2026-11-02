@@ -24,6 +24,8 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(vector(geometry.pivot) && [geometry.drumRadius, geometry.guideLength, geometry.turretRadiansPerSecond].every(positive), 'Shooter geometry must be finite and positive.');
   check(!m.turret || !!geometry.turretPivot && vector(geometry.turretPivot), 'A turret requires its bearing pivot.');
   check(!geometry.feedPath || geometry.feedPath.every(vector), 'Feed path points must be finite.');
+  if (geometry.spread) check(Object.values(geometry.spread).every(v => Number.isFinite(v) && v >= 0) && geometry.spread.flyerChance <= 1 && geometry.spread.speed < 1,
+    'Shot spread must be finite and nonnegative with valid probability and fractional speed.');
   check(m.climb === !!d.climb, 'Climb capability and physics profile must agree.');
   if (d.climb) check(d.climb.kind === 'side-hook-l1' && [d.climb.maxLift, d.climb.rate, d.climb.travel, d.climb.deploySeconds].every(positive) && vector(d.climb.hook), 'Unsupported or invalid climber profile.');
   if (d.hopper.intakeCurve) check(d.hopper.intakeCurve.length >= 2 && d.hopper.intakeCurve[0] === 0 && d.hopper.intakeCurve.at(-1) === 1 && d.hopper.intakeCurve.every((v,i,a) => Number.isFinite(v) && v >= 0 && v <= 1 && (i === 0 || v >= a[i-1])), 'Hopper linkage samples must run monotonically from zero to one.');
