@@ -7,6 +7,8 @@ export type HopperVolume = {
   frontX: number; backX: number; halfWidth: number; floorY: number; ceilingY: number;
   frontTravel: number; floorSlope?: number; slopedFront?: boolean;
 };
+/** Estimated launch standard deviations: radians, fractional speed, and rad/s backspin. */
+export type ShotSpread = { yaw: number; elevation: number; speed: number; flyerChance: number; backspin: number };
 export type RobotDefinition = {
   id: string; teamNumber: string; name: string; summary: string; model: string;
   visual: RobotVisualDefinition;
@@ -22,7 +24,7 @@ export type RobotDefinition = {
   climb?: { kind: 'side-hook-l1'; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };
   cargoSlots: Vec3[];
   pickup: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
-  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number; feedPath?: Vec3[] };
+  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number; spread?: ShotSpread; feedPath?: Vec3[] };
   mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; movingShots: boolean; simultaneousIntake?: boolean; climb: boolean };
 };
 

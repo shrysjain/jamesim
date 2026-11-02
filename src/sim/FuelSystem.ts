@@ -7,6 +7,9 @@ import { CollisionGroups } from './collisionGroups';
 export const FUEL_RADIUS = 0.075;
 export const FUEL_MASS = 0.215;
 export const FUEL_LINEAR_DAMPING = 0.15;
+// Stable per-ball material variation models inconsistent foam rebounds. Gameplay
+// estimates; identical properties survive every capture, shot, return and reset.
+export const fuelRestitution = (id: number) => .38 + .16 * (Math.imul(id + 1, 0x9e3779b1) >>> 0) / 4294967296;
 export type FuelState = 'loose' | 'transferring' | 'stored' | 'feeding' | 'airborne' | 'hubTransit';
 export type Fuel = {
   readonly id: number; readonly body: RAPIER.RigidBody;
@@ -24,7 +27,7 @@ export class FuelSystem {
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(...position)
         .setLinearDamping(FUEL_LINEAR_DAMPING).setAngularDamping(0.5).setCanSleep(true).setCcdEnabled(true));
       world.createCollider(RAPIER.ColliderDesc.ball(FUEL_RADIUS).setMass(FUEL_MASS)
-        .setFriction(0.6).setRestitution(0.35).setCollisionGroups(CollisionGroups.fuel), body);
+        .setFriction(0.6).setRestitution(fuelRestitution(id)).setCollisionGroups(CollisionGroups.fuel), body);
       body.sleep();
       return { id, body, state: 'loose', owner: null, slot: -1, age: 0, local: v3(), start: v3(), availableAt: 0 };
     });
