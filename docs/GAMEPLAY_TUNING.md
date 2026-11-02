@@ -78,3 +78,11 @@ On the Limestone preview branch, intake/reverse raises the actual climber-mounte
 Robot frame/mechanism colliders now use .05 friction (.02 on the thin bellypan) with Rapier's minimum combine rule. Previously the default average raised their effective wall friction to roughly .33–.38, preventing small sideways inputs from sliding along the boundary. The tire-force traction model, mass, collision envelopes, support rays and hopper solver remain unchanged. Frame contacts stay solid; no position nudges, teleporting or prescribed escape velocities are added.
 
 Registry-wide regressions reproduce wall pressure with small sideways commands, empty/full hoppers, both real perimeter sides, ordinary braking/reversal and turning after driving clear. Full-load shot tests retain their firing/conservation/hit assertions; the distant Re•Blitz fixture now respects its stationary-only shooting capability rather than holding drive into an intake/wall wedge. Other robots retain moving-shot samples.
+
+## Moving-shot uncertainty and match cutoff hold
+
+The moving-shot PR is integrated using the newer per-robot spread profiles as the single release distribution. Acceleration scales angular uncertainty; the 60 ms velocity estimate retains transient compensation error. Spin and recoil apply to original fuel bodies. This supersedes the older independent spread sampler without stacking both distributions.
+
+At AUTO, teleop and manual early-stop cutoffs, the chassis clears wheel commands and yaw, then zeros horizontal velocity while supported by grounded wheels. The hold runs at the cutoff tick and through disabled assessment, preventing momentum from carrying the robot across the carpet. Vertical falling, suspension settling and tower support remain physical, and unsupported airborne horizontal travel continues until landing. Pause and practice behavior are unchanged.
+
+Integration order is moving-shot/match-stop, Darwin, then Citrus. These branch merges do not merge into main. Local hopper contacts and per-fuel mass remain unchanged.
