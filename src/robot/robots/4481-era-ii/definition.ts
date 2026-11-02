@@ -16,7 +16,7 @@ export const ERA_II: RobotDefinition = {
   modules: swerveModules(.27332,.27332),
   // Passively deployed spring carriage. It stays out, including while shooting.
   // Travel is an estimate fitted along the measured inclined slide direction.
-  intake: { pivot: [0,0,0], stowedAngle: 0, stowTravel: .26, stowRise: .095, manualRetraction: false },
+  intake: { pivot: [0,0,0], stowedAngle: 0, stowTravel: .26, stowRise: .095, manualRetraction: false, passiveKicker: true },
   hopper: ERA_HOPPER,
   hood: { pivot: [.2425,.25535,-.15], maxAngle: 26*DEG },
   shooterGeometry: {

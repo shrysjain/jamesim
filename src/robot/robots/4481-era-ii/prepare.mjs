@@ -32,6 +32,12 @@ function group(name,world=[0,0,0],parent=''){
 }
 group('chassis');group('intake');group('turret',bearing);group('turret-hood',drum,'turret');group('shooter-drum',drum,'turret');
 group('indexer-disk',runtime([0,.1279,-.038]));
+const kickerPivot=runtime([0,.2175,-.22]),kickerFold=110*Math.PI/180;
+group('passive-kicker',kickerPivot);
+// The export shows the passive kicker deployed. Bake its folded starting pose
+// around the actual frame hinge; runtime deployment restores the CAD pose.
+const foldKicker=new Matrix4().makeTranslation(...kickerPivot).multiply(new Matrix4().makeRotationZ(-kickerFold)).multiply(new Matrix4().makeTranslation(...kickerPivot.map(x=>-x)));
+const kickerParts=new Set(['TR26-IN-4013','TR26-IN-4014','TR26-IN-4015','TR26-IN-4021','TR26-IN-4103']);
 const hardware=/SHCS|BHCS|FHCS|bolt|rivet|screw|washer|locknut|spacer|standoff|bushing|bearing|KerbKonus|shaft collar|DIN_|ISO[_ -]|kracht_SBK|circlip/i;
 function bounds(node){const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity],m=new Matrix4().fromArray(node.getWorldMatrix());
  for(const p of node.getMesh().listPrimitives()){const a=p.getAttribute('POSITION'),l=a.getMin([]),h=a.getMax([]);for(let i=0;i<8;i++){const q=new Vector3(...l.map((x,k)=>i&(1<<k)?h[k]:x)).applyMatrix4(m).toArray();for(let k=0;k<3;k++){lo[k]=Math.min(lo[k],q[k]);hi[k]=Math.max(hi[k],q[k]);}}}
@@ -81,6 +87,7 @@ for(const node of source.getRoot().listNodes())if(node.getMesh()){
  let parent='chassis',matrix=frame.clone().multiply(new Matrix4().fromArray(node.getWorldMatrix()));
  const assembly=path[1]??'';
  if(assembly.startsWith('TR26-IN')&&!fixedIntake.test(name)&&!name.startsWith('Constant Force Spring'))parent='intake';
+ if(kickerParts.has(name)){parent='passive-kicker';matrix.premultiply(foldKicker);}
  if(assembly.startsWith('TR26-SH')){
   parent='turret';matrix.premultiply(neutral);
   // Inner curved hood skin and its cross brace; bearing rails/side plates stay on the turret.
@@ -93,7 +100,11 @@ for(const node of source.getRoot().listNodes())if(node.getMesh()){
  }
  // Fixed tower rollers, with their actual transverse native-Z shafts.
  if(assembly.startsWith('TR26-TW')&&(/StealthWheel|Thrifty Squish Wheel/.test(name)||name==='TR26-TW-2036')){
-  const i=b.center[1]<.33?0:1,p=runtime([i?.0526:.0556,i?.3511:.2988,.15]);parent=group(`feeder-roller-${i}`,p);groups.get(parent).setExtras({mechanism:parent,spinAxis:'x'});
+  // The opposed upper rollers share a height, not a shaft. Keep the right
+  // cylinder on its own axis instead of orbiting it around the left roller.
+  const i=b.center[1]<.33?0:b.center[0]<.15?1:2;
+  const p=runtime([i===0?.0556:i===1?.0526:.2474,i===0?.2988:.3511,.15]);
+  parent=group(`feeder-roller-${i}`,p);groups.get(parent).setExtras({mechanism:parent,spinAxis:'x'});
  }
  if(name==='SDS MK5i_4in with lift kit'){
   const p=runtime(b.center),x=Math.sign(p[0])*.27332,z=Math.sign(p[2])*.27332,base=`module-${x>0?'front':'rear'}-${z<0?'left':'right'}`,center=[x,.0508-.223,z];
