@@ -255,13 +255,13 @@ export class Shooter {
       if (hit || !this.clearExit(z)) { this.blocked = true; continue; }
       const scatter = sampleShotScatter(this.geometry.spread ?? DEFAULT_SHOT_SPREAD, this.geometry.movingAccuracy ?? .9,
         this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom);
+      const speed = this.chassis.telemetry.speed, turn = Math.abs(this.chassis.body.angvel().y);
+      const motion = this.mechanism.movingShots ? clamp(Math.max(0, speed-.1)/.4 + Math.max(0, turn-.1)/1.4, 0, 1) : 0;
       // One spread distribution, with transient acceleration sensitivity.
-      const transient = this.mechanism.movingShots ? 1 + this.motionAcceleration * .04 : 1;
+      const transient = 1 + motion * this.motionAcceleration * .04;
       const elevation = this.elevation + scatter.elevation * transient, yaw = scatter.yaw * transient;
       const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
         this.rpm * this.speedPerRpm * scatter.speedFactor)), q);
-      const speed = this.chassis.telemetry.speed, turn = Math.abs(this.chassis.body.angvel().y);
-      const motion = this.mechanism.movingShots ? clamp(Math.max(0, speed-.1)/.4 + Math.max(0, turn-.1)/1.4, 0, 1) : 0;
       // A 60 ms motion estimate leaves transient compensation error under acceleration/braking.
       const estimationError = this.velocityEstimate ? scale(sub(this.chassis.body.linvel(), this.velocityEstimate), motion*.35) : v3();
       const velocity = add(add(this.chassis.body.velocityAtPoint(position), exit), estimationError);
