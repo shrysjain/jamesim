@@ -1,3 +1,4 @@
+// Performance evidence, estimate ranges and retained CAD limits: docs/ROBOT_PERFORMANCE_RESEARCH.md.
 import type {RobotDefinition,RobotCollider} from '../../types';
 import {STANDARD_SWERVE,swerveModules} from '../../defaults';
 import {MATTERHORN_VISUAL} from './visual';
@@ -11,7 +12,7 @@ export const MATTERHORN: RobotDefinition = {
   summary:'Fixed hood · passive intake · full-width shooter',
   model:'/assets/robots/9496-matterhorn/robot.glb',visual:MATTERHORN_VISUAL,
   mass:66,inertia:[3.5,6,3.8],length:.83185,width:.8382,bumperCenterY:.1003-.223,
-  drive:{maxSpeed:14.4*.3048,acceleration:10,grip:1.05},modules:swerveModules(.276225,.276225),
+  drive:{maxSpeed:14.4*.3048,acceleration:9.5,grip:1.10},modules:swerveModules(.276225,.276225),
   // Team confirms a passive drop: no powered retraction or climb is advertised.
   intake:{pivot:[-.32385,.18415-.223,0],stowedAngle:-115*Math.PI/180},
   // Keep stored spheres ahead of the shooter housing, including its side plates.
@@ -22,12 +23,13 @@ export const MATTERHORN: RobotDefinition = {
   hood:{pivot:[.127,.454025-.223,0],maxAngle:0},
   shooterGeometry:{pivot:[.127,.454025-.223,0],drumRadius:.0508,guideLength:.155,turretRadiansPerSecond:3,
     feedAcrossLanes:true,laneJitter:.185/3,
-    yawOffset:Math.PI,fixedElevation:56*Math.PI/180,passRange:9,movingAccuracy:.90,
+    yawOffset:Math.PI,fixedElevation:56*Math.PI/180,passRange:9,movingAccuracy:.20,
+    movingLimits:{hub:{speed:.5,turnRate:.2},pass:{speed:1.2,turnRate:.25}},
     spread:{yaw:.030,elevation:.035,speed:.035,flyerChance:.10,backspin:30},
     // Fit full-size fuel inside the curved rear guide. Contact at the roller
     // nip approximates soft-fuel compression, not a rigid CAD contact solver.
     feedPath:[[.17,-.02,0],[.224,.2801-.223,0],[.224,.3881-.223,0],[.208,.523-.223,0]]},
-  mechanisms:{capacity:MATTERHORN_CARGO.length,intakeRate:35,compress:false,lanes:[-.37/3,0,.37/3],fireRate:18,
+  mechanisms:{capacity:MATTERHORN_CARGO.length,intakeRate:30,compress:false,lanes:[-.37/3,0,.37/3],fireRate:16,
     turret:false,movingShots:true,simultaneousIntake:true,climb:false},
   cargoSlots:MATTERHORN_CARGO,
   pickup:{minX:-.66,maxX:-.49,halfWidth:.29,mouthX:-.58,ejectX:-.70},

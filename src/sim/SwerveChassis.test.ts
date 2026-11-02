@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { FieldSimulation } from './FieldSimulation';
-import { NEUTRAL_INPUT, DEFAULT_TUNING } from './SwerveChassis';
+import { NEUTRAL_INPUT } from './SwerveChassis';
 import { toRobotInput } from './driveInput';
 import type { CollisionAsset, FieldManifest, Vec3 } from '../field/types';
 
@@ -35,7 +35,7 @@ describe('swerve dynamics', () => {
       const robot = sim.robot!;
       robot.input = { ...NEUTRAL_INPUT, forward: 1 };
       run(sim, 0.25); expect(robot.telemetry.speed).toBeGreaterThan(0.7); expect(robot.telemetry.speed).toBeLessThan(2.4);
-      run(sim, 1); expect(robot.telemetry.speed).toBeCloseTo(DEFAULT_TUNING.maxSpeed, 1);
+      run(sim, 1); expect(robot.telemetry.speed).toBeCloseTo(robot.tuning.maxSpeed, 1);
       const beforeBrake = robot.body.translation().x;
       robot.input = { ...NEUTRAL_INPUT, brake: true }; run(sim, 0.8);
       expect(robot.telemetry.speed).toBeLessThan(0.12);
@@ -113,10 +113,10 @@ describe('swerve dynamics', () => {
     const sim = await setup();
     try {
       sim.robot!.input = { ...NEUTRAL_INPUT, forward: 1, slow: true }; run(sim, 1.2);
-      expect(sim.robot!.telemetry.speed).toBeCloseTo(DEFAULT_TUNING.maxSpeed * 0.32, 1);
+      expect(sim.robot!.telemetry.speed).toBeCloseTo(sim.robot!.tuning.maxSpeed * 0.32, 1);
       sim.robot!.input = { ...NEUTRAL_INPUT, forward: 1, strafe: 1, turn: 1 }; run(sim, 1);
-      expect(sim.robot!.modules.every((m) => Math.abs(m.speed) <= DEFAULT_TUNING.maxSpeed + 0.001)).toBe(true);
-      expect(sim.robot!.telemetry.speed).toBeLessThan(DEFAULT_TUNING.maxSpeed + 0.1);
+      expect(sim.robot!.modules.every((m) => Math.abs(m.speed) <= sim.robot!.tuning.maxSpeed + 0.001)).toBe(true);
+      expect(sim.robot!.telemetry.speed).toBeLessThan(sim.robot!.tuning.maxSpeed + 0.1);
     } finally { sim.dispose(); }
   });
 
