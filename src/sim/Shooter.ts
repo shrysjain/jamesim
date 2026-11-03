@@ -4,7 +4,6 @@ import type { Alliance, ShotTarget } from '../field/targets';
 import { FUEL_LINEAR_DAMPING, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { FuelSystem } from './FuelSystem';
 import type { SwerveChassis } from './SwerveChassis';
-import {sampleShotScatter} from './ShotScatter';
 import { DRIVE_RESPONSE } from './SwerveChassis';
 import { DEFAULT_SHOT_SPREAD, sampleShotScatter } from './ShotScatter';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';

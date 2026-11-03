@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {FieldSimulation} from '../../../sim/FieldSimulation';
 import {DEFAULT_MATCH} from '../../../sim/MatchRules';
-import {FUEL_RADIUS,FUEL_RESTITUTION} from '../../../sim/FuelSystem';
+import {FUEL_RADIUS,fuelRestitution} from '../../../sim/FuelSystem';
 import {CollisionGroups} from '../../../sim/collisionGroups';
 import {NEUTRAL_INPUT} from '../../../sim/SwerveChassis';
 import {MATTERHORN} from './definition';
@@ -107,9 +107,9 @@ describe('Matterhorn exposed fuel and actual field CAD',()=>{
    expect(touchedTrench).toBe(true);expect(f.body.translation().y).toBeGreaterThan(.06);expect(f.body.handle).toBe(handle);
    expect(s.fuelSystem.capture(f,r.owner,0,v3())).toBe(true);
    expect(s.fuelSystem.release(f,origin,v3(),true)).toBe(true);
-   expect(f.body.collider(0).restitution()).toBeCloseTo(FUEL_RESTITUTION);
+   expect(f.body.collider(0).restitution()).toBeCloseTo(fuelRestitution(f.id));
    f.body.collider(0).setRestitution(.18);s.fuelSystem.reset();
-   expect(f.body.collider(0).restitution()).toBeCloseTo(FUEL_RESTITUTION);expect(f.body.handle).toBe(handle);
+   expect(f.body.collider(0).restitution()).toBeCloseTo(fuelRestitution(f.id));expect(f.body.handle).toBe(handle);
   }finally{s.dispose();}
  });
 });

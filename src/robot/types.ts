@@ -7,8 +7,7 @@ export type HopperVolume = {
   frontX: number; backX: number; halfWidth: number; floorY: number; ceilingY: number;
   frontTravel: number; ceilingTravel?: number; // roof follows the vertical climber/lid stage
   floorSlope?: number; slopedFront?: boolean;
-  /** Finite wall tops in local Y. When present, the hopper is open above its rim;
-   * ceilingY only bounds authored cargo seeds, never traps dynamic fuel. */
+  /** Finite wall tops; open hoppers have no dynamic ceiling. */
   rim?: { front: number; back: number; sides: number };
 };
 /** Estimated launch standard deviations: radians, fractional speed, and rad/s backspin. */

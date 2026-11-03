@@ -1,8 +1,8 @@
 import { REBLITZ } from './robots/2910-reblitz/definition';
 import { KEPLER } from './robots/1690-kepler/definition';
-import { MATTERHORN } from './robots/9496-matterhorn/definition';
-import { LIMESTONE } from './robots/1678-limestone/definition';
 import { DARWIN } from './robots/6328-darwin/definition';
+import { LIMESTONE } from './robots/1678-limestone/definition';
+import { MATTERHORN } from './robots/9496-matterhorn/definition';
 
 // Integration point: one import and entry per robot. Preserve existing IDs/order.
 export { REBLITZ, KEPLER };
