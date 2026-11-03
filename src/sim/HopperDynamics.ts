@@ -1,3 +1,4 @@
+import { hopperObstacleContact } from '../robot/hopperGeometry';
 import type { HopperVolume, RobotDefinition, RobotPose } from '../robot/RobotDefinition';
 import { FUEL_RADIUS } from './FuelSystem';
 import type { Fuel } from './FuelSystem';
@@ -36,7 +37,7 @@ export class HopperDynamics {
     this.lastMotion = { position: { ...motion.position }, velocity: { ...motion.velocity }, angularVelocity: { ...motion.angularVelocity }, rotation: { ...motion.rotation } };
     const gravity = unrotate(v3(0, -9.81, 0), motion.rotation);
     const balls = [...this.particles.values()];
-    const front = this.front(pose), width = this.volume.halfWidth - FUEL_RADIUS;
+    const front = this.front(pose), back = this.back(pose), width = this.volume.halfWidth - FUEL_RADIUS;
     // Two integration substeps bound moving-wall and sphere penetration without rendering dependence.
     const h = dt/2;
     for (let substep = 0; substep < 2; substep++) {
@@ -63,7 +64,7 @@ export class HopperDynamics {
           a.x -= n.x*correction; a.y -= n.y*correction; a.z -= n.z*correction;
           b.x += n.x*correction; b.y += n.y*correction; b.z += n.z*correction;
         }
-        for (const p of balls) this.constrain(p.fuel.local, front, width);
+        for (const p of balls) this.constrain(p.fuel.local, front, width, back);
       }
       for (const p of balls) {
         p.velocity = scale(sub(p.fuel.local, p.previous), 1/h);
@@ -80,9 +81,14 @@ export class HopperDynamics {
     }
   }
   front(pose: RobotPose) { return this.volume.frontX + this.volume.frontTravel*(1-pose.intake); }
+  back(pose: RobotPose) { return this.volume.backX - (this.volume.backTravel ?? 0)*(1-pose.intake); }
   floor(x: number) { return this.volume.floorY + (this.volume.floorSlope ?? 0)*x; }
-  private constrain(p: Vector, front: number, width: number) {
-    p.x = Math.max(front+FUEL_RADIUS, Math.min(this.volume.backX-FUEL_RADIUS, p.x));
+  private constrain(p: Vector, front: number, width: number, back: number) {
+    for (const box of this.definition.hopper.obstacles ?? []) {
+      const contact = hopperObstacleContact([p.x,p.y,p.z],box), penetration = FUEL_RADIUS-contact.distance;
+      if (penetration > 0) { p.x += contact.normal[0]*penetration; p.y += contact.normal[1]*penetration; p.z += contact.normal[2]*penetration; }
+    }
+    p.x = Math.max(front+FUEL_RADIUS, Math.min(back-FUEL_RADIUS, p.x));
     p.z = Math.max(-width, Math.min(width, p.z));
     p.y = Math.min(this.volume.ceilingY-FUEL_RADIUS, p.y);
     const slope = this.volume.floorSlope ?? 0, penetration = this.floor(p.x)+FUEL_RADIUS*Math.sqrt(1+slope*slope)-p.y;

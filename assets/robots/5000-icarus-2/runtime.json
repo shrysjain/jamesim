@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "5000-icarus-2",
+  "group": {
+    "name": "Team 5000 Icarus 2.0 official CAD",
+    "source": "https://github.com/hammerheads5000/2026Rebuilt/tree/279745f273441470f86b78dece9d9c8653db0e2c/AdvantageScope/Robot_2026",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/5000-icarus-2/robot.glb",
+        "bytes": 1433012,
+        "sha256": "b48a52bb7b4810b20c6663ebaa3b5c3dfe1207dd3be6c42772c51e4a3d62bbf7"
+      }
+    ]
+  }
+}

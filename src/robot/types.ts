@@ -1,27 +1,31 @@
 import type { Vec3 } from '../field/types';
 
-export type RobotPart = 'chassis' | 'intake' | 'hopper' | 'hood';
+export type RobotPart = 'chassis' | 'intake' | 'opposedIntake' | 'hopper' | 'hood';
 export type RobotCollider = { part: RobotPart; center: Vec3; halfExtents: Vec3; radius?: number };
 export type RobotPose = { intake: number; hopper: number; hood: number };
+export type HopperObstacle = { center: Vec3; halfExtents: Vec3; angle?: number };
 export type HopperVolume = {
   frontX: number; backX: number; halfWidth: number; floorY: number; ceilingY: number;
-  frontTravel: number; floorSlope?: number; slopedFront?: boolean;
+  frontTravel: number; backTravel?: number; floorSlope?: number; slopedFront?: boolean;
 };
+/** A second, oppositely facing mouth uses positive local X. */
+export type PickupRegion = { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
+export type ShotSpread = { yaw: number; elevation: number; speed: number; flyerChance: number; backspin: number };
 export type RobotDefinition = {
   id: string; teamNumber: string; name: string; summary: string; model: string;
   visual: RobotVisualDefinition;
   mass: number; inertia: Vec3; length: number; width: number;
   wheelRadius: number; mountY: number; springLength: number; travel: number; bumperCenterY: number;
-  drive?: { maxSpeed: number; acceleration: number; grip: number };
+  drive?: { maxSpeed: number; acceleration: number; grip: number; brakeAcceleration?: number };
   modules: { name: string; x: number; z: number }[];
-  intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean };
-  hopper: { stowTravel: number; volume?: HopperVolume; fixedSlot?: number };
+  intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean; opposed?: { pivot: Vec3; stowTravel: number; stowRise?: number } };
+  hopper: { stowTravel: number; volume?: HopperVolume; fixedSlot?: number; entry?: Vec3; entryHalfWidth?: number; obstacles?: HopperObstacle[] };
   hood: { pivot: Vec3; maxAngle: number };
   colliders: RobotCollider[];
   climb?: { kind: 'side-hook-l1'; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };
   cargoSlots: Vec3[];
-  pickup: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
-  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number; feedPath?: Vec3[] };
+  pickup: PickupRegion & { opposed?: PickupRegion };
+  shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; turretLimits?: [number, number]; spread?: ShotSpread; minElevation?: number; maxElevation?: number; passRange?: number; movingAccuracy?: number; feedPath?: Vec3[] };
   mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; movingShots: boolean; simultaneousIntake?: boolean; climb: boolean };
 };
 

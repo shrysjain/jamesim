@@ -7,7 +7,7 @@ import { SettingsDialog } from './components/SettingsDialog';
 import { Dialog } from './components/Dialog';
 import { Icon } from './components/Icon';
 import { ACTIONS, ACTION_LABELS, keyLabel } from './controls';
-import { ROBOTS } from './robot/RobotDefinition';
+import { ROBOTS, supportsIntakeToggle } from './robot/RobotDefinition';
 import { DEFAULT_MATCH } from './sim/MatchRules';
 import type { MatchConfig } from './sim/MatchRules';
 import { readSettings, saveSettings } from './settings';
@@ -122,8 +122,9 @@ export function App() {
     {showResults && match && <MatchResults match={match} onRematch={restart} onClose={() => { setResultsDismissed(true); pause(); }} restartLabel={restartLabel} onSetup={returnToSetup} />}
     {modal === 'settings' && <SettingsDialog settings={settings} onChange={setSettings} onClose={closeModal} onAbout={() => setModal('about')} />}
     {modal === 'help' && <Dialog title="Controls" eyebrow="JAMESIM · DRIVER GUIDE" onClose={closeModal}>
-      <p>Drive during AUTO and teleop. Shoot aims at your alliance hub, or passes into your zone. Re•Blitz stops to shoot. Kepler tracks with its turret and can collect while firing.</p>
-      <dl className="controls-list">{ACTIONS.filter(a => a !== 'toggleIntake' || !!activeRobot.intake.stowTravel).filter(a => a !== 'climb' || activeRobot.mechanisms.climb).filter(a => a !== 'supply' || match?.config.humanSupply).map(a => <div key={a}><dt><kbd>{settings.controls.keys[a].map(keyLabel).join(' / ') || 'Unbound'}</kbd></dt><dd>{ACTION_LABELS[a]}</dd></div>)}</dl>
+      <p>Drive during AUTO and teleop. Shoot aims at your alliance hub, or passes into your zone. Re•Blitz stops to shoot. Turret robots track independently and can collect while firing.</p>
+      {activeRobot.intake.opposed && <p>Icarus collects from both opposing sides. Intake runs both roller stacks; Reverse / eject runs them backward. Toggle intake extension moves both carriages. Holding Aim / shoot / pass compresses them as fuel empties. The chassis arrow marks the primary intake side.</p>}
+      <dl className="controls-list">{ACTIONS.filter(a => a !== 'toggleIntake' || supportsIntakeToggle(activeRobot)).filter(a => a !== 'climb' || activeRobot.mechanisms.climb).filter(a => a !== 'supply' || match?.config.humanSupply).map(a => <div key={a}><dt><kbd>{settings.controls.keys[a].map(keyLabel).join(' / ') || 'Unbound'}</kbd></dt><dd>{ACTION_LABELS[a]}</dd></div>)}</dl>
       {activeRobot.mechanisms.climb && <p>Toggle C to raise the hook. Approach beside your own tower along the low rung; stop with the hook aligned to engage. Toggle C again to pull up into L1. Toggle once more to lower and release.</p>}
       <p>Escape opens the pause menu. Losing focus pauses and clears held inputs. Resume explicitly.</p><button className="primary-button" onClick={closeModal}>Done</button>
     </Dialog>}
@@ -131,7 +132,7 @@ export function App() {
       <p>Both AUTO and teleop are under your control. AUTO lasts 20 seconds, followed by the assessment gap and 140 seconds of teleop. Hub shifts determine which fuel scores.</p><p>Climb points are assessed at period boundaries. Kepler supports L1; Re•Blitz has no climber. Bonus targets follow the selected event. Opponents, fouls and win/tie ranking points are outside singleplayer.</p><p>Practice has no clock and both hubs stay active. R restarts your selected session.</p><button className="primary-button" onClick={closeModal}>Done</button>
     </Dialog>}
     {modal === 'about' && <Dialog title="Jamesim" eyebrow="REBUILT 2026" onClose={() => setModal('settings')}>
-      <p>A browser FRC simulator inspired by FRSim and MoSimulator. Independently built; not affiliated with FIRST or the teams.</p><div className="credits-list"><p>Field · FIRST</p><p>Robot CAD · Team 2910 Jack in the Bot and Team 1690 Orbit</p><p>Match audio · Team 254 Cheesy Arena</p><p>Barlow · Jeremy Tribby, SIL OFL</p><p>React · Three.js · Rapier</p></div><a href="https://github.com/shrysjain/jamesim" target="_blank" rel="noreferrer">Source and asset attribution ↗</a><button className="primary-button" onClick={() => setModal('settings')}>Back to settings</button>
+      <p>A browser FRC simulator inspired by FRSim and MoSimulator. Independently built; not affiliated with FIRST or the teams.</p><div className="credits-list"><p>Field · FIRST</p><p>Robot CAD · Team 2910 Jack in the Bot, Team 1690 Orbit and Team 5000 Hammerheads</p><p>Match audio · Team 254 Cheesy Arena</p><p>Barlow · Jeremy Tribby, SIL OFL</p><p>React · Three.js · Rapier</p></div><a href="https://github.com/shrysjain/jamesim" target="_blank" rel="noreferrer">Source and asset attribution ↗</a><button className="primary-button" onClick={() => setModal('settings')}>Back to settings</button>
     </Dialog>}
   </div>;
 }

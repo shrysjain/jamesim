@@ -34,6 +34,17 @@ const rotate = (v: Vector, q: Quaternion) => {
 const angleDelta = (to: number, from: number) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 const approach = (from: number, to: number, amount: number) => from + Math.max(-amount, Math.min(amount, to - from));
 
+/** Stop a spinning wheel before spending the remaining tick accelerating in
+ * reverse. A faster brake response never increases powered acceleration. */
+export function nextWheelSpeed(from: number, to: number, dt: number, acceleration: number, braking: number) {
+  if (from*to < 0) {
+    const stopTime = Math.abs(from)/braking;
+    if (stopTime < dt) return approach(0,to,acceleration*(dt-stopTime));
+    return approach(from,0,braking*dt);
+  }
+  return approach(from,to,(Math.abs(to)<Math.abs(from) ? braking : acceleration)*dt);
+}
+
 /** Force-limited swerve, with a level chassis and assisted suspension over field bumps. */
 export class SwerveChassis {
   readonly body: RAPIER.RigidBody;
@@ -94,7 +105,8 @@ export class SwerveChassis {
       const r = Math.min(shape.radius ?? 0, ...shape.halfExtents) * 0.95;
       const half = shape.halfExtents.map(v => v - r) as Vec3;
       const desc = (r ? RAPIER.ColliderDesc.roundCuboid(...half, r) : RAPIER.ColliderDesc.cuboid(...half))
-        .setDensity(0).setFriction(shape.part === 'chassis' && shape.halfExtents[1] < 0.01 ? 0.02 : 0.1).setRestitution(0.05).setCollisionGroups(CollisionGroups.chassis);
+        .setDensity(0).setFriction(shape.part === 'chassis' && shape.halfExtents[1] < 0.01 ? 0.02 : 0.05)
+        .setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min).setRestitution(0.05).setCollisionGroups(CollisionGroups.chassis);
       this.mechanismColliders.push({ collider: world.createCollider(desc, this.body), definition: shape });
     }
     this.setPose(COLLECTING_POSE);
@@ -171,7 +183,8 @@ export class SwerveChassis {
     // contacts are assisted; walls, trench posts and overhead beams stay solid.
     let terrain = 0;
     const rearReach = this.definition.pickup ? Math.abs(this.definition.pickup.ejectX) - (this.definition.intake.stowTravel ?? 0) * (1 - this.pose.intake) : this.definition.length / 2 + .06 + .2 * this.pose.intake;
-    if (position.y < 0.8) for (const x of [-rearReach, 0, this.definition.length / 2 + 0.06]) {
+    const frontReach = this.definition.pickup.opposed ? this.definition.pickup.opposed.ejectX - (this.definition.intake.opposed?.stowTravel ?? 0) * (1 - this.pose.intake) : this.definition.length / 2 + .06;
+    if (position.y < 0.8) for (const x of [-rearReach, 0, frontReach]) {
       for (const z of [-this.definition.width / 2, 0, this.definition.width / 2]) {
         const sample = add(position, rotate(vec(x, 0, z), q));
         const hit = this.world.castRay(new RAPIER.Ray(vec(sample.x, 0.5, sample.z), vec(0, -1, 0)), 0.5, false,
@@ -219,7 +232,9 @@ export class SwerveChassis {
       const error = angleDelta(targetAngle, m.angle);
       if (powered) m.angle += Math.max(-18 * dt, Math.min(18 * dt, error));
       targetSpeed *= Math.max(0, Math.cos(error));
-      if (powered) m.speed = this.input.brake ? 0 : approach(m.speed, targetSpeed, this.tuning.acceleration * dt);
+      if (powered) m.speed = this.input.brake ? 0 : this.definition.drive?.brakeAcceleration === undefined
+        ? approach(m.speed, targetSpeed, this.tuning.acceleration * dt)
+        : nextWheelSpeed(m.speed,targetSpeed,dt,this.tuning.acceleration,this.definition.drive.brakeAcceleration);
       const mount = add(position, rotate(vec(m.x, this.definition.mountY, m.z), q));
       const maxRay = this.definition.springLength + this.definition.travel + this.definition.wheelRadius;
       // Fuel never acts as a suspension surface. It still collides with the frame and wheel proxies.
