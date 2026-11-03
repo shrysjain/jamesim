@@ -56,7 +56,7 @@ WASD drive, J/L turn, Shift intake, Space shoot/pass, Q reverse, V supported
 intake retraction, R restart, and Escape pause. Saved rebindings appear in
 Controls. The combined branch is a testing integration, not a merge into main.
 
-## Combined integration checks
+## Initial combined integration checks
 
 The preview merges each feature history normally onto main `093d554`.
 Additive registration, credits and optional intake contracts were resolved here;
@@ -68,9 +68,58 @@ cases provide the assertions for cargo conservation and mechanism behavior.
 
 The Windows helper was reviewed here; it has not been executed on Windows.
 
-Final combined checks passed: `pnpm test:sim` ran **433 tests across 58 files**;
+Before the feedback refinements below, combined checks passed: `pnpm test:sim` ran **433 tests across 58 files**;
 `pnpm build:release` verified all 27 runtime files (37.76 MiB), TypeScript/Vite
 and 20 content-hashed production assets. The existing large bundle warning
 remains. These checks include all registered robot acceptance cases, full-hopper
 original-body discharge, both Icarus mouths, Simbot Tim compression limits and
 actual CAD animation checks.
+
+## Feedback refinements
+
+- Downpour now folds its real pivoting intake automatically as fuel drains while
+  shooting. Its expanding hopper stays out. A CAD-measured contact margin removes
+  the former roughly 10 mm of allowed front-panel fuel penetration; capacity stays 48.
+- Simbot Tim moves the polycarbonate wrap and rim with its carriage, with matching
+  physical side walls. Thin sheets retain their original CAD tessellation. The hood
+  reference, sweep, roller spin and negative-X release agree with the actual roller
+  exit tangent; its full-size capacity stays 46.
+- Icarus opens one intake at a time. The new rebindable **N** action switches sides;
+  setup, Controls, a live side label and a gold robot arrow identify the selection.
+  The old side closes fully before the other opens. Switching is refused above
+  eight held fuel so the central packing can clear both closed walls. Continuous
+  collection from either side supports 37 full-size fuel; the former 51 assumed
+  both sides open. Its exposed upper/lower roof and sliding panels preserve source surfaces.
+  The redundant 6.24-degree hood preparation tilt is removed; roller tangents
+  agree with the physical launch direction throughout hood and turret travel.
+- All sliding intakes compress automatically while shooting, respecting each
+  robot's minimum stroke and cargo. Shift collection and Q reverse retain their
+  existing extension priority. This includes hidden Prismarine; selector visibility
+  remains unchanged. Matterhorn's passive dropping intake is not a powered slide.
+
+The default Windows port is now **5187**, as requested. Stop the old server and
+rerun the launcher to fetch these updates before testing.
+
+Final feedback verification on the current-main integration (`4154227`):
+
+- `pnpm test:sim`: **448 tests passed across 60 files**. The first feedback run
+  found Prismarine's old extended-while-shooting assertion; it now checks the
+  requested compression while retaining the movement gate, eight physical
+  releases, and extension after shooting stops. The complete suite was rerun.
+- `pnpm build:release`: all 27 runtime files (39.99 MiB), TypeScript/Vite,
+  and 20 content-hashed production assets passed. The existing large bundle
+  warning remains.
+- Combined browser: all three selectable, blue/red practice and saved-key
+  controls; default N and saved X both select each Icarus side, and N is ignored
+  after rebinding to X. No page errors. A case-sensitive test initially read the
+  visually uppercase side label incorrectly; its DOM-text assertion was corrected
+  and both binding cases reran successfully without changing production code.
+- Fresh before/after CAD renders confirm intact Simbot Tim sheet/rim and Icarus
+  roof/sliding surfaces. Downpour's partial folding pose retains the extended
+  hopper. CAD-derived direction checks cover all three; Icarus's prepared
+  roller tangent is checked against the shared physical shooter at nine
+  combinations of hood elevation and turret yaw.
+
+Prepared runtime hashes and provenance remain in each robot's asset records.
+The combined branch preserves all three feature histories and current main;
+no robot code is merged into main by this preview.
