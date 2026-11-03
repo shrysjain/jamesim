@@ -37,9 +37,9 @@ describe('5000 Icarus2.0 mechanism integration',()=>{
   expect(nextWheelSpeed(5,0,.01,10,20)).toBeCloseTo(4.8);
  });
  it('packs full150mm fuel inside the actual hopper envelope and outside the coaxial feeder',()=>{
-  expect(D.cargoSlots.length).toBe(51);const v=D.hopper.volume!;
+  expect(D.cargoSlots.length).toBe(37);const v=D.hopper.volume!;
   for(const [i,p] of D.cargoSlots.entries()){
-   expect(p[0]-FUEL_RADIUS).toBeGreaterThanOrEqual(v.frontX);expect(p[0]+FUEL_RADIUS).toBeLessThanOrEqual(v.backX);
+   expect(p[0]-FUEL_RADIUS).toBeGreaterThanOrEqual(v.frontX);expect(p[0]+FUEL_RADIUS).toBeLessThanOrEqual(v.backX-v.backTravel!);
    expect(Math.abs(p[2])+FUEL_RADIUS).toBeLessThanOrEqual(v.halfWidth);
    expect(p[1]-FUEL_RADIUS).toBeGreaterThanOrEqual(v.floorY-1e-12);expect(p[1]+FUEL_RADIUS).toBeLessThanOrEqual(v.ceilingY);
    for(const o of D.hopper.obstacles!)expect(hopperObstacleContact(p,o).distance).toBeGreaterThanOrEqual(FUEL_RADIUS);
@@ -47,30 +47,34 @@ describe('5000 Icarus2.0 mechanism integration',()=>{
    for(const q of D.cargoSlots.slice(i+1))expect(Math.hypot(...p.map((n,k)=>n-q[k]))).toBeGreaterThanOrEqual(.15);
   }
  });
- for(const alliance of ['blue','red'] as const)it(`${alliance}: acquires both sides once, rejects departing fuel and reverses through both mouths`,async()=>{
+ for(const alliance of ['blue','red'] as const)it(`${alliance}: collects and reverses only the selected side, with exclusive side switching`,async()=>{
   const s=await setup(4,floor,alliance);
   try{const r=s.robotController!,handles=s.fuel.map(b=>b.handle);
    place(s,0,-.58,.12);place(s,1,.58,.12);place(s,2,-.58,-.17,-2);place(s,3,.58,-.17,2);
    r.input.intake=true;run(s,.22);
-   expect(s.fuelSystem.records[0].owner).toBe(r.owner);expect(s.fuelSystem.records[1].owner).toBe(r.owner);
+   expect(s.fuelSystem.records[0].owner).toBe(r.owner);expect(s.fuelSystem.records[1].owner).toBeNull();
    expect(s.fuelSystem.records[2].owner).toBeNull();expect(s.fuelSystem.records[3].owner).toBeNull();
-   run(s,.4);expect(r.held).toHaveLength(2);
+   run(s,.4);expect(r.held).toHaveLength(1);
    r.input.intake=false;r.input.reverse=true;run(s,.9);
    expect(r.held).toHaveLength(0);
    const q=r.chassis.body.rotation(),p=r.chassis.body.translation();
    // Original IDs leave on the nearer side rather than crossing the entire hopper.
    const axis=rotate(v3(1,0,0),q);
    const side=(i:number)=>{const b=s.fuel[i].translation();return(b.x-p.x)*axis.x+(b.z-p.z)*axis.z;};
-   expect(side(0)).toBeLessThan(-.7);expect(side(1)).toBeGreaterThan(.7);conserved(s,handles);
+   expect(side(0)).toBeLessThan(-.7);
+   r.input.reverse=false;r.requestIntakeSwitch();run(s,.8);expect(r.intakeSide).toBe('Opposite');
+   expect(r.chassis.pose.intake).toBe(0);expect(r.chassis.pose.opposedIntake).toBe(1);
+   place(s,1,.58,.12);r.input.intake=true;run(s,.3);expect(s.fuelSystem.records[1].owner).toBe(r.owner);
+   r.input.intake=false;r.input.reverse=true;run(s,.9);expect(r.held).toHaveLength(0);expect(side(1)).toBeGreaterThan(.7);conserved(s,handles);
   }finally{s.dispose();}
  });
  it('checks the field path for each mouth and reverses loose fuel with an equal chassis reaction',async()=>{
   const s=await setup(2);
-  try{const r=s.robotController!,handles=s.fuel.map(b=>b.handle),p=r.toWorld(v3(.615,-.10,0));
+  try{const r=s.robotController!,handles=s.fuel.map(b=>b.handle);r.requestIntakeSwitch();run(s,.8);const p=r.toWorld(v3(.615,-.10,0));
    const wall=s.world.createCollider(RAPIER.ColliderDesc.cuboid(.005,.18,.35).setTranslation(p.x,p.y,p.z));s.colliderElements.set(wall.handle,'test-opposed-mouth-wall');s.world.step();
    place(s,0,-.65,0);place(s,1,.65,0);r.input.intake=true;
    for(let i=0;i<24;i++)r.postStep(1/120);
-   expect(s.fuelSystem.records[0].owner).toBe(r.owner);expect(s.fuelSystem.records[1].owner).toBeNull();
+   expect(s.fuelSystem.records[0].owner).toBeNull();expect(s.fuelSystem.records[1].owner).toBeNull();
    s.world.removeCollider(wall,true);s.colliderElements.delete(wall.handle);
    r.input.intake=false;r.input.reverse=true;place(s,1,.58,0);
    const before={...s.fuel[1].linvel()},chassis={...r.chassis.body.linvel()};r.postStep(1/120);

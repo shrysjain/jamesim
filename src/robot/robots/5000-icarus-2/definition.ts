@@ -9,11 +9,20 @@ export const ICARUS_TRAVEL=(11.5-.2)*.0254*Math.cos(21*DEG);
 export const ICARUS_RISE=(11.5-.2)*.0254*Math.sin(21*DEG);
 // Measured coaxial feeder tower. Extend the contact box below the hopper floor
 // so cargo cannot enter an impossible under-floor gap during compression.
-const obstacles:HopperObstacle[]=[{center:[0,.025,0],halfExtents:[.112,.225,.112]}];
+export const ICARUS_ROOF={halfLength:.283845,halfWidth:.352425,centerY:.530225-.223,halfThickness:.003175/2,holeRadius:.22225};
+// Four conservative cargo-only roof contact rails around an inscribed square in
+// the measured circular turret opening. Outer intake cargo may rise above this
+// localized roof; do not lower the entire hopper ceiling to the roof underside.
+const hole=ICARUS_ROOF.holeRadius/Math.sqrt(2);
+const roof:HopperObstacle[]=[-1,1].flatMap(sign=>[
+ {center:[sign*(ICARUS_ROOF.halfLength+hole)/2,ICARUS_ROOF.centerY,0],halfExtents:[(ICARUS_ROOF.halfLength-hole)/2,ICARUS_ROOF.halfThickness,ICARUS_ROOF.halfWidth]} as HopperObstacle,
+ {center:[0,ICARUS_ROOF.centerY,sign*(ICARUS_ROOF.halfWidth+hole)/2],halfExtents:[hole,ICARUS_ROOF.halfThickness,(ICARUS_ROOF.halfWidth-hole)/2]} as HopperObstacle,
+]);
+const obstacles:HopperObstacle[]=[{center:[0,.025,0],halfExtents:[.112,.225,.112]},...roof];
 const seeds:Vec3[]=[];
-for(let layer=0;layer<3;layer++)for(let row=0;row<6;row++)for(let column=0;column<4;column++){
- const p:Vec3=[-.453+row*.151+(column%2)*.0755+(layer%2)*.0755,-.005+layer*.151*Math.sqrt(2/3),(column-1.5)*.151*Math.sqrt(3)/2+((layer%2)-.5)*.151*Math.sqrt(3)/6];
- if(obstacles.every(box=>hopperObstacleContact(p,box).distance>=.075))seeds.push(p);
+for(let layer=0;layer<3;layer++)for(let row=0;row<7;row++)for(let column=0;column<5;column++){
+ const p:Vec3=[-.48+row*.151+(column%2)*.0755+(layer%2)*.0755,-.005+layer*.151*Math.sqrt(2/3),(column-2)*.151*Math.sqrt(3)/2+(layer%2)*.151*Math.sqrt(3)/6];
+ if(p[0]-.075>=-.585&&p[0]+.075<=.585-ICARUS_TRAVEL&&Math.abs(p[2])+.075<=.337&&obstacles.every(box=>hopperObstacleContact(p,box).distance>=.075))seeds.push(p);
 }
 // The first eight preload seeds must also fit the retracted starting volume.
 seeds.sort((a,b)=>Math.abs(a[0])-Math.abs(b[0])||a[1]-b[1]||a[2]-b[2]);
@@ -22,7 +31,7 @@ seeds.sort((a,b)=>Math.abs(a[0])-Math.abs(b[0])||a[1]-b[1]||a[2]-b[2]);
 export const ICARUS:RobotDefinition={
  ...STANDARD_SWERVE,id:'5000-icarus-2',teamNumber:'5000',name:'5000 Hammerheads · Icarus 2.0',
  model:'/assets/robots/5000-icarus-2/robot.glb',visual:ICARUS_VISUAL,
- summary:'Opposing sliding intakes · dye rotor · moving-shot turret',
+ summary:'Selectable intake side · dye rotor · moving-shot turret',
  mass:66,inertia:[4.0,7.2,4.3],length:.828875,width:.892375,bumperCenterY:.1038-.223,
  springLength:.1122,modules:swerveModules(.263525,.28575),
  drive:{maxSpeed:5.85,acceleration:10.0584,grip:1.05,brakeAcceleration:20.1168},

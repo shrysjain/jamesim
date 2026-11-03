@@ -41,6 +41,14 @@ group('chassis');group('intake');group('opposed-intake');group('turret',turretPi
 for(const [file,expected] of Object.entries(hashes)){
  const raw=await readFile(`${input}/${file}`);if(createHash('sha256').update(raw).digest('hex')!==expected)throw Error(`Source hash mismatch: ${file}`);
  const original=await io.readBinary(raw);await original.transform(weld());
+ const protectedSurfaces=new Map();
+ for(const node of original.getRoot().listNodes()){
+  const mesh=node.getMesh();if(!mesh)continue;
+  if(/^(Super Structure|Intake SRPP Plates|top plate shell - FusionComponent)$/i.test(mesh.getName()))protectedSurfaces.set(mesh,mesh.getName());
+  // Fusion emits the upper roof's complete part as an unnamed mesh under this
+  // assembly. Protect by source ancestry, not an assumed display name.
+  if(!node.getName()&&node.getParentNode()?.getName()==='Top Plate:1')protectedSurfaces.set(mesh,'Upper Top Plate');
+ }
  if(file==='model.glb'){
   function measure(node,path=[]){
    if(path.includes('Bumpers:1')&&['Body1 (1):1','Body19:1'].includes(node.getName())){
@@ -59,13 +67,19 @@ for(const [file,expected] of Object.entries(hashes)){
  // especially the thin SRPP rack teeth, instead of decimating only to a target size.
  for(const mesh of original.getRoot().listMeshes())for(const p of mesh.listPrimitives()){
   const a=p.getAttribute('POSITION'),indices=p.getIndices();if(p.getMode()!==4||!indices||indices.getCount()<180)continue;
-  const verts=a.getArray();for(let i=0;i<verts.length;i++)verts[i]=Math.round(verts[i]/.00001)*.00001;const remap=MeshoptSimplifier.generatePositionRemap(verts,3),w=new Uint32Array(Array.from(indices.getArray(),i=>remap[i]));
-  let [r]=MeshoptSimplifier.simplify(w,verts,3,Math.floor(w.length*.075/3)*3,.003,['ErrorAbsolute','Prune']);
-  // Fusion's disconnected face soups can lock every boundary even after weld.
-  // Spatial simplification reconnects those seams at a bounded millimeter scale.
-  if(r.length>w.length*.2){const [sloppy]=MeshoptSimplifier.simplifySloppy(w,verts,3,null,Math.floor(w.length*.075/3)*3,.006/MeshoptSimplifier.getScale(verts,3));if(sloppy.length>=3&&sloppy.length<r.length)r=sloppy;}
+  const protectedPanel=protectedSurfaces.has(mesh);
+  // Keep the source triangle topology of these exposed panels.
+  // Clustering thin opposite faces or smoothing their boundary vertices creates
+  // the reported large dark triangles across the roof and sliding plates.
+  if(protectedPanel)continue;
+  const grid=.00001;
+  const verts=a.getArray();for(let i=0;i<verts.length;i++)verts[i]=Math.round(verts[i]/grid)*grid;const remap=MeshoptSimplifier.generatePositionRemap(verts,3),w=new Uint32Array(Array.from(indices.getArray(),i=>remap[i]));
+  let [r]=MeshoptSimplifier.simplify(w,verts,3,Math.floor(w.length*.05/3)*3,.003,['ErrorAbsolute']);
+  // Spatial clustering can bridge the opposed faces of a thin panel. Keep the
+  // original connected topology on the real lid/structure and intake SRPP plates.
+  if(r.length>w.length*.2){const [sloppy]=MeshoptSimplifier.simplifySloppy(w,verts,3,null,Math.floor(w.length*.05/3)*3,.006/MeshoptSimplifier.getScale(verts,3));if(sloppy.length>=3&&sloppy.length<r.length)r=sloppy;}
   indices.setArray(r);
-  const geo=new BufferGeometry().setAttribute('position',new BufferAttribute(verts,3)).setIndex(new BufferAttribute(r,1));geo.computeVertexNormals();p.getAttribute('NORMAL')?.setArray(geo.getAttribute('normal').array);geo.dispose();
+  const geo=new BufferGeometry().setAttribute('position',new BufferAttribute(verts,3)).setIndex(new BufferAttribute(r,1));geo.computeVertexNormals();const normal=p.getAttribute('NORMAL');if(normal)p.setAttribute('NORMAL',normal.clone().setArray(geo.getAttribute('normal').array));geo.dispose();
  }
  function visit(node,path=[]){
   const mesh=node.getMesh(),name=node.getName(),names=path.map(n=>n.getName());
@@ -120,14 +134,14 @@ for(const [file,expected] of Object.entries(hashes)){
     const color=p.getMaterial()?.getBaseColorFactor()??[.25,.25,.25,1];
     // Preserve team palette using vertex colors while batching surfaces. Original
     // decals are omitted; runtime bumper numbers supply the team identification.
-    const style='cad';let b=g.batches.get(style);if(!b){b={p:[],n:[],c:[],i:[]};g.batches.set(style,b);}const base=b.p.length/3;
+    const style=protectedSurfaces.has(mesh)?'source-panel-'+protectedSurfaces.get(mesh):'cad';let b=g.batches.get(style);if(!b){b={p:[],n:[],c:[],i:[]};g.batches.set(style,b);}const base=b.p.length/3;
     for(let i=0;i<a.getCount();i++){
      const w=new Vector3(...a.getElement(i,[])).applyMatrix4(transform);bounds.expandByPoint(w);
      const v=w.sub(new Vector3(...g.pivot)).applyAxisAngle(new Vector3(0,1,0),-g.basis);b.p.push(...v.toArray());
      const nn=n?new Vector3(...n.getElement(i,[])).applyMatrix3(normal).normalize():new Vector3(0,1,0);nn.applyAxisAngle(new Vector3(0,1,0),-g.basis);b.n.push(...nn.toArray());
      b.c.push(...color.map(c=>Math.round(c*255)));
     }
-    for(let i=0;i<(idx?.getCount()??a.getCount());i++)b.i.push(base+(idx?idx.getScalar(i):i));
+    for(let i=0;i<(idx?.getCount()??a.getCount());i+=3){const order=transform.determinant()<0?[0,2,1]:[0,1,2];for(const j of order)b.i.push(base+(idx?idx.getScalar(i+j):i+j));}
    }
    parts.push({file,name,path:names.join('/'),group:g.name,min:bounds.min.toArray(),max:bounds.max.toArray()});
   }
@@ -137,11 +151,22 @@ for(const [file,expected] of Object.entries(hashes)){
 }
 for(const g of groups.values()){
  for(const [style,b] of g.batches){
+  if(style.startsWith('source-panel-')) {
+   // Bake true flat normals on the exposed planar sheets after preserving
+   // every source triangle and color. The final weld
+   // can share coplanar vertices without smoothing through a sharp CAD edge.
+   const next={p:[],n:[],c:[],i:[]};
+   for(let i=0;i<b.i.length;i+=3){const ids=b.i.slice(i,i+3),p=ids.map(j=>new Vector3(...b.p.slice(j*3,j*3+3)));
+    const normal=p[1].clone().sub(p[0]).cross(p[2].clone().sub(p[0])).normalize();
+    for(const j of ids){next.i.push(next.p.length/3);next.p.push(...b.p.slice(j*3,j*3+3));next.n.push(...normal.toArray());next.c.push(...b.c.slice(j*4,j*4+4));}
+   }
+   Object.assign(b,next);
+  }
   const mat=doc.createMaterial(g.name+'-cad').setDoubleSided(true).setRoughnessFactor(.67).setMetallicFactor(.18);
   const acc=(t,a,n=false)=>doc.createAccessor().setType(t).setArray(a).setBuffer(buffer).setNormalized(n);
   const primitive=doc.createPrimitive().setAttribute('POSITION',acc('VEC3',new Float32Array(b.p))).setAttribute('NORMAL',acc('VEC3',new Float32Array(b.n))).setIndices(acc('SCALAR',new Uint32Array(b.i))).setMaterial(mat);
   primitive.setAttribute('COLOR_0',acc('VEC4',new Uint8Array(b.c),true));
-  g.node.addChild(doc.createNode(`${g.name}-${style}`).setMesh(doc.createMesh().addPrimitive(primitive)));
+  g.node.addChild(doc.createNode(`${g.name}-${style}`).setExtras(style.startsWith('source-panel-')?{sourceSurface:style.slice('source-panel-'.length),flatCadNormals:true}:{}).setMesh(doc.createMesh().addPrimitive(primitive)));
  }
  if(g.parent){const p=groups.get(g.parent);g.node.setTranslation(g.pivot.map((v,i)=>v-p.pivot[i]));p.node.addChild(g.node);}else scene.addChild(g.node);
 }
