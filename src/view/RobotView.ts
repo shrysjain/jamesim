@@ -60,8 +60,7 @@ export class RobotView {
     this.model?.traverse(object => {
       if (!(object instanceof THREE.Mesh)) return;
       for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-        const names = this.model?.userData.bumperMaterial;
-        if (!(material instanceof THREE.MeshStandardMaterial) || !(Array.isArray(names) ? names.includes(material.name) : material.name === names)) continue;
+        if (!(material instanceof THREE.MeshStandardMaterial) || material.name !== this.model?.userData.bumperMaterial) continue;
         // Prepared 2910 bumper vertices contain blue; disable that tint on bumper material only.
         if (material.vertexColors) { material.vertexColors = false; material.needsUpdate = true; }
         material.color.setHex(alliance === 'red' ? 0xc72f45 : 0x215fc4);
@@ -79,20 +78,6 @@ export class RobotView {
         if (object instanceof THREE.Mesh) { object.castShadow = true; object.receiveShadow = true; }
       });
       for (const name of definition.visual.requiredNodes) if (!names.has(name)) throw new Error(`${definition.name}: missing ${name} assembly.`);
-      const bumperNames = definition.visual.bumperMaterial;
-      if (Array.isArray(bumperNames)) {
-        let fabric: THREE.Material | undefined;
-        gltf.scene.traverse(object => {
-          if (object instanceof THREE.Mesh) fabric ??= (Array.isArray(object.material) ? object.material : [object.material]).find(m => m.name === bumperNames[0]);
-        });
-        // Baked lettering uses the exact fabric material, including its finish,
-        // so it cannot show through as a differently lit second number.
-        if (fabric) gltf.scene.traverse(object => {
-          if (!(object instanceof THREE.Mesh)) return;
-          const replace = (m: THREE.Material) => bumperNames.includes(m.name) ? fabric! : m;
-          object.material = Array.isArray(object.material) ? object.material.map(replace) : replace(object.material);
-        });
-      }
       gltf.scene.userData.bumperMaterial = definition.visual.bumperMaterial;
       gltf.scene.visible = false; this.models.set(definition.id, gltf.scene); this.group.add(gltf.scene);
     }));

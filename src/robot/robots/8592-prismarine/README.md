@@ -83,7 +83,7 @@ User-provided front/rear photos and CAD view are hash-recorded in `sources.json`
 
 ## Main integration
 
-The shared game number badges replace the baked CAD lettering. Both the fabric and original `8592-number` faces take the alliance color, leaving the original bumper surface intact without overlapping white numbers.
+The source foam has embossed number geometry, which remains visible even when recolored. `bumpers.mjs` replaces that foam and its lettering with the same flat four-rail bumper style and matte fabric material used by Kepler. Prismarine's .7792 × .8871 m outer envelope, .123 m height and -.1273 m center stay aligned with the existing collision proxies. Game number badges provide the only lettering. This supersedes the source-bumper descriptions above and the earlier recoloring workaround. The full CAD converter applies the replacement before packing; the rest of the robot is retained.
 
 The combined roster uses the shared `fixedElevation` contract for the 64° hood. This replaces the branch-local equal-limit search special case and keeps Matterhorn and Prismarine on the same physical fixed-angle solver. The original CAD and hood angle remain unchanged. Registry integration preserves all eight robots.
 

@@ -55,8 +55,7 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(!d.intake.passiveKicker || !!v.kicker, 'Passive kicker requires a visual binding.');
   check(!v.spin.some(b => b.source === 'indexer') || !!d.hopper.indexer, 'Indexer animation requires a physical indexer definition.');
   check(v.spin.every(b => !!b.node !== !!b.prefix && Number.isFinite(b.factor) && ['intake', 'feeder', 'shooter', 'indexer'].includes(b.source)), 'Spin bindings require exactly one node or prefix and a finite factor.');
-  const bumperMaterials = Array.isArray(v.bumperMaterial) ? v.bumperMaterial : [v.bumperMaterial];
-  check(bumperMaterials.length > 0 && bumperMaterials.every(name => typeof name === 'string' && !!name.trim()) && positive(v.previewHeight) && v.numberSize.length === 2 && v.numberSize.every(positive) && positive(v.numberOffset), 'Visual placement/material metadata is incomplete.');
+  check(!!v.bumperMaterial && positive(v.previewHeight) && v.numberSize.length === 2 && v.numberSize.every(positive) && positive(v.numberOffset), 'Visual placement/material metadata is incomplete.');
   // Keep definitions serializable: deterministic numbers/data, no browser or mutable instance state.
   const walk = (value: unknown): boolean => typeof value === 'number' ? Number.isFinite(value) : value === null || ['string', 'boolean', 'undefined'].includes(typeof value) ? true : typeof value === 'object' && Object.values(value).every(walk);
   check(walk(d), 'Definitions must contain finite, serializable data only.');

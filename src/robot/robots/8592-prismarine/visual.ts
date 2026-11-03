@@ -2,7 +2,6 @@ import type { RobotVisualDefinition } from '../../types';
 import { STANDARD_VISUAL } from '../../defaults';
 export const PRISMARINE_VISUAL = {
   ...STANDARD_VISUAL,
-  bumperMaterial: ['bumper', '8592-number'],
   requiredNodes: [
     'chassis',
     'intake',

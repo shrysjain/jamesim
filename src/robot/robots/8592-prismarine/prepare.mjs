@@ -11,6 +11,7 @@ import {
 } from 'meshoptimizer';
 import { Matrix4, Matrix3, Vector3, Box3 } from 'three';
 import { photoAppearance } from './appearance.mjs';
+import { replacePrismarineBumpers } from './bumpers.mjs';
 await Promise.all([
   MeshoptEncoder.ready,
   MeshoptDecoder.ready,
@@ -344,6 +345,9 @@ for (const b of batches.values()) {
   if (!bounds[b.target]) bounds[b.target] = new Box3();
   bounds[b.target].union(box);
 }
+replacePrismarineBumpers(doc);
+const primitives = doc.getRoot().listMeshes().flatMap(mesh => mesh.listPrimitives());
+triangles = primitives.reduce((sum, primitive) => sum + primitive.getIndices().getCount() / 3, 0);
 await doc.transform(
   prune(),
   meshopt({ encoder: MeshoptEncoder, level: 'high' }),
@@ -385,7 +389,7 @@ await writeFile(
       hash,
       bytes: output.length,
       triangles,
-      primitives: batches.size,
+      primitives: primitives.length,
       removed,
       corrected,
       bounds: Object.fromEntries(
@@ -402,7 +406,7 @@ await writeFile(
 console.log({
   bytes: output.length,
   triangles,
-  primitives: batches.size,
+  primitives: primitives.length,
   removed: removed.length,
   corrected,
 });
