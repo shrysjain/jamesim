@@ -30,12 +30,12 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
     'Shot spread must be finite and nonnegative with valid probability and fractional speed.');
   check(m.climb === !!d.climb, 'Climb capability and physics profile must agree.');
   if (d.climb) check(d.climb.kind === 'side-hook-l1' && [d.climb.maxLift, d.climb.rate, d.climb.travel, d.climb.deploySeconds].every(positive) && vector(d.climb.hook), 'Unsupported or invalid climber profile.');
-  if (d.hopper.intakeCurve) check(d.hopper.intakeCurve.length >= 2 && d.hopper.intakeCurve[0] === 0 && d.hopper.intakeCurve.at(-1) === 1 && d.hopper.intakeCurve.every((v,i,a) => Number.isFinite(v) && v >= 0 && v <= 1 && (i === 0 || v >= a[i-1])), 'Hopper linkage samples must run monotonically from zero to one.');
   if (d.climb) {
     check(d.climb.approachAxis === undefined || ['x', 'z'].includes(d.climb.approachAxis), 'Invalid climber approach axis.');
     check(d.climb.hookOffsetsZ === undefined || d.climb.hookOffsetsZ.length > 0 && d.climb.hookOffsetsZ.every(Number.isFinite), 'Hook offsets must be finite and nonempty.');
   }
   if (d.hopper.volume?.ceilingTravel !== undefined) check(!!d.climb && positive(d.hopper.volume.ceilingTravel) && d.hopper.volume.ceilingTravel === d.climb.travel, 'Moving hopper roof must match its climber stage.');
+  if (d.hopper.intakeCurve) check(d.hopper.intakeCurve.length >= 2 && d.hopper.intakeCurve[0] === 0 && d.hopper.intakeCurve.at(-1) === 1 && d.hopper.intakeCurve.every((v,i,a) => Number.isFinite(v) && v >= 0 && v <= 1 && (i === 0 || v >= a[i-1])), 'Hopper linkage samples must run monotonically from zero to one.');
   const v = d.visual, names = v.requiredNodes;
   check(names.includes('chassis') && new Set(names).size === names.length, 'Declare unique required mechanism nodes, including chassis.');
   const bindings = [...Object.values(v.poseNodes), v.turret, v.turretHood, v.kicker?.node, v.climber].filter((n): n is string => !!n);
