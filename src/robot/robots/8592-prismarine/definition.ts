@@ -18,7 +18,7 @@ export const PRISMARINE: RobotDefinition = {
   width: 0.8871,
   bumperCenterY: -0.1273,
   springLength: 0.1122,
-  drive: { maxSpeed: 4.73, acceleration: 8, grip: 1.05 },
+  drive: { maxSpeed: 4.73, acceleration: 8, brakeAcceleration: 16, grip: 1.05 },
   modules: swerveModules(0.250825, 0.301625),
   intake: {
     pivot: [0, 0, 0],
