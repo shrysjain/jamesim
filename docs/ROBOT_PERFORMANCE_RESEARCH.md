@@ -100,7 +100,11 @@ Located but playback-throttled references: [2910 BtB](https://www.youtube.com/wa
 
 ## Validation and useful advice
 
-Before the workspace disconnected, the release build and 34 focused gameplay/containment/wall/moving-pass checks passed, as did seven-robot desktop/mobile selector checks without page errors. Sixteen merge checks against main and all seven open PRs passed. The final full simulation run was interrupted by the workspace outage, so GitHub CI is the final gate for the published combined tree.
+The original tuning head (`0b14d0f`) passed GitHub CI: 335 simulation tests across 49 files and the complete release build. Earlier local checks covered 34 focused gameplay/containment/wall/moving-pass cases and seven-robot desktop/mobile selector behavior.
+
+The integration refresh merges main `093d554` into the existing tuning branch without rewriting published history. It retains main’s legal starting-line placement, Prismarine implementation and temporary selection hiding, CAD corrections and team-number sizes. The PR increment contains only the research calibration, moving-pass support, documentation and related checks; the robot/UI dependency PRs are already incorporated into main. The AUTO-driving assertion now measures more than two meters of travel from the actual start rather than assuming the obsolete absolute starting coordinate.
+
+The combined release integrity/build/payload check and focused desktop/mobile selector check pass. The browser check covers seven visible robots, hidden Prismarine, the Re•Blitz moving-pass badge, Spectrum/Rembrandts ratings and valid starting-line setup without page errors. Current full-suite and GitHub merge status are recorded in PR #11’s validation notes.
 
 Best follow-up evidence:
 - Full-hopper stationary/moving cycles for Spectrum FM, Matterhorn and Era II: event/match/timestamps, starting count, distance, departures and hub entries. Include the slow tail when estimating sustained BPS.
