@@ -34,7 +34,7 @@ describe('6800 Downpour', () => {
       const pose = { ...r.chassis.pose }, angle = r.rollerAngle;
       s.setRunning(false); run(s, .5); expect(r.chassis.pose).toEqual(pose); expect(r.rollerAngle).toBe(angle);
       s.startSession({ ...DEFAULT_MATCH, robot: '6800-downpour', preloads: 0 }, true);
-      expect(r.chassis.pose).toEqual({ intake: 0, hopper: 0, hood: 0 }); expect(r.rollerAngle).toBe(0);
+      expect(r.chassis.pose).toEqual({ intake: 0, hopper: 0, hood: 0, climber: 0 }); expect(r.rollerAngle).toBe(0);
     } finally { s.dispose(); }
   });
   for (const alliance of ['blue', 'red'] as const) it(`${alliance}: empties a full hopper across all four physical lanes while conserving original bodies and mass`, async () => {

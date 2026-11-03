@@ -6,7 +6,7 @@
   "season": 2026,
   "robotName": "Downpour",
   "status": "implemented-and-locally-validated",
-  "baseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
+  "baseCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
   "requestedCad": {
     "url": "https://cad.onshape.com/documents/15cd41462dc24ff986a4e549/w/1b79a7ae373e0026664ccfff/e/8fdecbfb5ab3c774cb6a4551",
     "documentId": "15cd41462dc24ff986a4e549",
@@ -196,15 +196,17 @@
   "runtime": {
     "registered": true,
     "preparedAsset": "public/assets/robots/6800-downpour/robot.glb",
-    "bytes": 2024604,
-    "sha256": "3c3251b676aec245e65cfb07c2ed7be5473c1ea2d671697b1a5aa1bd7c0e0c35",
-    "triangles": 502380,
+    "bytes": 2010836,
+    "sha256": "d9b8cd967b10ad351b6af4c6aa4c015b5f47618b23218a4187529a4b97b40d9c",
+    "triangles": 499168,
     "primitives": 31,
     "converter": "src/robot/robots/6800-downpour/prepare.mjs",
-    "keptCadBodies": 396,
+    "keptCadBodies": 392,
     "omittedHardwareBodies": 1280,
     "removedEmbeddedFuel": 0,
-    "preparation": "Palette batches preserve CAD colors;10-micron weld reconnects exporter face boundaries before bounded mesh simplification. Real fixed/rotating module geometry split from each WCP X2 occurrence; wheel axes normalized per source instance. Two static bar tubes never bound to roller spin."
+    "preparation": "Palette batches preserve CAD colors;10-micron weld reconnects exporter face boundaries before bounded mesh simplification. Real fixed/rotating module geometry split from each WCP X2 occurrence; wheel axes normalized per source instance. Two static bar tubes never bound to roller spin.",
+    "derivedPaddingBars": 4,
+    "padding": "Replace only the four lettered source foam meshes with plain boxes at their measured envelopes. Source backers and mounts remain CAD; shared renderer supplies team numbers."
   },
   "redistribution": {
     "status": "pending",
@@ -268,33 +270,40 @@
     "node": "26.13.0",
     "pnpm": "10.20.0",
     "branchGuard": "passed",
-    "robotTests": {
-      "tests": 31,
-      "files": 8,
-      "result": "passed"
-    },
+    "robotTests": "All registered robot checks included in the final 380-test simulation suite; original standalone command result retained under initialTwoRobotBase.",
     "fullSimulation": {
-      "tests": 165,
-      "files": 28,
-      "result": "passed"
+      "tests": 380,
+      "files": 53,
+      "result": "passed",
+      "base": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+      "log": ".tools/full-integrated.log"
     },
     "fieldShots": "4 passed: both-alliance hub scoring after stopping, plus physical passing from the opposite heading with Downpour and Reblitz.",
     "assetIntegrity": "19 runtime files; 17.51 MiB; passed",
-    "releaseBuild": "Asset integrity, TypeScript/Vite and production payload checks passed; 12 content-hashed runtime assets. Existing physics chunk-size warning.",
-    "browser": "Passed isolated CAD stowed/deployed/seeded-full/shooting/partial poses and full-app robot selection, blue/red practice, W/L/Shift/Space/Q input smoke, visible saved bindings, pause/resume and R restart. No page errors. Initial app attempt overlapped a source update; stable-source repeat passed.",
-    "logs": "Ignored .tools/robots-final.log, full-simulation-node26.log, build-release-node26.log, downpour-browser.json, downpour-app.json"
+    "releaseBuild": "Passed on integrated base: asset integrity (25 runtime files, 33.27 MiB), TypeScript/Vite and production payload (18 content-hashed assets). Log .tools/release-integrated.log.",
+    "browser": "Passed final CAD poses with plain padding and current-main search/detail/selection, both-alliance practice, W/L/Shift/Space/Q/V input smoke, saved-key controls, pause/resume and R restart; no page errors. Integrated evidence in .tools/integrated-6800.json and downpour-browser.json.",
+    "logs": "Ignored .tools/robots-final.log, full-simulation-node26.log, build-release-node26.log, downpour-browser.json, downpour-app.json",
+    "initialTwoRobotBase": {
+      "robotTests": {
+        "tests": 31,
+        "files": 8,
+        "result": "passed"
+      },
+      "fullSimulation": {
+        "tests": 165,
+        "files": 28,
+        "result": "passed"
+      },
+      "releaseBuild": "Asset integrity, TypeScript/Vite and production payload checks passed; 12 content-hashed runtime assets. Existing physics chunk-size warning."
+    }
   },
   "integrationFiles": [
     "src/robot/registry.ts",
-    "src/robot/types.ts",
-    "src/robot/poses.ts",
-    "src/sim/RobotSimulation.ts",
-    "src/sim/Shooter.ts",
-    "src/sim/ShotScatter.ts",
-    "src/sim/ShotScatter.test.ts",
-    "src/sim/SwerveChassis.ts",
-    "src/view/RobotView.ts",
-    "src/App.tsx"
+    "src/App.tsx",
+    "src/sim/Shooter.ts"
   ],
-  "sharedAimingFix": "Retain the chosen chassis turn direction within 0.1 radians of the 180-degree wrap tie. Prevents alternating swerve commands from blocking aiming; actual-field passing cases protect Downpour and Reblitz."
+  "sharedAimingFix": "Retain the chosen chassis turn direction within 0.1 radians of the 180-degree wrap tie. Prevents alternating swerve commands from blocking aiming; actual-field passing cases protect Downpour and Reblitz.",
+  "initialBaseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
+  "integratedMainCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+  "integrationNote": "Current main already includes the capability helper, wide feed paths, launch uncertainty, rigid modules and wall-contact fix. Final contribution preserves those interfaces and adds only registration, help/credit and the chassis aim-tie correction."
 }

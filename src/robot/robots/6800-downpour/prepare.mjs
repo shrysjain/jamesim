@@ -6,7 +6,7 @@ import { Document, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { weld, prune, meshopt } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
-import { Matrix4, Matrix3, Vector3, Box3 } from 'three';
+import { Matrix4, Matrix3, Vector3, Box3, BoxGeometry } from 'three';
 const sourcePath='assets/source/robots/6800-downpour/VR26A-0000 Main.glb';
 const output='public/assets/robots/6800-downpour/robot.glb';
 const expected='02d163b47e2c0a828ba832370d32d65d3dd61f065f283ba011ad4e754adbcc46';
@@ -83,7 +83,15 @@ function visit(node,path=[]){
    moduleSpec={wheelNative,nativeAxle,pivot,id,basis};group(`${id}-wheel`,pivot);group(`${id}-fork`,pivot);
   }
   const part={name,node:node.getName(),path:ancestors.join('/'),group:g.id,min:bounds.min.toArray(),max:bounds.max.toArray(),center:c.toArray(),size:size.toArray()};parts.push(part);
-  for(const primitive of mesh.listPrimitives()){
+  if(bumper){
+   // Preserve each source pad's measured envelope while removing embossed CAD
+   // numbers. The shared renderer supplies the only visible team labels.
+   const geometry=new BoxGeometry(size.z,size.y,size.x),a=geometry.getAttribute('position'),n=geometry.getAttribute('normal');
+   const center=new Vector3(...point(c.toArray())),vertices=[],normals=[];
+   for(let i=0;i<a.count;i++){vertices.push(new Vector3(a.getX(i),a.getY(i),a.getZ(i)).add(center));normals.push(new Vector3(n.getX(i),n.getY(i),n.getZ(i)));}
+   add(g,'bumper',vertices,normals,Array.from(geometry.index.array),[1,1,1,1]);geometry.dispose();
+   part.approximation='Plain padding box at the source foam envelope; original wood and mounts retained.';
+  }else for(const primitive of mesh.listPrimitives()){
    if(primitive.getMode()!==4)continue;
    const a=primitive.getAttribute('POSITION'),na=primitive.getAttribute('NORMAL'),ix=primitive.getIndices(),vertices=[],normals=[];
    for(let i=0;i<a.getCount();i++){
@@ -145,3 +153,6 @@ const report={sourcePath,sourceBytes:source.length,sourceSha256:expected,output,
 await writeFile('assets/source/robots/6800-downpour/preparation-report.json',JSON.stringify(report,null,2));
 console.log(JSON.stringify({...report,parts:undefined},null,2));
 if(glb.length>6*1024*1024||triangles>650000||primitives>160)throw Error('Prepared model exceeds robot budget.');
+const manifestPath='assets/robots/6800-downpour/runtime.json',manifest=JSON.parse(await readFile(manifestPath,'utf8'));
+manifest.group.files=[{path:output,bytes:glb.length,sha256:report.sha256}];
+await writeFile(manifestPath,JSON.stringify(manifest,null,2)+'\n');

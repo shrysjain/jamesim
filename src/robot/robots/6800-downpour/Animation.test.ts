@@ -25,6 +25,34 @@ function fixture() {
   return { view, nodes, robot, mechanisms };
 }
 describe('Downpour source CAD articulation', () => {
+  it('uses plain padding at the source bumper envelope with one set of alliance-colored labels', () => {
+    const padding = new THREE.Group(); let triangles = 0;
+    source.updateMatrixWorld(true);
+    source.traverse(node => {
+      if (!(node instanceof THREE.Mesh)) return;
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      if (!materials.some(material => material.name === D.visual.bumperMaterial)) return;
+      const mesh = new THREE.Mesh(node.geometry); mesh.applyMatrix4(node.matrixWorld); padding.add(mesh);
+      triangles += (node.geometry.index?.count ?? node.geometry.getAttribute('position').count) / 3;
+    });
+    const bounds = new THREE.Box3().setFromObject(padding), size = bounds.getSize(new THREE.Vector3());
+    expect(triangles).toBeLessThanOrEqual(48); expect(triangles).toBeGreaterThan(0);
+    expect(size.x).toBeCloseTo(D.length, 3); expect(size.z).toBeCloseTo(D.width, 3);
+    expect(bounds.getCenter(new THREE.Vector3()).y).toBeCloseTo(D.bumperCenterY, 4);
+    const { view } = fixture();
+    try {
+      view['models'].get(D.id)!.userData.bumperMaterial = D.visual.bumperMaterial;
+      for (const [alliance, color] of [['red', 0xc72f45], ['blue', 0x215fc4]] as const) {
+        view.setAlliance(alliance);
+        view.group.traverse(node => {
+          if (!(node instanceof THREE.Mesh)) return;
+          for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+            if (material instanceof THREE.MeshStandardMaterial && material.name === D.visual.bumperMaterial) expect(material.color.getHex()).toBe(color);
+          }
+        });
+      }
+    } finally { view.dispose(); }
+  });
   it('keeps both crash-bar tubes static while the powered roller spins on its own shaft', () => {
     const { view, nodes, robot, mechanisms } = fixture();
     try {
