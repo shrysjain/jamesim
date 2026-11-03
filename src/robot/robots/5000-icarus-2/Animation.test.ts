@@ -5,6 +5,9 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'meshoptimizer';
 import {RobotView} from '../../../view/RobotView';
 import {STARTING_POSE} from '../../poses';
+import {FieldSimulation} from '../../../sim/FieldSimulation';
+import {DEFAULT_MATCH} from '../../../sim/MatchRules';
+import {v3,rotate} from '../../../sim/vector';
 import type {SwerveChassis} from '../../../sim/SwerveChassis';
 import type {RobotSimulation} from '../../../sim/RobotSimulation';
 import {ICARUS as D,ICARUS_TRAVEL,ICARUS_RISE,ICARUS_ROOF} from './definition';
@@ -50,6 +53,27 @@ describe('Icarus actual CAD articulation',()=>{
    }
   }
   expect(checked).toBeGreaterThan(100);
+ });
+ it('matches the actual rendered hood-roller exit tangent to physical launch direction throughout hood and turret travel',async()=>{
+  const sim=await FieldSimulation.create({boxes:[{element:'floor',center:[0,-.1,0],halfExtents:[10,.1,10]}],meshes:[]},[],true);
+  const {view,nodes}=fixture();
+  try{
+   sim.startSession({...DEFAULT_MATCH,robot:'5000-icarus-2',preloads:0},true);const mechanisms=sim.robotController!,robot=mechanisms.chassis;
+   robot.teleport([0,.223,0],0);
+   const min=D.shooterGeometry.minElevation!,max=D.shooterGeometry.maxElevation!;
+   for(const elevation of [min,(min+max)/2,max])for(const yaw of [-1.2,0,2]){
+    mechanisms.shooter.elevation=elevation;mechanisms.shooter.turretYaw=yaw;
+    view.update(robot,0,mechanisms);view.group.updateMatrixWorld(true);
+    const drum=nodes.get('shooter-drum')!,roller=nodes.get('hood-roller-upper')!;
+    const radial=roller.getWorldPosition(new THREE.Vector3()).sub(drum.getWorldPosition(new THREE.Vector3()));
+    const axle=new THREE.Vector3(0,0,1).applyQuaternion(drum.getWorldQuaternion(new THREE.Quaternion()));
+    const tangent=radial.cross(axle).normalize();
+    // This is the same shared turret/chassis rotation used for the physical
+    // launch, including the definition yaw offset; it is not a visual-only aim.
+    const launch=rotate(mechanisms.shooter['turretRotate'](v3(Math.cos(elevation),Math.sin(elevation),0)),robot.renderRotation);
+    expect(tangent.angleTo(new THREE.Vector3(launch.x,launch.y,launch.z))).toBeLessThan(.0001);
+   }
+  }finally{view.dispose();sim.dispose();}
  });
  it('uses two distinct hood shafts without a cylinder orbiting about the other shaft',()=>{
   const {view,robot,mechanisms,nodes}=fixture();

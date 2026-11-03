@@ -25,11 +25,12 @@ const doc=new Document(),buffer=doc.createBuffer(),scene=doc.createScene('5000 H
 const frame=new Matrix4().makeRotationY(Math.PI/2);frame.elements[13]=-.223;
 const map=p=>new Vector3(...p).applyMatrix4(frame);
 const deploy=.0254*11.5, travel=.0254*(11.5-.2),dx=deploy*Math.cos(21*Math.PI/180),dy=-deploy*Math.sin(21*Math.PI/180);
-const turretYaw=-Math.PI/2, maxElevation=(90-6.24)*Math.PI/180;
+const turretYaw=-Math.PI/2;
 const turretPivot=map([0,.5113,0]).toArray();
 const turretAdjust=new Matrix4().makeTranslation(...turretPivot).multiply(new Matrix4().makeRotationY(turretYaw)).multiply(new Matrix4().makeTranslation(...turretPivot.map(x=>-x)));
 const drumPivot=new Vector3(...map([.09672126882051421,.4835249918,0]).toArray()).applyMatrix4(turretAdjust).toArray();
-const hoodAdjust=new Matrix4().makeTranslation(...drumPivot).multiply(new Matrix4().makeRotationZ(maxElevation-Math.PI/2)).multiply(new Matrix4().makeTranslation(...drumPivot.map(x=>-x)));
+// The source hood is already at its 83.76-degree maximum elevation. Keep its
+// actual shaft tangent; RobotView applies elevation minus maxElevation once.
 const groups=new Map(),parts=[],removed=[],excludedFuel=[];
 let foamOutline=null,backerOutline=null;
 const hardware=/screw|\bbolt\b|washer|nylock|\bnut\b|rivet|bearing|heat.set|retaining|collar|insert|^local\./i;
@@ -91,7 +92,7 @@ for(const [file,expected] of Object.entries(hashes)){
    if(file==='model.glb'&&names.includes('Bumpers:1')&&name==='Body1 (1):1')return;
    let transform=frame.clone().multiply(new Matrix4().fromArray(node.getWorldMatrix())),g=group('chassis');
    if(file==='model_0.glb'||file==='model_1.glb')transform.premultiply(turretAdjust);
-   if(file==='model_1.glb'){transform.premultiply(hoodAdjust);g=group('turret-hood',drumPivot,'turret');}
+   if(file==='model_1.glb')g=group('turret-hood',drumPivot,'turret');
    if(file==='model_0.glb')g=group('turret',turretPivot);
    if(file==='model_3.glb'||file==='model_4.glb'){
     const sign=file==='model_3.glb'?-1:1,parent=sign<0?'intake':'opposed-intake';
@@ -104,7 +105,7 @@ for(const [file,expected] of Object.entries(hashes)){
    if(file==='model_0.glb'&&/^Flywheel:[12]$/.test(name))g=group('shooter-drum',drumPivot,'turret');
    if(file==='model_1.glb'){
     const roller=path.find(n=>/^TTB 1 Inch Solid Urethane Wheel/.test(n.getName()));
-    if(roller){let pivot=new Vector3().setFromMatrixPosition(new Matrix4().fromArray(roller.getWorldMatrix())).applyMatrix4(frame).applyMatrix4(turretAdjust).applyMatrix4(hoodAdjust);pivot.z=0;
+    if(roller){let pivot=new Vector3().setFromMatrixPosition(new Matrix4().fromArray(roller.getWorldMatrix())).applyMatrix4(frame).applyMatrix4(turretAdjust);pivot.z=0;
      const nativePivot=new Vector3().setFromMatrixPosition(new Matrix4().fromArray(roller.getWorldMatrix()));
      const upper=nativePivot.y>.4835249918;g=group(`hood-roller-${upper?'upper':'lower'}`,pivot.toArray(),'turret-hood');}
    }
