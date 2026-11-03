@@ -32,15 +32,21 @@ supersedes that research blocker.
 
 ## CAD and articulation
 
-Native Y-up, +Z intake and −Z shooter become the simulator's −X intake and +X
-shooter through one −90° Y rotation and −0.223 m reference shift. The actual four
+Native Y-up and +Z intake become the simulator's −X intake through one −90° Y
+rotation and −0.223 m reference shift. The final hood rollers curve upward
+toward native +Z as well: fuel exits toward simulator −X, over the intake.
+The existing `yawOffset: Math.PI` contract represents this fixed reversed shooter. The actual four
 module axle frames are inspected individually and normalized to the shared +Z
 wheel axle. Module translations remain rigid in the frame, as on all robots.
 
 The rack, carriage and upper pickup roller slide together. The lower P303
 kicker bar and its P311 supports stay down on the frame while the rack moves.
-The fixed upper shell,
-rail guides and chassis supports stay on the chassis. The main drum is separate
+The actual P322 polycarbonate wrap and P330 top cap move with the same intake
+carriage. Rail guides and chassis supports stay on the chassis. The physical
+side-wall colliders use that same slide pose, and the local cargo front boundary
+follows it. The conservative side/front rim height fits the fully deployed shell;
+the rear feeder tower remains fixed behind its open rear. All 46 fuel seeds
+retain their original size and fit below the deployed rim. The main drum is separate
 from the hood; each of the three real hood rollers has its own shaft center.
 Floor/elevator rollers use separate centers as well, avoiding orbital cylinder
 motion when Space is held. No fake mechanism arms or replacement CAD chassis are
@@ -56,10 +62,13 @@ The exterior `S26-IN-P322` shell is rendered at 24% opacity to reveal the hopper
 an intentional display choice rather than a source material-transparency claim.
 
 Preparation removes 900 hardware occurrences, retains 743 CAD bodies, and detects
-no embedded game pieces. Detail reduction uses bounded millimeter-scale
-simplification, material batching and Meshopt compression. The runtime is
-3,274,632 bytes, 576,823 triangles and 41 primitives, within the unchanged shared
-6 MiB / 650,000 triangle / 160 primitive limits. Final global simplification can
+no embedded game pieces. Detail reduction uses topology-preserving 2 mm per-source and 4 mm batched
+simplification, material batching and Meshopt compression. P322 and the .79 mm
+P330 cap retain their original tessellation, including all 524 cap triangles.
+The prior unbounded sloppy reduction could bridge thin faces into diagonal
+holes and is removed. The runtime is
+2,914,900 bytes, 602,880 triangles and 42 primitives, within the unchanged shared
+6 MiB / 650,000 triangle / 160 primitive limits. Topology-preserving reduction can
 remove small tooth/fastener detail; it preserves the actual major source bodies.
 
 Regenerate from the ignored complete upload using:
@@ -84,7 +93,7 @@ node src/robot/robots/1114-simbot-tim/prepare.mjs
 | Drive response | 9.5 m/s² powered / 19 m/s² wheel braking, grip 1.05, gameplay estimates; body traction remains physical |
 | Intake/fire rates | 38 intake/s and 18 shots/s, estimated targets, gated by physical collection and shooter readiness |
 | Feed width | Three 150 mm lanes centered at −0.151, 0 and +0.151 m; CAD lacks the clearance for four simultaneous full-size lanes |
-| Capacity | 46 fitted full-size non-overlapping sphere seeds, not a claimed real-robot rating; upper layers stay inside the tall fixed shell |
+| Capacity | 46 fitted full-size non-overlapping sphere seeds, not a claimed real-robot rating; upper layers fit beneath the sliding shell's lowest deployed rim |
 
 The intake IO starts its encoder at zero. The operator's alternate calibration
 can assign 13.5 in, so absolute encoder values are not treated as an independently
@@ -133,7 +142,7 @@ Shift/Space/Q/V, saved controls, pause/resume, R reset and return to setup witho
 page errors. Evidence is kept in ignored `.tools/tim-browser.json` and
 `.tools/integrated-1114.json`.
 
-Final standalone validation on current main:
+Historical standalone validation before the feedback corrections below:
 
 - `pnpm test:robots`: 152 tests across 25 files passed.
 - `pnpm test:sim`: 375 tests across 51 files passed.
@@ -149,3 +158,33 @@ intake fields and this robot's optional shooting stop are additive. The shared
 180° aiming fix is byte-identical across the new branches. CAD rights remain
 pending under the existing owner-authorized noncommercial v1 policy; code
 licensing does not clear the CAD.
+
+## Feedback corrections
+
+The contributor reported a stationary polycarbonate hopper, diagonal top holes,
+and backwards shooting. P322/P330 now follow the rack while the lower kicker
+stays fixed down. Their thin CAD surfaces bypass both simplification passes;
+all remaining reduction preserves topology. This corrects the original source
+classification and does not replace the shell with procedural geometry.
+
+The main shaft and final hood roller give a source release tangent of 45.76°.
+Preparation calibrates the hood −28.24° about its actual shaft so the 74° maximum
+launch and actual roller opening agree. The existing signed hood sweep then
+rotates +32° in world Z as elevation drops to 42°. The fixed release now points
+over the intake via `yawOffset: Math.PI`; main-drum and hood-roller spin signs
+follow that contact direction. The fitted 90 mm free guide clears the last
+contact instead of extending 210 mm through the wrong side of the hood.
+
+Updated focused checks passed: nine mechanism/physics cases and five prepared-CAD
+renderer cases. New regressions compare actual launched projectile velocity to
+the final rendered roller tangent at distinct hub/pass elevations, verify the
+shell and cap follow the intake, retain the fixed lower bar, preserve all 524
+cap triangles, and fit starting preloads behind the sliding front wall.
+Stowed/deployed/seeded-full/shooting/minimum-stop browser poses were recaptured
+without page errors and reviewed for panel continuity. The seeded diagnostic
+picture is not a cargo physics play test; both-alliance full-hopper physical
+discharge/conservation is covered by the focused simulation cases.
+
+These corrections touch only this robot's own files and runtime asset. No new
+shared interface is required. Exact slide limits and real-world ballistic
+calibration remain fitted estimates as documented above.

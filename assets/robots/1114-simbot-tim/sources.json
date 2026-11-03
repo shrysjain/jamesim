@@ -92,26 +92,6 @@
     "Real intake/fire throughput and calibrated hit distribution",
     "Exact hood-angle-to-launch mapping"
   ],
-  "validation": {
-    "branchGuard": "passed",
-    "focused": "9 tests passed: full-size packing, real CAD nodes/modules, full-hopper both-alliance release/conservation,3lanes,reset,shoot-min/manual/pause/reverse,legacydefault,real-field hub/pass oppositeheading",
-    "simulation": {
-      "tests": 375,
-      "files": 51,
-      "result": "passed",
-      "log": ".tools/full-final.log"
-    },
-    "browser": "Parent isolated CAD poses stowed/deployed/seededfull/shooting/minstop inspected; full current singleplayer search/detail/select, bothalliances, normalcontrols,savedcontrols,pause/resume/restart/setup passed without pageerrors. Ignored proofs .tools/tim-browser.json and .tools/integrated-1114.json.",
-    "build": "Node 26.13.0 / pnpm 10.20.0 release passed: 25 runtime source files, 34.48 MiB; 18 content-hashed assets. Existing Rapier chunk warning only.",
-    "assetBudget": "3,274,632 bytes;576,823triangles;41primitives;unchangedceilings",
-    "robotTests": {
-      "tests": 152,
-      "files": 25,
-      "result": "passed",
-      "log": ".tools/robots-final.log"
-    },
-    "additionalAnimation": "3 prepared-CAD renderer cases passed after the full run: fixed lower bar with sliding upper carriage, every roller around its own shaft over a full revolution, and rigid wheel/fork mounts. Production implementation and runtime CAD unchanged."
-  },
   "partialGeometry": {
     "repository": "https://github.com/ryanabraham1/frc-3d-sim",
     "commit": "1af807d17dcbf012c5810cc3fc7b1fa731ec5b74",
@@ -226,21 +206,30 @@
     "materials": 56
   },
   "runtime": {
-    "bytes": 3274632,
-    "sha256": "8d0d8a2934000c543a9779c4a448b15aa2e42cf9eb807199b048d9696fb7c362",
-    "triangles": 576823,
-    "primitives": 41
+    "bytes": 2914900,
+    "sha256": "4900d98486e6b2f40a03975890dadd0f58b97a699774cdcafc15f8cd716eb49e",
+    "triangles": 602880,
+    "primitives": 42
   },
   "preparation": {
     "converter": "src/robot/robots/1114-simbot-tim/prepare.mjs",
     "retainedBodies": 743,
     "omittedHardwareOccurrences": 900,
     "embeddedFuel": 0,
-    "sourceTransform": "Y-up, native +Z intake / -Z shooting; rotate Y -90deg then Y offset -0.223m",
+    "sourceTransform": "Native +Z intake and native +Z/up hood release map to simulator -X; rotate Y -90deg, Y offset -0.223m. Fixed reversed shooter uses existing yawOffset PI.",
     "moduleAxles": "Each source module wheel axle normalized independently; all module mounts rigid.",
     "supplementalGeometry": "Four bumper padding bars, source CAD omits bumpers. Official code .76x.92m outer footprint; estimated .0635m padding thickness clears source frame on both axes; not passed off as team-supplied CAD.",
     "displayOverride": "Exterior S26-IN-P322 at24% opacity for hopper visibility; source export material was opaque.",
-    "intakeArticulation": "P301/P315 rack/carriage and P302 upper roller translate; P303 lower kicker and P311 supports stay fixed down. Both actual shafts rotate about their own axes."
+    "intakeArticulation": "P301/P315 rack/carriage, P302 upper roller, P322 polycarbonate U-wrap and P330 cap translate together. P303 lower kicker and P311 supports stay fixed down.",
+    "simplification": "Topology-preserving 2mm source / 4mm merged reduction. No simplifySloppy. P322/P330 original tessellation protected including 524 cap triangles.",
+    "hoodReference": {
+      "sourceReleaseElevationDegrees": 45.76394006353831,
+      "calibrationDegrees": -28.236059936461704,
+      "definitionSweepDegrees": -32,
+      "releaseYawOffsetRadians": 3.141592653589793,
+      "guideLengthMetres": 0.09,
+      "evidence": "Main shaft and final hood-roller radius define the release tangent; actual projectile/rendered tangent tested at distinct hub/pass elevations."
+    }
   },
   "estimates": {
     "massKg": 64,
@@ -281,5 +270,34 @@
     "src/robot/validateDefinition.ts",
     "src/sim/RobotSimulation.ts",
     "src/sim/Shooter.ts"
-  ]
+  ],
+  "previousValidation": {
+    "branchGuard": "passed",
+    "focused": "9 tests passed: full-size packing, real CAD nodes/modules, full-hopper both-alliance release/conservation,3lanes,reset,shoot-min/manual/pause/reverse,legacydefault,real-field hub/pass oppositeheading",
+    "simulation": {
+      "tests": 375,
+      "files": 51,
+      "result": "passed",
+      "log": ".tools/full-final.log"
+    },
+    "browser": "Parent isolated CAD poses stowed/deployed/seededfull/shooting/minstop inspected; full current singleplayer search/detail/select, bothalliances, normalcontrols,savedcontrols,pause/resume/restart/setup passed without pageerrors. Ignored proofs .tools/tim-browser.json and .tools/integrated-1114.json.",
+    "build": "Node 26.13.0 / pnpm 10.20.0 release passed: 25 runtime source files, 34.48 MiB; 18 content-hashed assets. Existing Rapier chunk warning only.",
+    "assetBudget": "3,274,632 bytes;576,823triangles;41primitives;unchangedceilings",
+    "robotTests": {
+      "tests": 152,
+      "files": 25,
+      "result": "passed",
+      "log": ".tools/robots-final.log"
+    },
+    "additionalAnimation": "3 prepared-CAD renderer cases passed after the full run: fixed lower bar with sliding upper carriage, every roller around its own shaft over a full revolution, and rigid wheel/fork mounts. Production implementation and runtime CAD unchanged."
+  },
+  "validation": {
+    "focused": "9 mechanism/physics tests passed; all5 CAD animation cases passed on corrected fixture rerun. First aggregate had a mutable-vector test fixture error; fixed without changing production behavior.",
+    "logs": [
+      ".tools/feedback-focused.log",
+      ".tools/feedback-animation.log"
+    ],
+    "browser": "Five isolated CAD poses recaptured/reviewed, no page errors. Exact moving polycarbonate and intact top cap inspected. .tools/tim-browser.json; .tools/feedback-browser.log",
+    "build": "Node26.13.0 / pnpm10.20.0 pnpm build:release passed: 25 runtime source files,18 hashed production assets, TypeScript/Vite and asset integrity. Existing large Rapier bundle warning. Log .tools/feedback-release.log; combined simulation validation owned by parent."
+  }
 }
