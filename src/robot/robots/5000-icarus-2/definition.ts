@@ -15,6 +15,8 @@ for(let layer=0;layer<3;layer++)for(let row=0;row<6;row++)for(let column=0;colum
  const p:Vec3=[-.453+row*.151+(column%2)*.0755+(layer%2)*.0755,-.005+layer*.151*Math.sqrt(2/3),(column-1.5)*.151*Math.sqrt(3)/2+((layer%2)-.5)*.151*Math.sqrt(3)/6];
  if(obstacles.every(box=>hopperObstacleContact(p,box).distance>=.075))seeds.push(p);
 }
+// The first eight preload seeds must also fit the retracted starting volume.
+seeds.sort((a,b)=>Math.abs(a[0])-Math.abs(b[0])||a[1]-b[1]||a[2]-b[2]);
 /** Icarus2.0, official post-Championship AdvantageScope export. CAD/source-code
  * measurements are separated from simulator estimates in README and sources.json. */
 export const ICARUS:RobotDefinition={

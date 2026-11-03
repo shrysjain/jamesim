@@ -25,6 +25,16 @@ function fixture(){
  return{view,robot,mechanisms,nodes};
 }
 describe('Icarus actual CAD articulation',()=>{
+ it('keeps only four plain source-sized padding bars so game labels cannot overlap embossed numbers',()=>{
+  const padding:THREE.Mesh[]=[];source.traverse(n=>{if(n instanceof THREE.Mesh&&(n.userData.padding==='derived-plain'||n.parent?.userData.padding==='derived-plain'))padding.push(n);});
+  expect(padding).toHaveLength(4);
+  const box=new THREE.Box3();let triangles=0;
+  for(const mesh of padding){box.union(new THREE.Box3().setFromObject(mesh,true));triangles+=(mesh.geometry.index?.count??0)/3;
+   expect(mesh.geometry.getAttribute('color')).toBeUndefined();expect((mesh.material as THREE.Material).name).toBe('bumper');}
+  expect(triangles).toBe(48);const size=box.getSize(new THREE.Vector3());
+  // Meshopt vertex quantization can shift a face by tens of micrometers.
+  expect(Math.abs(size.x-D.length)).toBeLessThan(.0001);expect(Math.abs(size.z-D.width)).toBeLessThan(.0001);expect(Math.abs(size.y-.128397)).toBeLessThan(.0001);
+ });
  it('uses two distinct hood shafts without a cylinder orbiting about the other shaft',()=>{
   const {view,robot,mechanisms,nodes}=fixture();
   try{

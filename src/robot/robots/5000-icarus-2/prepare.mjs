@@ -1,13 +1,14 @@
 /** Offline preparation of the team's published Icarus 2.0 AdvantageScope CAD.
- * No geometry is synthesized; static CAD and the five original articulated exports
- * are classified before material batching. Source hashes are checked before use. */
+ * Robot mechanisms retain original geometry. Only the embossed bumper foam is
+ * replaced with four plain bars fitted to its measured outline, so game labels
+ * do not overlap baked numbers. Source hashes are checked before preparation. */
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {Document,NodeIO} from '@gltf-transform/core';
 import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
 import {weld,prune,meshopt} from '@gltf-transform/functions';
 import {MeshoptEncoder,MeshoptSimplifier} from 'meshoptimizer';
-import {Matrix4,Matrix3,Vector3,Box3,BufferGeometry,BufferAttribute} from 'three';
+import {Matrix4,Matrix3,Vector3,Box3,BoxGeometry,BufferGeometry,BufferAttribute} from 'three';
 await Promise.all([MeshoptEncoder.ready,MeshoptSimplifier.ready]);
 const id='5000-icarus-2', input=`assets/source/robots/${id}/official`, output=`public/assets/robots/${id}`;
 const hashes={
@@ -30,6 +31,7 @@ const turretAdjust=new Matrix4().makeTranslation(...turretPivot).multiply(new Ma
 const drumPivot=new Vector3(...map([.09672126882051421,.4835249918,0]).toArray()).applyMatrix4(turretAdjust).toArray();
 const hoodAdjust=new Matrix4().makeTranslation(...drumPivot).multiply(new Matrix4().makeRotationZ(maxElevation-Math.PI/2)).multiply(new Matrix4().makeTranslation(...drumPivot.map(x=>-x)));
 const groups=new Map(),parts=[],removed=[],excludedFuel=[];
+let foamOutline=null,backerOutline=null;
 const hardware=/screw|\bbolt\b|washer|nylock|\bnut\b|rivet|bearing|heat.set|retaining|collar|insert|^local\./i;
 function group(name,pivot=[0,0,0],parent=null,basis=0){
  if(!groups.has(name))groups.set(name,{name,pivot,parent,basis,node:doc.createNode(name).setTranslation(pivot).setExtras({mechanism:name}),batches:new Map()});
@@ -39,6 +41,20 @@ group('chassis');group('intake');group('opposed-intake');group('turret',turretPi
 for(const [file,expected] of Object.entries(hashes)){
  const raw=await readFile(`${input}/${file}`);if(createHash('sha256').update(raw).digest('hex')!==expected)throw Error(`Source hash mismatch: ${file}`);
  const original=await io.readBinary(raw);await original.transform(weld());
+ if(file==='model.glb'){
+  function measure(node,path=[]){
+   if(path.includes('Bumpers:1')&&['Body1 (1):1','Body19:1'].includes(node.getName())){
+    const box=new Box3(),world=frame.clone().multiply(new Matrix4().fromArray(node.getWorldMatrix()));
+    for(const p of node.getMesh().listPrimitives()){
+     const a=p.getAttribute('POSITION'),lo=a.getMin([]),hi=a.getMax([]);
+     for(const x of [lo[0],hi[0]])for(const y of [lo[1],hi[1]])for(const z of [lo[2],hi[2]])box.expandByPoint(new Vector3(x,y,z).applyMatrix4(world));
+    }
+    if(node.getName()==='Body1 (1):1')foamOutline=box;else backerOutline=box;
+   }
+   for(const c of node.listChildren())measure(c,[...path,node.getName()]);
+  }
+  for(const n of original.getRoot().listScenes()[0].listChildren())measure(n);
+ }
  // Simplify each original mesh before expanding occurrences. Preserve3mm shapes,
  // especially the thin SRPP rack teeth, instead of decimating only to a target size.
  for(const mesh of original.getRoot().listMeshes())for(const p of mesh.listPrimitives()){
@@ -56,6 +72,9 @@ for(const [file,expected] of Object.entries(hashes)){
   if(mesh){
    if(/\bfuel\b|game.?piece/i.test(name)){excludedFuel.push({file,name});return;}
    if(hardware.test(name)){removed.push({file,name});return;}
+   // This source body contains both foam and embossed white glyphs. Its real
+   // backer is a different retained body; replace only the measured outer wrap.
+   if(file==='model.glb'&&names.includes('Bumpers:1')&&name==='Body1 (1):1')return;
    let transform=frame.clone().multiply(new Matrix4().fromArray(node.getWorldMatrix())),g=group('chassis');
    if(file==='model_0.glb'||file==='model_1.glb')transform.premultiply(turretAdjust);
    if(file==='model_1.glb'){transform.premultiply(hoodAdjust);g=group('turret-hood',drumPivot,'turret');}
@@ -95,14 +114,13 @@ for(const [file,expected] of Object.entries(hashes)){
      const root=`module-${pivot[0]>0?'front':'rear'}-${pivot[2]>0?'right':'left'}`;g=group(`${root}-${node===wheel?'wheel':'fork'}`,pivot,null,basis);
     }
    }
-   const bumper=names.includes('Bumpers:1')&&name==='Body1 (1):1';
    const bounds=new Box3(),normal=new Matrix3().getNormalMatrix(transform);
    for(const p of mesh.listPrimitives()){
     if(p.getMode()!==4)continue;const a=p.getAttribute('POSITION'),n=p.getAttribute('NORMAL'),idx=p.getIndices();
     const color=p.getMaterial()?.getBaseColorFactor()??[.25,.25,.25,1];
     // Preserve team palette using vertex colors while batching surfaces. Original
     // decals are omitted; runtime bumper numbers supply the team identification.
-    const style=bumper?'bumper':'cad';let b=g.batches.get(style);if(!b){b={p:[],n:[],c:[],i:[]};g.batches.set(style,b);}const base=b.p.length/3;
+    const style='cad';let b=g.batches.get(style);if(!b){b={p:[],n:[],c:[],i:[]};g.batches.set(style,b);}const base=b.p.length/3;
     for(let i=0;i<a.getCount();i++){
      const w=new Vector3(...a.getElement(i,[])).applyMatrix4(transform);bounds.expandByPoint(w);
      const v=w.sub(new Vector3(...g.pivot)).applyAxisAngle(new Vector3(0,1,0),-g.basis);b.p.push(...v.toArray());
@@ -119,20 +137,37 @@ for(const [file,expected] of Object.entries(hashes)){
 }
 for(const g of groups.values()){
  for(const [style,b] of g.batches){
-  const mat=doc.createMaterial(style==='bumper'?'bumper':g.name+'-cad').setDoubleSided(true).setRoughnessFactor(.67).setMetallicFactor(style==='bumper'?0:.18);
-  if(style==='bumper')mat.setBaseColorFactor([.03,.18,.65,1]);
+  const mat=doc.createMaterial(g.name+'-cad').setDoubleSided(true).setRoughnessFactor(.67).setMetallicFactor(.18);
   const acc=(t,a,n=false)=>doc.createAccessor().setType(t).setArray(a).setBuffer(buffer).setNormalized(n);
   const primitive=doc.createPrimitive().setAttribute('POSITION',acc('VEC3',new Float32Array(b.p))).setAttribute('NORMAL',acc('VEC3',new Float32Array(b.n))).setIndices(acc('SCALAR',new Uint32Array(b.i))).setMaterial(mat);
-  if(style!=='bumper')primitive.setAttribute('COLOR_0',acc('VEC4',new Uint8Array(b.c),true));
+  primitive.setAttribute('COLOR_0',acc('VEC4',new Uint8Array(b.c),true));
   g.node.addChild(doc.createNode(`${g.name}-${style}`).setMesh(doc.createMesh().addPrimitive(primitive)));
  }
  if(g.parent){const p=groups.get(g.parent);g.node.setTranslation(g.pivot.map((v,i)=>v-p.pivot[i]));p.node.addChild(g.node);}else scene.addChild(g.node);
+}
+if(!foamOutline||!backerOutline)throw Error('Measured original bumper foam/backer missing');
+const foamSize=foamOutline.getSize(new Vector3()),foamCenter=foamOutline.getCenter(new Vector3()),backerSize=backerOutline.getSize(new Vector3());
+const paddingThickness=Math.min((foamSize.x-backerSize.x)/2,(foamSize.z-backerSize.z)/2);
+if(paddingThickness<=0)throw Error('Original foam outline must surround the retained backer');
+const bumperMaterial=doc.createMaterial('bumper').setBaseColorFactor([.03,.18,.65,1]).setRoughnessFactor(.95).setMetallicFactor(0).setDoubleSided(true);
+for(const sign of [-1,1])for(const [face,size,center]of[
+ ['end',[paddingThickness,foamSize.y,foamSize.z],[foamCenter.x+sign*(foamSize.x-paddingThickness)/2,foamCenter.y,foamCenter.z]],
+ ['side',[foamSize.x-2*paddingThickness,foamSize.y,paddingThickness],[foamCenter.x,foamCenter.y,foamCenter.z+sign*(foamSize.z-paddingThickness)/2]],
+]){
+ const geometry=new BoxGeometry(...size),positions=geometry.getAttribute('position').array.slice();
+ for(let i=0;i<positions.length;i++)positions[i]+=center[i%3];
+ const acc=(type,array)=>doc.createAccessor().setType(type).setArray(array).setBuffer(buffer);
+ const primitive=doc.createPrimitive().setMaterial(bumperMaterial)
+  .setAttribute('POSITION',acc('VEC3',positions)).setAttribute('NORMAL',acc('VEC3',geometry.getAttribute('normal').array.slice()))
+  .setIndices(acc('SCALAR',new Uint16Array(geometry.index.array)));
+ group('chassis').node.addChild(doc.createNode(`plain-bumper-${face}-${sign}`).setExtras({padding:'derived-plain',sourceBody:'Body1 (1):1'})
+  .setMesh(doc.createMesh().addPrimitive(primitive)));geometry.dispose();
 }
 await doc.transform(weld(),prune(),meshopt({encoder:MeshoptEncoder,level:'high'}));
 const result=await io.writeBinary(doc),sha256=createHash('sha256').update(result).digest('hex');await mkdir(output,{recursive:true});await writeFile(`${output}/robot.glb`,result);
 const triangles=doc.getRoot().listMeshes().reduce((s,m)=>s+m.listPrimitives().reduce((n,p)=>n+p.getIndices().getCount()/3,0),0),primitives=doc.getRoot().listMeshes().reduce((s,m)=>s+m.listPrimitives().length,0);
 if(result.length>6*1024*1024||triangles>650000||primitives>160)throw Error(`Runtime budget exceeded: ${result.length}bytes ${triangles}tris ${primitives}primitives`);
-const report={id,bytes:result.length,sha256,triangles,primitives,kept:parts.length,removed:removed.length,excludedFuel:excludedFuel.length,sourceToRobot:frame.toArray(),intakeTravel:travel*Math.cos(21*Math.PI/180),intakeRise:travel*Math.sin(21*Math.PI/180),turretPivot,drumPivot,parts};
+const report={id,bytes:result.length,sha256,triangles,primitives,kept:parts.length,removed:removed.length,excludedFuel:excludedFuel.length,sourceToRobot:frame.toArray(),intakeTravel:travel*Math.cos(21*Math.PI/180),intakeRise:travel*Math.sin(21*Math.PI/180),turretPivot,drumPivot,padding:{sourceBody:'Body1 (1):1',retainedBackerBody:'Body19:1',sourceMin:foamOutline.min.toArray(),sourceMax:foamOutline.max.toArray(),thickness:paddingThickness,approximation:'Four plain padding bars replace source embossed foam; no baked numbers.'},parts};
 await mkdir(`assets/source/robots/${id}/prepared`,{recursive:true});await writeFile(`assets/source/robots/${id}/prepared/asset-report.json`,JSON.stringify(report,null,2)+'\n');
 await writeFile(`assets/robots/${id}/runtime.json`,JSON.stringify({schemaVersion:1,robotId:id,group:{name:'Team 5000 Icarus 2.0 official CAD',source:'https://github.com/hammerheads5000/2026Rebuilt/tree/279745f273441470f86b78dece9d9c8653db0e2c/AdvantageScope/Robot_2026',redistribution:{status:'pending',evidence:[]},files:[{path:`${output}/robot.glb`,bytes:result.length,sha256}]}},null,2)+'\n');
 console.log(JSON.stringify({...report,parts:undefined},null,2));
