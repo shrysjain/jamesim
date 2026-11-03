@@ -4,17 +4,17 @@
   "team": 1114,
   "season": 2026,
   "name": "Simbot Tim",
-  "status": "research-only-awaiting-complete-cad",
-  "runtimeRegistered": false,
-  "baseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
+  "status": "implemented-and-locally-validated",
+  "runtimeRegistered": true,
+  "baseCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
   "cad": {
     "url": "https://cad.onshape.com/documents/7959d159451177786d52dd9a/w/535bc31b66b0cc442967f1d0/e/a263c1a625ed8cf2484ae82f",
     "documentId": "7959d159451177786d52dd9a",
     "workspaceId": "535bc31b66b0cc442967f1d0",
     "elementId": "a263c1a625ed8cf2484ae82f",
     "revisionStatus": "workspace URL; immutable CAD revision not yet available",
-    "verification": "Exact URL is the CAD link in the official Team 1114 Chief Delphi release. Viewer body unavailable to this session; no claim that export is disabled.",
-    "completeGeometryObtained": false
+    "verification": "Exact selected URL matches official team release. Complete user GLB root/subassemblies inspected; geometry hash pins the upload, not an invented immutable Onshape revision.",
+    "completeGeometryObtained": true
   },
   "primarySources": [
     {
@@ -87,20 +87,30 @@
     "note": "No CAD clearance inferred from official code license. Preserve owner-authorized noncommercial v1 publication policy; source export still required."
   },
   "unmeasured": [
-    "CAD bumper/frame envelope",
-    "mass/inertia",
-    "shooter drum radius and center",
-    "hood and intake pivots",
-    "hopper internal bounds and capacity",
-    "feed path and lane span",
-    "mechanism node names",
-    "kinematic travel direction and packaging clearance"
+    "Empty real robot mass/inertia",
+    "Exact encoder-origin-to-CAD mate-limit mapping",
+    "Real intake/fire throughput and calibrated hit distribution",
+    "Exact hood-angle-to-launch mapping"
   ],
   "validation": {
-    "branchGuard": "passed: pnpm robot:branch --team=1114",
-    "simulation": "not run: no gameplay implementation or prepared runtime CAD",
-    "browser": "not run: robot is not registered",
-    "assetBudget": "not applicable: no runtime asset generated"
+    "branchGuard": "passed",
+    "focused": "9 tests passed: full-size packing, real CAD nodes/modules, full-hopper both-alliance release/conservation,3lanes,reset,shoot-min/manual/pause/reverse,legacydefault,real-field hub/pass oppositeheading",
+    "simulation": {
+      "tests": 375,
+      "files": 51,
+      "result": "passed",
+      "log": ".tools/full-final.log"
+    },
+    "browser": "Parent isolated CAD poses stowed/deployed/seededfull/shooting/minstop inspected; full current singleplayer search/detail/select, bothalliances, normalcontrols,savedcontrols,pause/resume/restart/setup passed without pageerrors. Ignored proofs .tools/tim-browser.json and .tools/integrated-1114.json.",
+    "build": "Node 26.13.0 / pnpm 10.20.0 release passed: 25 runtime source files, 34.48 MiB; 18 content-hashed assets. Existing Rapier chunk warning only.",
+    "assetBudget": "3,274,632 bytes;576,823triangles;41primitives;unchangedceilings",
+    "robotTests": {
+      "tests": 152,
+      "files": 25,
+      "result": "passed",
+      "log": ".tools/robots-final.log"
+    },
+    "additionalAnimation": "3 prepared-CAD renderer cases passed after the full run: fixed lower bar with sliding upper carriage, every roller around its own shaft over a full revolution, and rigid wheel/fork mounts. Production implementation and runtime CAD unchanged."
   },
   "partialGeometry": {
     "repository": "https://github.com/ryanabraham1/frc-3d-sim",
@@ -197,5 +207,79 @@
     "hopperAgitation": {
       "evidence": "AgitateIntake.execute: after650ms of ready shooting, pulls slide toward MIN_AGITATION_POSITION2 (6.3in); on end restores SLIDE_DROP. Experimental oscillation code is commented out."
     }
-  }
+  },
+  "uploadedGeometry": {
+    "fileName": "1114 Simbotics - S26-A000.glb",
+    "parts": 7,
+    "bytes": 177801492,
+    "sha256": "baff1897535f7ed692eacad69032fed7894623131762ea23ed157bf8a2ecb50c",
+    "verification": "Numeric binary concatenation; GLB magic/version/header length and uploaded SHA-256 matched. Uploaded scripts read as data, never executed.",
+    "root": "S26-A000",
+    "assemblies": [
+      "S26-IN-A200",
+      "S26-SH/BEL-A000",
+      "S26-DT-A000",
+      "S26-FL-A000"
+    ],
+    "nodes": 3357,
+    "meshes": 335,
+    "materials": 56
+  },
+  "runtime": {
+    "bytes": 3274632,
+    "sha256": "8d0d8a2934000c543a9779c4a448b15aa2e42cf9eb807199b048d9696fb7c362",
+    "triangles": 576823,
+    "primitives": 41
+  },
+  "preparation": {
+    "converter": "src/robot/robots/1114-simbot-tim/prepare.mjs",
+    "retainedBodies": 743,
+    "omittedHardwareOccurrences": 900,
+    "embeddedFuel": 0,
+    "sourceTransform": "Y-up, native +Z intake / -Z shooting; rotate Y -90deg then Y offset -0.223m",
+    "moduleAxles": "Each source module wheel axle normalized independently; all module mounts rigid.",
+    "supplementalGeometry": "Four bumper padding bars, source CAD omits bumpers. Official code .76x.92m outer footprint; estimated .0635m padding thickness clears source frame on both axes; not passed off as team-supplied CAD.",
+    "displayOverride": "Exterior S26-IN-P322 at24% opacity for hopper visibility; source export material was opaque.",
+    "intakeArticulation": "P301/P315 rack/carriage and P302 upper roller translate; P303 lower kicker and P311 supports stay fixed down. Both actual shafts rotate about their own axes."
+  },
+  "estimates": {
+    "massKg": 64,
+    "inertiaKgM2": [
+      4.4,
+      6.8,
+      4.1
+    ],
+    "accelerationMps2": 9.5,
+    "wheelBrakingMps2": 19,
+    "grip": 1.05,
+    "intakePerSecond": 38,
+    "firePerSecond": 18,
+    "slideHorizontalMetres": 0.34417,
+    "slideRiseMetres": 0.057,
+    "shootingMinExtension": 0.47232472324723246,
+    "slideExplanation": "Boot encoder zero, source13.55in drop value, sloped rack and required floor-roller clearance. Absolute stroke and hood reference mapping remain fitted; no immutable mate limits supplied.",
+    "movingShots": false,
+    "movingShotsReason": "Official ShootMoveLUT returns distance-only before commented predictor.",
+    "scatter": {
+      "yaw": 0.032,
+      "elevation": 0.035,
+      "speed": 0.038,
+      "flyerChance": 0.1,
+      "backspin": 28
+    },
+    "lanes": [
+      -0.151,
+      0,
+      0.151
+    ],
+    "capacity": 46
+  },
+  "integrationFiles": [
+    "src/robot/registry.ts",
+    "src/App.tsx",
+    "src/robot/types.ts",
+    "src/robot/validateDefinition.ts",
+    "src/sim/RobotSimulation.ts",
+    "src/sim/Shooter.ts"
+  ]
 }

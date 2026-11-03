@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "1114-simbot-tim",
+  "group": {
+    "name": "Team1114 Simbot Tim full CAD and supplemental bumper envelope",
+    "source": "https://www.chiefdelphi.com/t/team-1114-simbotics-2026-simbot-tim-cad-release/522887",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/1114-simbot-tim/robot.glb",
+        "bytes": 3274632,
+        "sha256": "8d0d8a2934000c543a9779c4a448b15aa2e42cf9eb807199b048d9696fb7c362"
+      }
+    ]
+  }
+}
