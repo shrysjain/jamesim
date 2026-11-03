@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "robotId": "1678-limestone",
+  "team": "1678 Citrus Circuits",
+  "revision": "1678-26c-0000 CAD Release",
+  "onshape": "https://1678.onshape.com/documents/acdaaf42764a293a9452326d/w/f887ef4c6a254c09c73344c3/e/a9684fa7665096e977b19c44",
+  "officialRelease": "https://www.chiefdelphi.com/t/1678-citrus-circuits-2026-cad-and-robot-code-release/521535",
+  "officialRobot": "https://www.citruscircuits.org/2026-robot",
+  "teamCode": {
+    "url": "https://github.com/frc1678/C2026-Public",
+    "commit": "0f403dd8f3ad1f7d0dbe0c1bd23b24c210f41677",
+    "use": "Dimensional and mechanism reference only; no simulator implementation copied."
+  },
+  "derivative": {
+    "repository": "https://github.com/TylerHandel/rebuilt-sim-2026",
+    "commit": "344501f464477cb93517a7b5344b43d7ee9474a7",
+    "recipe": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1678.json",
+    "use": "Published tessellation of the exact team CAD document; original Onshape unavailable to the execution environment."
+  },
+  "redistribution": {
+    "status": "pending",
+    "evidence": [],
+    "note": "Team CAD rights remain under review; owner-authorized noncommercial v1 policy in docs/V1_PUBLICATION.md."
+  },
+  "files": [
+    {
+      "part": "body",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1678-body.glb",
+      "bytes": 4453132,
+      "sha256": "ce5c07beca6818bd0e559a9ad7c9b8a52ffa65253cbd7f121921a39ed20bf920"
+    },
+    {
+      "part": "intake",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1678-intake.glb",
+      "bytes": 788520,
+      "sha256": "1528db91616fe5e3b42560c8c2fcbcb790b37d960278ddc1e161bd5d4b6127f7"
+    },
+    {
+      "part": "slide",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1678-slide.glb",
+      "bytes": 48260,
+      "sha256": "57ffa982f879ff6f1e56a15c6011acb304c61c71c04b85f20d14aa0be86e8bb3"
+    },
+    {
+      "part": "lift",
+      "url": "https://raw.githubusercontent.com/TylerHandel/rebuilt-sim-2026/344501f464477cb93517a7b5344b43d7ee9474a7/cad/robots/1678-lift.glb",
+      "bytes": 654624,
+      "sha256": "0fa109bc1ca67c18561294db70c7c4ac326f96b0c66123e3a25a22247d99c68b"
+    },
+    {
+      "part": "official-complete",
+      "url": "https://raw.githubusercontent.com/frc1678/C2026-Public/0f403dd8f3ad1f7d0dbe0c1bd23b24c210f41677/assets/Robot_Comp/model.glb",
+      "bytes": 36765564,
+      "sha256": "4f9bcd9b3489e3347ab3056462e0e96b614f34039a7d60d9bed72513838c4712",
+      "use": "Actual MK5n wheels, steerable forks and fixed L plates only; full original stays ignored."
+    }
+  ]
+}

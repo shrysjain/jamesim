@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "robotId": "3847-infrared",
+  "variant": "2026 Final Machine, explicitly selected by contributor",
+  "release": "https://github.com/Spectrum3847/2026-Spectrum/tree/8be90a6c1044d9433f6f7ade9dd0857871f7579b/advantagescope-custom-assets/Robot_FM",
+  "onshape": "https://cad.onshape.com/documents/363f51f69b0f6094e6657347/w/2da37c11ab641d1d095c37e0/e/3373ed9eb771d6e08a7d8782",
+  "upstreamCommit": "8be90a6c1044d9433f6f7ade9dd0857871f7579b",
+  "exactOnshapeElementVerified": false,
+  "files": [
+    {
+      "name": "model.glb",
+      "url": "https://raw.githubusercontent.com/Spectrum3847/2026-Spectrum/8be90a6c1044d9433f6f7ade9dd0857871f7579b/advantagescope-custom-assets/Robot_FM/model.glb",
+      "bytes": 26254568,
+      "sha256": "3b9fd1ff8a89ecb3aacd80714da4e0ff5ad8a7a91f4d487fd09b46c9b7a7e04a"
+    },
+    {
+      "name": "model_0.glb",
+      "url": "https://raw.githubusercontent.com/Spectrum3847/2026-Spectrum/8be90a6c1044d9433f6f7ade9dd0857871f7579b/advantagescope-custom-assets/Robot_FM/model_0.glb",
+      "bytes": 4010660,
+      "sha256": "6e8380770e3339c0ef5c66ce1cb07b5634ffffb7a397cb5d5e146503a0098f90"
+    },
+    {
+      "name": "model_1.glb",
+      "url": "https://raw.githubusercontent.com/Spectrum3847/2026-Spectrum/8be90a6c1044d9433f6f7ade9dd0857871f7579b/advantagescope-custom-assets/Robot_FM/model_1.glb",
+      "bytes": 1916668,
+      "sha256": "501d9a79bcc4cf85247f0b7aeecad100e5f7a8af314fcc531136bf10493558ec"
+    }
+  ],
+  "redistribution": {
+    "status": "pending",
+    "evidence": []
+  }
+}

@@ -1,3 +1,4 @@
+import { linkedHopperExtension, supportsIntakeToggle } from '../robot/poses';
 import { HopperDynamics } from './HopperDynamics';
 import { Climber } from './Climber';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -7,7 +8,6 @@ import { FuelSystem, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { Fuel } from './FuelSystem';
 import type { RobotDefinition, RobotPose } from '../robot/RobotDefinition';
 import { REBLITZ_CARGO, REBLITZ_FEEDER_POCKET } from '../robot/robots/2910-reblitz/cargo';
-import { supportsIntakeToggle } from '../robot/poses';
 import { REBLITZ, STARTING_POSE } from '../robot/RobotDefinition';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
@@ -45,6 +45,7 @@ export class RobotSimulation {
   input = { ...NEUTRAL_MECHANISMS };
   inspectionPose: RobotPose | null = null;
   rollerAngle = 0;
+  indexerAngle = 0;
   kickerDeployment = 0;
   actuatorsEnabled = true;
   private deployed = false;
@@ -57,6 +58,7 @@ export class RobotSimulation {
   private overturnedFor = 0;
   private outletBlocked = false;
   private payloadSignature = '';
+  private readonly cargoShape = new RAPIER.Ball(FUEL_RADIUS);
 
   constructor(private world: RAPIER.World, readonly fuel: FuelSystem, private fieldElements: Map<number, string>, definition: RobotDefinition = REBLITZ, readonly owner = 'robot-0') {
     this.storageSlots = definition.cargoSlots.map(([x, y, z]) => v3(x, y, z));
@@ -71,12 +73,19 @@ export class RobotSimulation {
   }
   get mechanism() { return this.chassis.definition.mechanisms; }
   get capacity() { return this.mechanism.capacity; }
+  get hopperMinimumLift() {
+    const lift = this.chassis.definition.hopper.autoLift;
+    return lift ? Math.max(0, Math.min(1, (this.held.length - lift.loweredCapacity) / (this.capacity - lift.loweredCapacity))) : 0;
+  }
+  get hopperLiftTarget() {
+    return this.chassis.definition.hopper.autoLift && (this.input.intake || this.input.reverse) ? 1 : this.hopperMinimumLift;
+  }
   get held() { return this.fuel.ownedBy(this.owner); }
   private storedPosition(slot: number) {
     const p = this.storageSlots[slot];
     // Initial preload/transfer packing; stored cargo then evolves in HopperDynamics.
     // Keep the original feeder entry pocket fixed on 2910.
-    return { ...p, x: p.x + (slot === this.chassis.definition.hopper.fixedSlot ? 0 : this.chassis.definition.hopper.stowTravel * (1 - this.chassis.pose.intake)) };
+    return { ...p, x: p.x + (slot === this.chassis.definition.hopper.fixedSlot ? 0 : this.chassis.definition.hopper.stowTravel * (1 - (this.chassis.definition.hopper.intakeCurve ? this.chassis.pose.hopper : this.chassis.pose.intake))) };
   }
   preload(ids: number[]) {
     for (const id of ids.slice(0, 8)) {
@@ -95,7 +104,7 @@ export class RobotSimulation {
   reset() {
     this.climber.reset(); this.hopper.reset();
     this.clearInput(); this.deployed = false; this.intakeOut = true; this.intakeTarget = 0; this.inspectionPose = null; this.actuatorsEnabled = true;
-    this.overturnedFor = 0; this.outletBlocked = false; this.rollerAngle = 0; this.kickerDeployment = 0;
+    this.overturnedFor = 0; this.outletBlocked = false; this.rollerAngle = 0; this.indexerAngle = 0; this.kickerDeployment = 0;
     this.chassis.reset(); this.chassis.setPose(STARTING_POSE); this.updatePayload();
     this.shooter.reset();
   }
@@ -117,6 +126,8 @@ export class RobotSimulation {
     this.toggleHeld = !!this.input.toggleIntake;
     const held = this.held;
     const shoot = !!this.input.shoot && !this.input.reverse && !this.inspectionPose && this.actuatorsEnabled && !this.climber.attached;
+    const indexerDirection = this.actuatorsEnabled && !this.inspectionPose ? this.input.reverse ? -1 : this.input.intake || shoot ? 1 : 0 : 0;
+    this.indexerAngle += (this.chassis.definition.hopper.indexer?.angularSpeed ?? 0) * indexerDirection * dt;
     const aimTurn = this.inspectionPose ? undefined : this.shooter.preStep(dt, shoot, this.actuatorsEnabled);
     if (!this.inspectionPose && this.actuatorsEnabled) {
       const demand = this.input.reverse || (this.input.intake && (!shoot || this.mechanism.simultaneousIntake));
@@ -126,32 +137,72 @@ export class RobotSimulation {
       const target = demand ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? cargoExtension(held.length, this.capacity) : 1;
       this.intakeTarget = target;
       const intake = approach(this.chassis.pose.intake, target, target < this.chassis.pose.intake ? INTAKE.compressSeconds : INTAKE.deploySeconds);
-      const hopper = this.chassis.definition.hopper.stowTravel && this.chassis.definition.intake.stowTravel ? intake : approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
+      const hopper = this.chassis.definition.hopper.intakeCurve ? linkedHopperExtension(this.chassis.definition, intake) : (this.chassis.definition.hopper.coupledToIntake || this.chassis.definition.hopper.stowTravel && this.chassis.definition.intake.stowTravel) ? intake : approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
       if (hopper === 1 && intake === 1) this.deployed = true;
       if (this.chassis.definition.intake.passiveKicker && intake > .1) this.kickerDeployment = Math.min(1, this.kickerDeployment + dt / .25);
-      this.chassis.setPose({ intake, hopper, hood: this.shooter.hood });
+      this.chassis.setPose({ intake, hopper, hood: this.shooter.hood, climber: this.climber.telemetry.extension });
       if (demand) this.rollerAngle += (this.input.reverse ? -1 : 1) * 32 * dt;
     }
     for (const f of held) {
       if (f.state === 'transferring') {
         if (!this.actuatorsEnabled) continue;
         f.age += dt;
-        const t = Math.min(1, f.age / INTAKE.transferSeconds), end = this.storedPosition(f.slot);
+        const t = Math.min(1, f.age / INTAKE.transferSeconds);
+        const entry = this.chassis.definition.hopper.entry, end = entry ? v3(...entry) : this.storedPosition(f.slot);
+        const width = this.chassis.definition.hopper.entryHalfWidth;
+        if (width !== undefined) end.z = Math.max(-width,Math.min(width,f.start.z));
         const control = v3(-0.4, 0.25, f.start.z * 0.5 + end.z * 0.5);
         f.local = lerp(lerp(f.start, control, t), lerp(control, end, t), t);
         if (t === 1) f.state = 'stored';
       } else if (f.state === 'stored' && !this.chassis.definition.hopper.volume) f.local = this.storedPosition(f.slot);
     }
-    if (!this.inspectionPose && this.chassis.definition.hopper.volume) this.hopper.step(dt, held, this.chassis.pose, {
-      position: this.chassis.body.translation(), velocity: this.chassis.body.linvel(),
-      angularVelocity: this.chassis.body.angvel(), rotation: this.chassis.renderRotation,
-    });
+    if (!this.inspectionPose && this.chassis.definition.hopper.volume) {
+      const body = this.chassis.body, q = this.chassis.renderRotation;
+      const spills = this.hopper.step(dt, held, this.chassis.pose, {
+        position: body.translation(), velocity: body.linvel(), angularVelocity: body.angvel(), rotation: q,
+      }, this.chassis.definition.hopper.volume.rim ? this.hopperFieldContact : undefined, indexerDirection);
+      this.releaseSpills(spills);
+    }
     this.updatePayload();
     if (!this.climber.attached) this.chassis.step(dt, aimTurn, this.actuatorsEnabled);
     else { this.chassis.body.resetForces(false); this.chassis.body.resetTorques(false); }
   }
+  private releaseSpills(spills: ReturnType<HopperDynamics['step']>) {
+    const body = this.chassis.body, q = this.chassis.renderRotation;
+    for (const spill of spills) {
+      const f = this.fuel.records[spill.id];
+      if (f.owner !== this.owner || f.state !== 'stored') continue;
+      const position = add(body.translation(), rotate(f.local, q));
+      const velocity = add(body.velocityAtPoint(position), rotate(spill.velocity, q));
+      if (this.fuel.release(f, position, velocity)) f.body.collider(0).setRestitution(.18);
+    }
+  }
+  /** Owned bodies are disabled, so protruding open-hopper spheres query the
+   * same static CAD colliders used by free fuel, including trench roofs/posts. */
+  private hopperFieldContact = (local: Vector, velocity: Vector) => {
+    const body = this.chassis.body, q = this.chassis.renderRotation;
+    let position = add(body.translation(),rotate(local,q));
+    this.world.intersectionsWithShape(position,q,this.cargoShape,collider => {
+      const contact = collider.contactShape(this.cargoShape,position,q,0);
+      if (!contact || contact.distance >= 0) return true;
+      const normal = contact.normal1;
+      position = add(position,scale(normal,-contact.distance+.0002));
+      const pointVelocity = body.velocityAtPoint(position), worldVelocity = add(pointVelocity,rotate(velocity,q));
+      const closing = worldVelocity.x*normal.x+worldVelocity.y*normal.y+worldVelocity.z*normal.z;
+      if (closing < 0) {
+        const resolved = unrotate(sub(sub(worldVelocity,scale(normal,closing)),pointVelocity),q);
+        Object.assign(velocity,resolved);
+      }
+      Object.assign(local,unrotate(sub(position,body.translation()),q));
+      return true;
+    },RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+    undefined,undefined,body,c=>this.fieldElements.has(c.handle));
+  };
   postStep(dt: number) {
     if (this.inspectionPose || !this.actuatorsEnabled) return;
+    if (this.chassis.definition.hopper.volume?.rim) {
+      this.releaseSpills(this.hopper.resolveExternalContacts(this.held, this.chassis.pose, this.hopperFieldContact));
+    }
     const up = rotate(v3(0, 1, 0), this.chassis.body.rotation());
     this.overturnedFor = up.y < 0.4 ? this.overturnedFor + dt : 0;
     const spilling = this.overturnedFor > 0.25;

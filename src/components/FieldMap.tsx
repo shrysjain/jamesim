@@ -6,10 +6,13 @@ import { driveStart } from '../sim/SessionConfig';
 import type { Alliance } from '../field/targets';
 import type { RobotDefinition } from '../robot/RobotDefinition';
 import type { StartPosition } from '../sim/SessionConfig';
-const u = (x: number) => (8.27 - x) / 16.54 * 1000;
-const v = (z: number) => (4.05 - z) / 8.1 * 490;
-export function FieldMap({ alliance, robot, position, onChange, controls, active, focusRef }: { alliance: Alliance; robot: RobotDefinition; position: StartPosition; onChange: (start: StartPosition) => void; controls: Controls; active: boolean; focusRef: RefObject<SVGSVGElement | null> }) {
-  const latest = useRef({ position, onChange, controls, alliance }); latest.current = { position, onChange, controls, alliance };
+import { ALLIANCE_LINE, FIELD_HALF_LENGTH, FIELD_HALF_WIDTH } from '../field/targets';
+import { fieldFootprints, START_LINE_WIDTH } from '../field/layout';
+const SCALE = 1000 / (2 * FIELD_HALF_LENGTH), HEIGHT = 2 * FIELD_HALF_WIDTH * SCALE;
+const u = (x: number) => (FIELD_HALF_LENGTH - x) * SCALE;
+const v = (z: number) => (FIELD_HALF_WIDTH - z) * SCALE;
+export function FieldMap({ alliance, robot, position, valid, onChange, controls, active, focusRef }: { alliance: Alliance; robot: RobotDefinition; position: StartPosition; valid: boolean; onChange: (start: StartPosition) => void; controls: Controls; active: boolean; focusRef: RefObject<SVGSVGElement | null> }) {
+  const latest = useRef({ position, onChange, controls, alliance, robot }); latest.current = { position, onChange, controls, alliance, robot };
   useEffect(() => {
     if (!active) return;
     focusRef.current?.focus({ preventScroll: true });
@@ -26,8 +29,8 @@ export function FieldMap({ alliance, robot, position, onChange, controls, active
       const dt = Math.min(.04, (now-before)/1000); before=now;
       if (editable(document.activeElement)) keys.clear();
       if (keys.size) {
-        const { position: p, controls: c, alliance: a, onChange: change }=latest.current, actions=readActions(keys,c);
-        const next=driveStart(p,{forward:actions.forward-actions.backward,strafe:actions.right-actions.left,turn:actions.turnLeft-actions.turnRight},a,dt);
+        const { position: p, controls: c, alliance: a, robot: r, onChange: change }=latest.current, actions=readActions(keys,c);
+        const next=driveStart(p,{forward:actions.forward-actions.backward,strafe:actions.right-actions.left,turn:actions.turnLeft-actions.turnRight},a,dt,r);
         latest.current.position=next;change(next);
       }
       frame=requestAnimationFrame(tick);
@@ -38,26 +41,38 @@ export function FieldMap({ alliance, robot, position, onChange, controls, active
   const move = (e: PointerEvent<SVGSVGElement>) => {
     const matrix = e.currentTarget.getScreenCTM(); if (!matrix) return;
     const point = new DOMPoint(e.clientX, e.clientY).matrixTransform(matrix.inverse());
-    onChange({ ...position, x: 8.27 - point.x / 1000 * 16.54, z: 4.05 - point.y / 490 * 8.1 });
+    onChange({ ...position, x: FIELD_HALF_LENGTH - point.x / SCALE, z: FIELD_HALF_WIDTH - point.y / SCALE });
   };
-  return <svg ref={focusRef} className="field-map" viewBox="-2 -2 1004 494" role="application" aria-label={`Starting position map. ${alliance} alliance. WASD drives; J and L rotate. Arrow points toward the intake. Drag to place.`} tabIndex={0}
+  const halfMarker = Math.max(robot.length, robot.width) * SCALE / 2, markerColor = valid ? '#f7dfaa' : '#ff818c';
+  return <svg ref={focusRef} className="field-map" viewBox={`-2 -2 1004 ${HEIGHT+4}`} role="application" aria-label={`Starting position map. ${alliance} alliance. Bumpers must overlap the colored starting line without touching a bump. Dashed trenches are overhead. WASD drives; J and L rotate. Arrow points toward the intake. Drag to place.`} tabIndex={0}
     onPointerDown={e => { e.currentTarget.focus(); e.currentTarget.setPointerCapture(e.pointerId); move(e); }}
     onPointerMove={e => { if (e.currentTarget.hasPointerCapture(e.pointerId)) move(e); }}
     onPointerUp={e => { if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); }}
   >
-    <rect width="1000" height="490" fill="#171b24" stroke="#637082" strokeWidth="2" />
-    <path d="M0 0H221V490H0Z" fill="#397ef0" opacity={alliance === 'blue' ? '.16' : '.05'} />
-    <path d="M779 0H1000V490H779Z" fill="#ef5260" opacity={alliance === 'red' ? '.16' : '.05'} />
-    <path d="M500 0V490" stroke="#454c59" strokeDasharray="5 8" />
-    {(['blue', 'red'] as const).map(a => { const x = a === 'blue' ? 220 : 780, sign = a === 'blue' ? 1 : -1, color = a === 'blue' ? '#6198ff' : '#fb7280'; return <g key={a} stroke={color} fill={color} fillOpacity=".12" strokeWidth="1.4">
-      <path d={`M${x} 0V490`} /><rect x={x-21} y="213" width="42" height="64" /><rect x={x-24} y="78" width="48" height="120" /><rect x={x-24} y="292" width="48" height="120" /><rect x={x-34} y="33" width="68" height="16" /><rect x={x-34} y="441" width="68" height="16" />
-      <rect x={a === 'blue' ? 0 : 965} y="210" width="35" height="70" /><path d={`M${a === 'blue' ? 45 : 955} 233h${sign*24}v24h${-sign*24}`} /><text x={a === 'blue' ? 64 : 935} y="26" stroke="none" fill={color} fillOpacity="1" textAnchor="middle" fontSize="13">{a.toUpperCase()}</text>
-    </g>; })}
-    <rect x={u(6.9)} y={v(3.3)} width={u(5.45)-u(6.9)} height={v(-3.3)-v(3.3)} fill="#95b6ee" opacity={alliance === 'blue' ? '.08' : '0'} />
-    <rect x={u(-5.45)} y={v(3.3)} width={u(-6.9)-u(-5.45)} height={v(-3.3)-v(3.3)} fill="#f795a0" opacity={alliance === 'red' ? '.08' : '0'} />
+    <rect width="1000" height={HEIGHT} fill="#171b24" stroke="#637082" strokeWidth="2" />
+    <rect width={u(ALLIANCE_LINE)} height={HEIGHT} fill="#397ef0" opacity={alliance === 'blue' ? '.16' : '.05'} />
+    <rect x={u(-ALLIANCE_LINE)} width={1000-u(-ALLIANCE_LINE)} height={HEIGHT} fill="#ef5260" opacity={alliance === 'red' ? '.16' : '.05'} />
+    <path d={`M500 0V${HEIGHT}`} stroke="#454c59" strokeDasharray="5 8" />
+    {(['blue', 'red'] as const).map(a => {
+      const sign = a === 'blue' ? 1 : -1, color = a === 'blue' ? '#6198ff' : '#fb7280';
+      const tapeX = a === 'blue' ? ALLIANCE_LINE + START_LINE_WIDTH : -ALLIANCE_LINE;
+      return <g key={a} stroke={color} fill={color} fillOpacity=".12" strokeWidth="1.4">
+        {fieldFootprints(a).map((f,i) => {
+          const x = u(f.maxX), y = v(f.maxZ), w = (f.maxX-f.minX)*SCALE, h = (f.maxZ-f.minZ)*SCALE;
+          return <g key={i}>
+            <rect x={x} y={y} width={w} height={h} strokeDasharray={f.kind === 'trench' ? '5 4' : undefined} fillOpacity={f.kind === 'trench' ? '.035' : '.12'} />
+            {f.kind === 'bump' && <path d={`M${x+w/2} ${y}V${y+h}`} opacity=".6" />}
+            <text x={x+w/2} y={y+h/2} stroke="none" fillOpacity="1" textAnchor="middle" dominantBaseline="middle" fontSize={f.kind === 'depot' ? '8' : '10'}>{f.kind.toUpperCase()}</text>
+            <title>{a} {f.kind}{f.kind === 'trench' ? ' · overhead arm, 22.25 inch clearance' : ''}</title>
+          </g>;
+        })}
+        <rect x={u(tapeX)} width={START_LINE_WIDTH*SCALE} height={HEIGHT} fillOpacity="1" stroke="none"><title>{a} robot starting line</title></rect>
+        <text x={u(sign*6.25)} y="24" stroke="none" fillOpacity="1" textAnchor="middle" fontSize="13">{a.toUpperCase()}</text>
+      </g>;
+    })}
     <g transform={`translate(${u(position.x)},${v(position.z)}) rotate(${-position.yaw*180/Math.PI})`}>
-      <rect x="-26" y="-26" width="52" height="52" fill="#e9e7dd" fillOpacity=".16" stroke="#f7dfaa" strokeWidth="2.5" />
-      <path d="M39 0L28 -8V8Z" fill="#f7dfaa" />
+      <rect x={-halfMarker} y={-halfMarker} width={halfMarker*2} height={halfMarker*2} fill={markerColor} fillOpacity=".16" stroke={markerColor} strokeWidth="2.5" />
+      <path d={`M${halfMarker+13} 0L${halfMarker+2} -8V8Z`} fill={markerColor} />
       <title>{robot.name} · intake points along the arrow</title>
     </g>
   </svg>;

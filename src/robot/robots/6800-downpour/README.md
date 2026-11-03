@@ -135,12 +135,14 @@ pnpm test:sim
 pnpm build:release
 ```
 
-The model currently has 2,024,604 bytes, 502,380 triangles and 31 primitives. The
-converter keeps 396 CAD bodies and omits 1,280 hardware/origin-detail bodies. No
+The model currently has 2,010,836 bytes, 499,168 triangles and 31 primitives. The
+converter preserves 392 CAD bodies and derives four plain padding bars and omits 1,280 hardware/origin-detail bodies. No
 embedded fuel bodies were identified in this export. It reconnects exporter
 face boundaries at 10-micron tolerance, simplifies the original surfaces and
 batches around real mechanism frames. It preserves palette colors and makes
-exterior hopper polycarbonate 24% opaque. No substitute robot geometry is used.
+exterior hopper polycarbonate 24% opaque. Only the lettered foam is replaced: four plain boxes retain the measured source
+padding envelopes while original bumper wood and mounts remain CAD. The shared
+renderer supplies the only bumper numbers, following the current authoring rule.
 
 The four simplified WCP X2 module occurrences contain their wheel/fork surfaces
 in one batched body. Preparation separates the actual triangles at the measured
@@ -151,50 +153,47 @@ the frame while retaining steering and wheel rotation.
 
 ## Shared integration and validation
 
-Base `origin/main`: `0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5`.
-Robot-only folders own the definition, visual bindings, preparation, provenance,
-runtime record and tests. The existing registry gains one import/entry. Other
-shared integration points are:
+Integrated base `origin/main`: `093d554` (initial source branch began at
+`0d64cbb`). A normal merge preserves the current roster, searchable selection,
+starting-line validation, climber/juice-press contracts, spill physics and launch
+profiles. Robot-owned folders hold geometry, configuration, provenance and tests.
+The final shared delta against that integrated base is:
 
-- `poses.ts`: optional manual capability helper for pivot-only intake control,
-  preserving legacy sliding-intake defaults.
-- `RobotSimulation.ts`: three intake-toggle guards use that capability helper.
-- `types.ts` and `Shooter.ts`: opt-in wide feed paths and the same optional shot
-  spread interface already used by related robot work; no global profile change.
-  Shooter aiming also fixes the 180° direction tie described above.
-- `ShotScatter.ts` and tests: reused deterministic physical launch uncertainty.
-- `RobotView.ts`: remove numerical-suspension movement of CAD module roots;
-  steering/spin remain active, matching the approved universal rigid-swerve rule.
-- `SwerveChassis.ts`: reuse the reviewed .05/Min contact-friction fix after loaded
-  Downpour reproduced sticking against both ends of a wall. Tire grip is unchanged.
-- `App.tsx`: capability-aware control list, binding-independent Downpour help,
-  stationary-shoot wording and CAD credit; no selector or layout rewrite.
+- `registry.ts`: one import/key, preserving every existing ID and order.
+- `Shooter.ts`: the narrow 180° chassis aiming correction described above;
+  current turn response, turret behavior and motion prediction remain intact.
+- `App.tsx`: binding-independent Downpour control help and CAD credit.
+
+The capability helper, wide feed paths, uncertainty model, rigid modules and
+wall-contact material fix are now supplied by main. Their integrated versions
+are retained rather than replaced by the initial branch's copies.
 
 Asset/build manifests are discovered through this robot's own runtime record;
 no common manifest, payload allowance or build configuration changes are made.
 Shared lines overlap related robot PRs and must retain compatible optional
 fields/guards rather than restore an older core file wholesale.
 
-Validation with Node 26.13.0 and pnpm 10.20.0:
+Final validation with Node 26.13.0 and pnpm 10.20.0 on the integrated base:
 
-- `pnpm test:robots`: 31 tests across 8 files passed.
-- `pnpm test:sim`: 165 tests across 28 files passed, including both-alliance
-  48-fuel discharge through all four lanes, body/ID and mass conservation,
-  above-floor feed paths, pivot controls, pause/reset, loaded wall slide and
-  back-away, static tubes, distinct shafts and rigid wheel/fork roots.
-- Actual-field shooting cases verify hub entry and processing after stopping,
-  plus physical passing from a 180° turn for Downpour and Re•Blitz.
+- `pnpm test:sim`: 380 tests across 53 files passed, including the current
+  registered roster, Downpour's full 48-fuel discharge through all four lanes,
+  body/ID and mass conservation, above-floor feed paths, pivot controls,
+  pause/reset, loaded wall slide/back-away and real CAD articulation.
+- Actual-field cases verify hub entry and processing after stopping, plus
+  physical passing from a 180° turn for Downpour and Re•Blitz.
 - `pnpm build:release`: integrity, TypeScript/Vite and production payload checks
-  passed. Nineteen runtime source files total 17.51 MiB; twelve hashed build assets.
-  The existing Rapier chunk-size warning remains.
-- An isolated browser inspected stowed/deployed/seeded-full/shooting/partial
-  CAD poses and both alliance colors, then checked selection, blue/red practice,
-  normal drive/intake/shoot/reverse inputs, saved-key help, pause/resume and R
-  restart. The stable-source flow passed with no page errors. A first UI attempt
-  overlapped a source update and was repeated after edits stopped.
+  passed. Twenty-five runtime source files total 33.27 MiB; eighteen hashed build
+  assets. The existing Rapier chunk-size warning remains.
+- The final isolated browser inspected stowed/deployed/seeded-full/shooting/
+  partial CAD poses with plain padding, then checked the current searchable
+  robot picker, detail/select, both-alliance practice, W/L/Shift/Space/Q/V,
+  saved-key help, pause/resume and R restart. No page errors were recorded.
 
-Ignored `.tools/` logs and screenshots retain local QA evidence. Prepared CAD is
-unchanged by the final shooting fix; its manifest hash matches the checked asset.
+Earlier standalone robot checks (31 tests / 8 files) and the initial 165-test
+simulation pass belong to the original two-robot base, before main advanced;
+those are retained as historical results in the source record. The final suite
+above includes all current robot contract and asset checks. Ignored `.tools/`
+logs/screenshots retain local evidence; original CAD and QA stay out of Git.
 
 CAD redistribution remains pending under the repository's owner-authorized
 noncommercial v1 policy. Public attribution and an unrelated code license are
