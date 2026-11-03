@@ -62,6 +62,7 @@ export class Shooter {
   private selection: { alliance: Alliance; kind: ShotTarget['kind']; time: number; extra: number; obstructed: boolean; until: number } | null = null;
   private active = false;
   private blocked = false;
+  private chassisAimTurnSign = 0;
   private randomState = 29102026;
   private scatterState = 20261102;
   private velocityEstimate: Vector | null = null;
@@ -218,10 +219,15 @@ export class Shooter {
     if (powered) this.elevation = approach(this.elevation, this.solution?.elevation ?? this.maxElevation, dt * SHOOTER.hoodRadiansPerSecond);
     this.drumAngle = (this.drumAngle + this.rpm * 2 * Math.PI / 60 * dt) % (2 * Math.PI);
     if (requested || this.laneState.some(l => l.id !== null)) this.feederAngle += 40 * dt;
-    if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) return undefined;
+    if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) { this.chassisAimTurnSign = 0; return undefined; }
     // Own yaw only while requested. Translation and tire/traction limits remain in SwerveChassis.
     if (this.mechanism.turret) return undefined;
-    return clamp((9 * this.solution.yawError + 1.8 * this.solution.trackingRate - 0.8 * this.chassis.body.angvel().y) / DRIVE_RESPONSE.turnRate, -0.75, 0.75);
+    const yawError = this.solution.yawError;
+    // Early steering forces can cross the 180-degree wrap tie. Hold the chosen
+    // direction until clear of it rather than reversing wheel commands each tick.
+    if (!this.chassisAimTurnSign || Math.abs(yawError) < Math.PI - .1) this.chassisAimTurnSign = Math.sign(yawError);
+    const steeringError = Math.abs(yawError) >= Math.PI - .1 ? Math.abs(yawError) * this.chassisAimTurnSign : yawError;
+    return clamp((9 * steeringError + 1.8 * this.solution.trackingRate - 0.8 * this.chassis.body.angvel().y) / DRIVE_RESPONSE.turnRate, -0.75, 0.75);
   }
 
   private get stable() {
@@ -325,7 +331,7 @@ export class Shooter {
       if (lane.id !== null) { const f = this.fuel.records[lane.id]; if (f.owner === this.owner && f.state === 'feeding') { f.state = 'stored'; f.local = { ...lane.start }; } }
       lane.id = null; lane.age = lane.availableAt = 0; lane.lastShotAt = -Infinity;
     }
-    this.turretYaw = 0; this.velocityEstimate = this.previousVelocity = null; this.motionAcceleration = 0;
+    this.turretYaw = 0; this.chassisAimTurnSign = 0; this.velocityEstimate = this.previousVelocity = null; this.motionAcceleration = 0;
     this.rpm = this.drumAngle = this.feederAngle = 0; this.elevation = this.maxElevation;
     this.solution = null; this.selection = null; this.active = this.blocked = false;
     this.feedOrder = []; this.laneOrder = []; this.nextFeedAt = this.nextLaunchAt = 0;
@@ -333,7 +339,7 @@ export class Shooter {
     this.scatterState = 20261102;
     if (clearShots) { this.shots.length = 0; this.shotsFired = 0; }
   }
-  stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; }
+  stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; this.chassisAimTurnSign = 0; }
   get telemetry(): ShooterTelemetry {
     const solution = this.solution, feeding = this.laneState.filter(l => l.id !== null).length;
     const mode = !this.active ? 'Idle' : !this.fuel.ownedBy(this.owner).length ? 'Empty' : !solution ? 'Out of range' : !this.stable ? 'Unstable'
