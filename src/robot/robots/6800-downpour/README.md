@@ -79,7 +79,11 @@ play deploys them through the existing shared actuator timing. Toggle intake
 extension folds the pivot as cargo permits; Intake and Reverse/eject extend it.
 The expanding hopper remains out after deployment. This uses the retained
 single intake/hopper mechanism family rather than simulating every guide/link
-constraint. Firing does not automatically fold the pivoting intake.
+constraint. Holding Aim/shoot/pass automatically folds the pivot as fuel empties;
+releasing it extends the intake again unless manually stowed. Both manual and
+automatic folding use the same cargo-limited physical actuator. Holding Intake
+while shooting retains the existing simultaneous-collection priority and keeps
+it extended; Reverse/eject also extends it.
 
 Both original 1 in tubes are static on the intake assembly. The powered roller
 spins around its own measured shaft; the lower and upper tubes never receive
@@ -113,7 +117,11 @@ Capacity 48 uses nonoverlapping 150 mm sphere seeds, three staggered layers and
 the shared local hopper dynamics. It accounts for the measured extended hopper
 plus the documented expandable top net; the packet's volume is not naively
 divided into a ball count. The net itself is an estimated containment envelope,
-not individually simulated strands. Manual folding is cargo-limited. Held fuel
+not individually simulated strands. The front contact plane is now X=-.6395,
+about 1 mm inside the measured polycarbonate inner face at X=-.6405245. The old
+-.65 plane let fuel surfaces cross that plate by almost 10 mm. Full-size seed
+spacing is adjusted by less than 1 mm to fit the corrected contact envelope;
+capacity remains 48. Manual and shooting retraction are cargo-limited. Held fuel
 continues to contribute mass/inertia once through the existing system.
 
 Shot spread is an estimate: yaw .032 rad, elevation .035 rad, speed fraction .035,
@@ -198,3 +206,10 @@ logs/screenshots retain local evidence; original CAD and QA stay out of Git.
 CAD redistribution remains pending under the repository's owner-authorized
 noncommercial v1 policy. Public attribution and an unrelated code license are
 not treated as CAD clearance. Raw source, QA pages and reports remain ignored.
+
+User-feedback follow-up: automatic Space folding, both-alliance partial/full
+discharge, actual prepared-polycarbonate clearance, accelerated full-hopper
+wall contact, pause/reset and the existing CAD articulation checks are covered
+by 15 focused tests across three files. Shared/core full validation and combined
+preview browser checks are coordinated by the integration task. The runtime
+GLB is unchanged by this contact/actuation correction.
