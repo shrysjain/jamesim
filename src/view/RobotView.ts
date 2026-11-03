@@ -16,14 +16,16 @@ export class RobotView {
   private nodes = new Map<string, THREE.Object3D>();
   private models = new Map<string, THREE.Group>();
   private poseNodes: { part: RobotPart; node: THREE.Object3D }[] = [];
-  private spinNodes: { node: THREE.Object3D; axis: 'x' | 'y' | 'z'; source: SpinSource; factor: number }[] = [];
+  private spinNodes: { node: THREE.Object3D; axis: 'x' | 'y' | 'z'; source: SpinSource; factor: number; intakeSide?: 'primary' | 'opposed' }[] = [];
   private activeId = '';
   private alliance: Alliance = 'blue';
   private refreshBumpers = true;
   private wheelRotation = [0, 0, 0, 0];
   private disposed = false;
   private badges = new THREE.Group();
+  private intakeMarker = new THREE.ArrowHelper(new THREE.Vector3(-1,0,0), new THREE.Vector3(), .24, 0xffd04f, .09, .06);
   constructor() {
+    this.intakeMarker.visible = false; this.group.add(this.intakeMarker);
     if (this.contacts) { this.contacts.frustumCulled = false; this.contacts.renderOrder = 22; this.contacts.visible = false; }
   }
   setDefinition(definition: RobotDefinition) {
@@ -40,11 +42,19 @@ export class RobotView {
     this.spinNodes = [];
     for (const [name, node] of this.nodes) {
       const binding = definition.visual.spin.find(b => b.node === name || !!b.prefix && name.startsWith(b.prefix));
-      if (binding) this.spinNodes.push({ node, axis: binding.axis ?? node.userData.spinAxis ?? 'z', source: binding.source, factor: binding.factor });
+      if (binding) {
+        let intakeSide: 'primary' | 'opposed' | undefined;
+        if (binding.source === 'intake' && definition.intake.opposed) {
+          intakeSide = 'primary'; const opposite = this.nodes.get(definition.visual.poseNodes.opposedIntake ?? '');
+          for (let ancestor: THREE.Object3D | null = node; ancestor; ancestor = ancestor.parent) if (ancestor === opposite) intakeSide = 'opposed';
+        }
+        this.spinNodes.push({ node, axis: binding.axis ?? node.userData.spinAxis ?? 'z', source: binding.source, factor: binding.factor, intakeSide });
+      }
     }
     this.wheelRotation.fill(0);
   }
   preview(definition: RobotDefinition, alliance: Alliance) {
+    this.intakeMarker.visible = false;
     this.setDefinition(definition); this.setAlliance(alliance); this.group.position.y = definition.visual.previewHeight;
     for (const { part, node } of this.poseNodes) {
       const { angle, pivot, shift, rise } = partTransform(definition, part, STARTING_POSE);
@@ -107,14 +117,16 @@ export class RobotView {
     if (mechanisms) this.setAlliance(mechanisms.shooter.alliance);
     const p = robot.body.translation(), q = robot.renderRotation, physicalRotation = robot.body.rotation(), d = robot.definition;
     this.group.position.set(p.x, p.y, p.z); this.group.quaternion.set(q.x, q.y, q.z, q.w);
+    this.intakeMarker.visible = !!d.intake.opposed && !!mechanisms;
+    if (this.intakeMarker.visible) { const sign = mechanisms!.intakeSide === 'Opposite' ? 1 : -1; this.intakeMarker.position.set(sign*.39, .20, 0); this.intakeMarker.setDirection(new THREE.Vector3(sign,0,0)); }
     for (const { part, node } of this.poseNodes) {
       const { angle, pivot, shift, rise } = partTransform(d, part, robot.pose);
       node.position.set(pivot[0] + shift, pivot[1] + rise, pivot[2]); node.rotation.z = angle;
     }
     if (mechanisms) {
-      for (const { node, axis, source, factor } of this.spinNodes) {
+      for (const { node, axis, source, factor, intakeSide } of this.spinNodes) {
         const angle = source === 'indexer' ? mechanisms.indexerAngle : source === 'intake' ? mechanisms.rollerAngle : source === 'feeder' ? mechanisms.rollerAngle * .7 + mechanisms.shooter.feederAngle : mechanisms.shooter.drumAngle;
-        node.rotation[axis] = angle * factor;
+        if (!intakeSide || (intakeSide === 'opposed' ? robot.pose.opposedIntake ?? 0 : robot.pose.intake) > .92) node.rotation[axis] = angle * factor;
       }
       const visual = d.visual;
       const turret = this.nodes.get(visual.turret ?? ''); if (turret) turret.rotation.y = mechanisms.shooter.turretYaw;
@@ -148,5 +160,5 @@ export class RobotView {
     object.traverse(o => { if (o instanceof THREE.Mesh) { geometries.add(o.geometry); (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => materials.add(m)); } });
     geometries.forEach(g => g.dispose()); materials.forEach(m => { if ('map' in m) (m.map as THREE.Texture | null)?.dispose(); m.dispose(); });
   }
-  dispose() { this.disposed = true; this.disposeObject(this.group); this.contacts?.geometry.dispose(); (this.contacts?.material as THREE.Material | undefined)?.dispose(); }
+  dispose() { this.disposed = true; this.intakeMarker.dispose(); this.disposeObject(this.group); this.contacts?.geometry.dispose(); (this.contacts?.material as THREE.Material | undefined)?.dispose(); }
 }

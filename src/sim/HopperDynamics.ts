@@ -121,7 +121,7 @@ export class HopperDynamics {
     return spills;
   }
   front(pose: RobotPose) { return this.volume.frontX + this.volume.frontTravel*(1-(this.definition.hopper.intakeCurve ? pose.hopper : pose.intake)); }
-  back(pose: RobotPose) { return this.volume.backX - (this.volume.backTravel ?? 0)*(1-pose.intake); }
+  back(pose: RobotPose) { return this.volume.backX - (this.volume.backTravel ?? 0)*(1-(pose.opposedIntake ?? 0)); }
   floor(x: number) { return this.volume.floorY + (this.volume.floorSlope ?? 0)*x; }
   private contactVelocities(balls: Particle[], front: number, back: number) {
     const rim = this.volume.rim!;

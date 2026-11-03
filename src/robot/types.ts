@@ -2,7 +2,7 @@ import type { Vec3 } from '../field/types';
 
 export type RobotPart = 'chassis' | 'intake' | 'opposedIntake' | 'hopper' | 'hood' | 'climber';
 export type RobotCollider = { part: RobotPart; center: Vec3; halfExtents: Vec3; radius?: number };
-export type RobotPose = { intake: number; hopper: number; hood: number; climber?: number };
+export type RobotPose = { intake: number; opposedIntake?: number; hopper: number; hood: number; climber?: number };
 export type HopperVolume = {
   frontX: number; backX: number; halfWidth: number; floorY: number; ceilingY: number;
   frontTravel: number; backTravel?: number; ceilingTravel?: number; // roof follows the vertical climber/lid stage
