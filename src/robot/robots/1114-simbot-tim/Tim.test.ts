@@ -32,7 +32,7 @@ describe('1114 Simbot Tim complete CAD integration',()=>{
   expect(lower.getParentNode()).toBeNull();expect(upper.getParentNode()?.getExtras().mechanism).toBe('intake');
   expect(lower.getTranslation()).toEqual(expect.arrayContaining([expect.closeTo(-.1652,4),expect.closeTo(.0952-.223,4)]));
   const rollers=[0,1,2].map(i=>nodes.find(n=>n.getExtras().mechanism===`hood-roller-${i}`)!);expect(new Set(rollers.map(n=>n.getTranslation().join(','))).size).toBe(3);
-  expect(doc.getRoot().listMaterials().find(m=>m.getName()==='chassis-clear')?.getAlphaMode()).toBe('BLEND');
+  expect(doc.getRoot().listMaterials().find(m=>m.getName()==='hopper-shell-clear')?.getAlphaMode()).toBe('BLEND');
  });
  it('limits automatic shooting compression while V can fully stow, and leaves legacy compression unchanged',async()=>{
   for(const robot of['1114-simbot-tim','2910-reblitz'] as const){

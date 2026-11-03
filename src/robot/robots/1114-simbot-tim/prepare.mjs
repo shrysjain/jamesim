@@ -21,6 +21,12 @@ const map=p=>new Vector3(...p).applyMatrix4(frame);
 // estimate consistent with the boot-zero/drop code and a mouth beyond bumpers.
 const travel=.34417,rise=.057;
 const drumPivot=map([0,.5715,-.01757]).toArray();
+// Last hood roller radius defines its actual release tangent: native +Z/up.
+const sourceExitElevation=Math.atan2(.1533823-.01757,.7037381-.5715);
+const hoodReference=sourceExitElevation-74*Math.PI/180;
+const hoodFrame=new Matrix4().makeTranslation(...drumPivot).multiply(new Matrix4().makeRotationZ(hoodReference)).multiply(new Matrix4().makeTranslation(...drumPivot.map(v=>-v)));
+const hoodPoint=p=>new Vector3(...p).applyMatrix4(hoodFrame).toArray();
+const protectedMeshes=new Set();for(const n of src.getRoot().listNodes())if(['S26-IN-P322','S26-IN-P330'].includes(n.getName()))protectedMeshes.add(n.getMesh());
 const groups=new Map(),parts=[],removed=[],embeddedFuel=[],moduleFrames=new Map();
 function moduleFrame(node){if(moduleFrames.has(node))return moduleFrames.get(node);let wheel=null;const scan=n=>{if(n.getMesh()&&n.getName().includes('Colson Wheel ('))wheel??=n;for(const c of n.listChildren())scan(c);};scan(node);if(!wheel)throw Error('Missing source wheel');const a=wheel.getMesh().listPrimitives()[0].getAttribute('POSITION'),ext=a.getMax([]).map((v,i)=>v-a.getMin([])[i]),axis=ext.indexOf(Math.min(...ext)),world=frame.clone().multiply(new Matrix4().fromArray(wheel.getWorldMatrix())),axle=new Vector3().setComponent(axis,1).transformDirection(world),c=new Vector3(...a.getMin([]).map((v,i)=>(v+a.getMax([])[i])/2)).applyMatrix4(world),r={x:c.x>0?.24765:-.24765,z:c.z>0?.3175:-.3175,basis:Math.atan2(axle.x,axle.z)};moduleFrames.set(node,r);return r;}
 function group(name,pivot=[0,0,0],parent=null,basis=0){if(!groups.has(name))groups.set(name,{name,pivot,parent,basis,node:doc.createNode(name).setTranslation(pivot).setExtras({mechanism:name}),batches:new Map()});return groups.get(name);}
@@ -28,12 +34,11 @@ group('chassis');group('intake');group('hood',drumPivot);group('shooter-drum',dr
 const hardware=/screw|\bbolt\b|washer|\bnut\b|nylock|rivet|bearing|spacer|collar|retaining|^9\d{4}[A-Z]/i;
 // Simplify source meshes before expanding instanced occurrences. The threshold
 // is bounded in meters; recognizable plates and their cutouts remain CAD.
-for(const mesh of src.getRoot().listMeshes())for(const p of mesh.listPrimitives()){
+for(const mesh of src.getRoot().listMeshes())if(!protectedMeshes.has(mesh))for(const p of mesh.listPrimitives()){
  const a=p.getAttribute('POSITION'),indices=p.getIndices();if(p.getMode()!==4||!indices||indices.getCount()<180)continue;
  const v=a.getArray();for(let i=0;i<v.length;i++)v[i]=Math.round(v[i]/.00001)*.00001;
  const remap=MeshoptSimplifier.generatePositionRemap(v,3),w=new Uint32Array(Array.from(indices.getArray(),i=>remap[i]));
  let [r]=MeshoptSimplifier.simplify(w,v,3,Math.floor(w.length*.06/3)*3,.002,['ErrorAbsolute','Prune']);
- if(r.length>w.length*.2){const [sloppy]=MeshoptSimplifier.simplifySloppy(w,v,3,null,Math.floor(w.length*.06/3)*3,.004/MeshoptSimplifier.getScale(v,3));if(sloppy.length>=3&&sloppy.length<r.length)r=sloppy;}
  indices.setArray(r);const geo=new BufferGeometry().setAttribute('position',new BufferAttribute(v,3)).setIndex(new BufferAttribute(r,1));geo.computeVertexNormals();p.getAttribute('NORMAL')?.setArray(geo.getAttribute('normal').array);geo.dispose();
 }
 function visit(node,path=[]){
@@ -45,8 +50,10 @@ function visit(node,path=[]){
   const nativeCenter=new Box3();for(const p of mesh.listPrimitives()){const a=p.getAttribute('POSITION');for(let k=0;k<8;k++)nativeCenter.expandByPoint(new Vector3(...a.getMin([]).map((x,i)=>k&(1<<i)?a.getMax([])[i]:x)).applyMatrix4(new Matrix4().fromArray(node.getWorldMatrix())));}
   const center=nativeCenter.getCenter(new Vector3()),size=nativeCenter.getSize(new Vector3());
   const intake=names.some(n=>n.startsWith('S26-IN-A200'));
-  const fixedIntake=/^S26-IN-P(?:011|018|303|311|318|319|320|321|322|324|330)$/.test(name)||['Part 46','Part 52'].includes(name);
+  const fixedIntake=/^S26-IN-P(?:011|018|303|311|318|319|320|321|324)$/.test(name)||['Part 46','Part 52'].includes(name);
   if(intake&&!fixedIntake){transform.premultiply(new Matrix4().makeTranslation(-travel,-rise,0));g=group('intake');
+   if(name==='S26-IN-P322')g=group('hopper-shell',[0,0,0],'intake');
+   if(name==='S26-IN-P330')g=group('hopper-rim',[0,0,0],'intake');
    let roller=null;if(['S26-IN-P302','Part 51'].includes(name))roller=[0,.2182,.2517];
    if(roller){const pivot=map(roller);pivot.x-=travel;pivot.y-=rise;g=group(roller[1]<.15?'intake-roller-lower':'intake-roller-upper',pivot.toArray(),'intake');}
   }
@@ -56,7 +63,7 @@ function visit(node,path=[]){
   if(shooter&&['Part 101','S26-P001_r1'].includes(name))g=group('shooter-drum',drumPivot);
   // Three genuine hood rollers each retain their own shaft center.
   if(shooter&&['S26-SH-P045','Part 102','S26-SH-P034','S26-SH-P035','S26-SH-P036','S26-SH-P037','S26-SH-P032','S26-SH-P024'].includes(name)&&center.y>.58){
-   const shafts=[[0,.6136723,-.2023799],[0,.6620811,-.1840866],[0,.7037381,-.1533823]],idx=shafts.reduce((best,p,i)=>Math.abs(p[1]-center.y)<Math.abs(shafts[best][1]-center.y)?i:best,0);g=group(`hood-roller-${idx}`,map(shafts[idx]).toArray(),'hood');
+   const shafts=[[0,.6136723,-.2023799],[0,.6620811,-.1840866],[0,.7037381,-.1533823]],idx=shafts.reduce((best,p,i)=>Math.abs(p[1]-center.y)<Math.abs(shafts[best][1]-center.y)?i:best,0);g=group(`hood-roller-${idx}`,hoodPoint(map(shafts[idx]).toArray()),'hood');
   }
   // Fixed floor/elevator roller covers rotate on their actual independent axes.
   if(!intake&&!shooter&&(name==='Part 99'||name==='Part 100'||name==='3" Thrifty Squish Wheel (45A, 1" Wide, 1/2" Hex Bore)'||name==='S26-BEL-P006')){
@@ -67,6 +74,7 @@ function visit(node,path=[]){
    const {x,z,basis}=moduleFrame(module),pivot=[x,.0508-.223,z],root=`module-${x>0?'front':'rear'}-${z>0?'right':'left'}`;
    g=group(`${root}-${wheelRoot?'wheel':'fork'}`,pivot,null,basis);
   }}
+  if(g.name==='hood'||g.parent==='hood')transform.premultiply(hoodFrame);
   const normal=new Matrix3().getNormalMatrix(transform),bounds=new Box3();
   for(const p of mesh.listPrimitives()){
    if(p.getMode()!==4)continue;const a=p.getAttribute('POSITION'),n=p.getAttribute('NORMAL'),idx=p.getIndices(),mat=p.getMaterial(),color=mat?.getBaseColorFactor()??[.25,.25,.25,1];
@@ -88,12 +96,15 @@ for(const g of groups.values()){
 }
 await doc.transform(weld(),prune());
 const before=doc.getRoot().listMeshes().reduce((s,m)=>s+m.listPrimitives().reduce((n,p)=>n+p.getIndices().getCount()/3,0),0);
+console.log('Topology-safe precompression triangles',before);
 if(before>600000)for(const m of doc.getRoot().listMeshes())for(const p of m.listPrimitives()){
+ if(m.listParents().some(n=>/^(hopper-shell|hopper-rim)-/.test(n.getName?.()??'')))continue;
  const a=p.getAttribute('POSITION'),idx=p.getIndices(),v=a.getArray(),target=Math.max(3,Math.floor(idx.getCount()*(590000/before)/3)*3);
- const [out]=MeshoptSimplifier.simplifySloppy(idx.getArray(),v,3,null,target,.008/MeshoptSimplifier.getScale(v,3));if(out.length>=3&&out.length<idx.getCount())idx.setArray(out);
+ const remap=MeshoptSimplifier.generatePositionRemap(v,3),w=new Uint32Array(Array.from(idx.getArray(),i=>remap[i]));
+ const [out]=MeshoptSimplifier.simplify(w,v,3,target,.004,['ErrorAbsolute','Prune']);if(out.length>=3&&out.length<idx.getCount())idx.setArray(out);
  const geo=new BufferGeometry().setAttribute('position',new BufferAttribute(v,3)).setIndex(new BufferAttribute(idx.getArray(),1));geo.computeVertexNormals();p.getAttribute('NORMAL').setArray(geo.getAttribute('normal').array);geo.dispose();
 }
 await doc.transform(weld(),prune(),meshopt({encoder:MeshoptEncoder,level:'high'}));const result=await io.writeBinary(doc),sha256=createHash('sha256').update(result).digest('hex'),triangles=doc.getRoot().listMeshes().reduce((s,m)=>s+m.listPrimitives().reduce((n,p)=>n+p.getIndices().getCount()/3,0),0),primitives=doc.getRoot().listMeshes().reduce((s,m)=>s+m.listPrimitives().length,0);
 if(result.length>6*1024*1024||triangles>650000||primitives>160)throw Error(`Budget exceeded ${result.length}bytes ${triangles}tris ${primitives}primitives`);
-await mkdir(output,{recursive:true});await writeFile(`${output}/robot.glb`,result);await mkdir(`assets/source/robots/${id}/prepared`,{recursive:true});await writeFile(`assets/source/robots/${id}/prepared/report.json`,JSON.stringify({sourceHash,bytes:result.length,sha256,triangles,primitives,parts,removed,embeddedFuel,travel,rise,drumPivot},null,2)+'\n');
+await mkdir(output,{recursive:true});await writeFile(`${output}/robot.glb`,result);await mkdir(`assets/source/robots/${id}/prepared`,{recursive:true});await writeFile(`assets/source/robots/${id}/prepared/report.json`,JSON.stringify({sourceHash,bytes:result.length,sha256,triangles,primitives,parts,removed,embeddedFuel,travel,rise,drumPivot,sourceExitElevation,hoodReference},null,2)+'\n');
 await writeFile(`assets/robots/${id}/runtime.json`,JSON.stringify({schemaVersion:1,robotId:id,group:{name:'Team1114 Simbot Tim full CAD and supplemental bumper envelope',source:'https://www.chiefdelphi.com/t/team-1114-simbotics-2026-simbot-tim-cad-release/522887',redistribution:{status:'pending',evidence:[]},files:[{path:`${output}/robot.glb`,bytes:result.length,sha256}]}},null,2)+'\n');console.log(JSON.stringify({bytes:result.length,sha256,triangles,primitives,parts:parts.length,removed:removed.length,embeddedFuel:embeddedFuel.length,drumPivot}));
