@@ -12,6 +12,7 @@ import {
 import { Matrix4, Matrix3, Vector3, Box3 } from 'three';
 import { photoAppearance } from './appearance.mjs';
 import { replacePrismarineBumpers } from './bumpers.mjs';
+import { rigPrismarineIntakeBrackets } from './intake-brackets.mjs';
 await Promise.all([
   MeshoptEncoder.ready,
   MeshoptDecoder.ready,
@@ -346,6 +347,7 @@ for (const b of batches.values()) {
   bounds[b.target].union(box);
 }
 replacePrismarineBumpers(doc);
+rigPrismarineIntakeBrackets(doc);
 const primitives = doc.getRoot().listMeshes().flatMap(mesh => mesh.listPrimitives());
 triangles = primitives.reduce((sum, primitive) => sum + primitive.getIndices().getCount() / 3, 0);
 await doc.transform(

@@ -5,6 +5,7 @@ export const PRISMARINE_VISUAL = {
   requiredNodes: [
     'chassis',
     'intake',
+    'intake-brackets',
     'turret',
     'turret-hood',
     'feeder-rotor',

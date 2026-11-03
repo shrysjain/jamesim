@@ -189,6 +189,27 @@ describe('8592 Prismarine', () => {
         }),
     ).toBe(false);
     const nodes = doc.getRoot().listNodes();
+    const brackets = nodes.find(n => n.getExtras().mechanism === 'intake-brackets')!;
+    const intake = nodes.find(n => n.getExtras().mechanism === 'intake')!;
+    expect(brackets.getParentNode()).toBe(intake);
+    const bracketBounds = () => {
+      const box = new Box3();
+      brackets.traverse(n => {
+        for (const p of n.getMesh()?.listPrimitives() ?? []) {
+          const a = p.getAttribute('POSITION')!;
+          box.union(new Box3(new Vector3(...a.getMinNormalized([])), new Vector3(...a.getMaxNormalized([])))
+            .applyMatrix4(new Matrix4().fromArray(n.getWorldMatrix())));
+        }
+      });
+      return box;
+    };
+    const deployedBrackets = bracketBounds();
+    intake.setTranslation([PRISMARINE.intake.stowTravel!, PRISMARINE.intake.stowRise!, 0]);
+    const stowedBrackets = bracketBounds();
+    expect(stowedBrackets.min.x).toBeCloseTo(deployedBrackets.min.x + .2, 4);
+    expect(stowedBrackets.min.y).toBeCloseTo(deployedBrackets.min.y + .087, 4);
+    expect(stowedBrackets.min.x).toBeGreaterThan(-PRISMARINE.length / 2);
+    intake.setTranslation([0, 0, 0]);
     const roller = (id: string) =>
       nodes.find((n) => n.getExtras().mechanism === id)!;
     const low = roller('shooter-roller-360').getWorldMatrix().slice(12, 15);
