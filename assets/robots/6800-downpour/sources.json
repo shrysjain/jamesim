@@ -190,7 +190,7 @@
       "backspin": 28
     },
     "scatterBasis": "Qualitative physical launch-uncertainty estimate, slightly broader than Icarus profile, not a TBA/Statbotics hit probability or forced hit/miss rating.",
-    "hopperDynamics": "Shared local full-size sphere solver; horizontal hopper stays out after deployment while pivot intake can retract as cargo permits. Net is represented by estimated containment envelope, not individually simulated strands.",
+    "hopperDynamics": "Shared full-size local sphere solver; Space folds the actual pivot as cargo empties, Intake/Reverse extends it, and the expanding horizontal hopper stays out. Net is an estimated containment envelope, not individual simulated strands.",
     "climbing": "No identified hook mechanism in inspected export hierarchy/batched surfaces. Team packet describes a real pivoting climber; capability remains disabled in this simulator."
   },
   "runtime": {
@@ -305,5 +305,24 @@
   "sharedAimingFix": "Retain the chosen chassis turn direction within 0.1 radians of the 180-degree wrap tie. Prevents alternating swerve commands from blocking aiming; actual-field passing cases protect Downpour and Reblitz.",
   "initialBaseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
   "integratedMainCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
-  "integrationNote": "Current main already includes the capability helper, wide feed paths, launch uncertainty, rigid modules and wall-contact fix. Final contribution preserves those interfaces and adds only registration, help/credit and the chassis aim-tie correction."
+  "integrationNote": "Current main already includes the capability helper, wide feed paths, launch uncertainty, rigid modules and wall-contact fix. Final contribution preserves those interfaces and adds only registration, help/credit and the chassis aim-tie correction.",
+  "userFeedbackFollowup": {
+    "automaticIntakeRetraction": "Aim/shoot/pass folds the actual pivoting intake as fuel empties; hopper remains deployed. No fictional slide added.",
+    "hopperContact": {
+      "oldFrontX": -0.65,
+      "frontX": -0.6395,
+      "sourcePanelInnerX": -0.6405245,
+      "preparedPanelInnerX": -0.640502,
+      "note": "About 1mm containment margin inside the actual polycarbonate panel; capacity stays48 with sub-millimeter seed-spacing adjustment."
+    },
+    "validation": {
+      "focusedTests": 15,
+      "files": 3,
+      "command": "pnpm exec vitest run src/robot/robots/6800-downpour --maxWorkers=1 --testTimeout=30000",
+      "log": ".tools/user-feedback-tests.log",
+      "coverage": "Automatic empty/full shooting fold, both alliances, all four original-body streams, CAD panel clearance, loaded wall-contact bounds, pause/reset and rigid-module/roller articulation.",
+      "combinedValidation": "Parent integration task owns the combined full suite and browser review."
+    },
+    "runtimeModel": "Unchanged; actual CAD pivot and polycarbonate geometry retained."
+  }
 }
