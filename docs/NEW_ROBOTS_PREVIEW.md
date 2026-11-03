@@ -35,10 +35,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Could not read preview helper' }
 Default folder:
 `$env:USERPROFILE\OneDrive\Documents\GitHub\jamesim-new-robots-preview`
 
-Default address: **http://127.0.0.1:5185/**. Keep PowerShell running; Ctrl+C stops
+Default address: **http://127.0.0.1:5187/**. Keep PowerShell running; Ctrl+C stops
 the server. The helper requires Node 26 and uses `npx.cmd` with pnpm 10.20.0,
 so Corepack is not required. Rerun it to fetch a newer preview. Change the port
-with `-Port 5186` if 5185 is occupied.
+with `-Port 5188` if 5187 is occupied.
 
 The dev server started in the cloud workspace is separate from a server running
 on your PC. The helper starts the same combined source locally.

@@ -2,7 +2,7 @@
 param(
     [string]$Repository = (Join-Path $env:USERPROFILE 'OneDrive\Documents\GitHub\jamesim'),
     [string]$PreviewFolder = '',
-    [ValidateRange(1024, 65535)][int]$Port = 5185
+    [ValidateRange(1024, 65535)][int]$Port = 5187
 )
 
 $ErrorActionPreference = 'Stop'
