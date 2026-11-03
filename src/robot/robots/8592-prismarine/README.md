@@ -83,6 +83,8 @@ User-provided front/rear photos and CAD view are hash-recorded in `sources.json`
 
 ## Main integration
 
+The shared game number badges replace the baked CAD lettering. Both the fabric and original `8592-number` faces take the alliance color, leaving the original bumper surface intact without overlapping white numbers.
+
 The combined roster uses the shared `fixedElevation` contract for the 64° hood. This replaces the branch-local equal-limit search special case and keeps Matterhorn and Prismarine on the same physical fixed-angle solver. The original CAD and hood angle remain unchanged. Registry integration preserves all eight robots.
 
 The combined wall-contact regression exposed slow reversal of unloaded spinning wheels at the estimated 8 m/s² powered response. Prismarine now uses the existing separate 16 m/s² braking response (a gameplay estimate, matching the 2× braking convention already used by Era II). Powered acceleration remains 8 m/s² and tire forces remain traction-limited. Empty and full-load wall escape must pass the original shared bounds.

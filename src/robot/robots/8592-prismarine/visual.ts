@@ -2,6 +2,7 @@ import type { RobotVisualDefinition } from '../../types';
 import { STANDARD_VISUAL } from '../../defaults';
 export const PRISMARINE_VISUAL = {
   ...STANDARD_VISUAL,
+  bumperMaterial: ['bumper', '8592-number'],
   requiredNodes: [
     'chassis',
     'intake',
@@ -28,5 +29,5 @@ export const PRISMARINE_VISUAL = {
     { prefix: 'shooter-roller-', source: 'shooter', factor: -1, axis: 'z' },
     { node: 'feeder-rotor', source: 'feeder', factor: 0.35, axis: 'y' },
   ],
-  numberSize: [0.27, 0.078],
+  numberSize: [0.3375, 0.0975],
 } satisfies RobotVisualDefinition;

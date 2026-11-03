@@ -54,7 +54,7 @@ export type RobotVisualDefinition = {
   turret?: string; turretHood?: string;
   kicker?: { node: string; radians: number };
   climber?: string; // side-hook-l1: translate Y by extension × climb.travel
-  bumperMaterial: string;
+  bumperMaterial: string | string[]; // include baked CAD lettering to replace it with shared number badges
   previewHeight: number;
   numberSize: [number, number];
   numberOffset: number;

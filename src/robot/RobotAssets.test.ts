@@ -24,7 +24,8 @@ describe('prepared robot asset contract', () => {
     const nodes = doc.getRoot().listNodes().filter(n => n.getExtras().mechanism), names = nodes.map(n => n.getExtras().mechanism as string);
     expect(new Set(names).size).toBe(names.length);
     for (const name of [...d.visual.requiredNodes, ...d.modules.flatMap(m => [`${m.name}-fork`, `${m.name}-wheel`])]) expect(names, `missing ${name}`).toContain(name);
-    expect(doc.getRoot().listMaterials().some(m => m.getName() === d.visual.bumperMaterial)).toBe(true);
+    const bumperMaterials = Array.isArray(d.visual.bumperMaterial) ? d.visual.bumperMaterial : [d.visual.bumperMaterial];
+    for (const name of bumperMaterials) expect(doc.getRoot().listMaterials().some(m => m.getName() === name), `missing bumper material ${name}`).toBe(true);
     for (const resource of [...doc.getRoot().listBuffers(), ...doc.getRoot().listTextures()]) expect(resource.getURI()).toBe('');
     let triangles = 0, primitives = 0;
     for (const node of doc.getRoot().listNodes()) for (const p of node.getMesh()?.listPrimitives() ?? []) {
