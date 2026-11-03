@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 1,
+  "robotId": "5000-icarus-2",
+  "teamNumber": 5000,
+  "season": 2026,
+  "robot": "Icarus 2.0",
+  "requestedCad": "https://gmail2245660.autodesk360.com/g/shares/SH90d2dQT28d5b6028119885f9f65ba749db",
+  "officialRelease": "https://www.chiefdelphi.com/t/frc-5000-hammerheads-2026-build-thread-open-alliance/507502",
+  "championshipShortLink": "https://a360.co/4wuUiK0",
+  "championshipStep": {
+    "url": "https://drive.google.com/file/d/1pD1Hule9rc5S2wxoWTjIMgEtEGykpZOK/view",
+    "name": "Championship Icarus.step",
+    "bytes": 458013644,
+    "metadataModified": "2026-05-14",
+    "downloadStatus": "Connected provider rejects files over 268,435,456 bytes; source geometry could not be downloaded."
+  },
+  "runtimeGeometry": {
+    "sourceRepository": "https://github.com/hammerheads5000/2026Rebuilt",
+    "pinnedCommit": "279745f273441470f86b78dece9d9c8653db0e2c",
+    "meshesLastChangedCommit": "7e117ff831a4b49074b28c8dd8d6fd21d59a4a0f",
+    "meshesLastChangedDate": "2026-07-09",
+    "qualification": "Official post-Championship AdvantageScope static mesh and five articulated components, matching the final Icarus 2.0 binder appearance. Exact equivalence to the requested 458 MB Championship STEP is unverified.",
+    "derivedPadding": {
+      "replacedSourceBody": "Bumpers:1/Body1 (1):1",
+      "retainedBackerBody": "Bumpers:1/Body19:1",
+      "reason": "Remove source embossed white team numbers so shared game labels are the only number layer.",
+      "approximation": "Four plain padding bars measured from the source outline; mechanisms/frame/backer retain original CAD.",
+      "sourceOutlineMeters": [
+        0.828875,
+        0.128397,
+        0.892375
+      ],
+      "thicknessMeters": 0.05248749256134033,
+      "sourceBodiesRetained": 321,
+      "sourceHardwareBodiesRemoved": 798
+    }
+  },
+  "binder": {
+    "url": "https://logandelaar1.github.io/Tech-Binder/",
+    "repository": "https://github.com/logandelaar1/Tech-Binder",
+    "commit": "17ed028157d5f5848c4e781f1fe7dae90f8ae4de"
+  },
+  "inputs": [
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/AdvantageScope/Robot_2026/config.json",
+      "file": "config.json",
+      "bytes": 4754,
+      "sha256": "ec178ff297857826285d69d71cc60408fff735489b06c8c2302bc0962d8be999"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/AdvantageScope/Robot_2026/model.glb",
+      "file": "model.glb",
+      "bytes": 65009232,
+      "sha256": "6d6a15b11971c8deb42397ae5be46af6baaf50d25fe9e376ad498bf959702cfa"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/AdvantageScope/Robot_2026/model_0.glb",
+      "file": "model_0.glb",
+      "bytes": 16942464,
+      "sha256": "fd75a3954b26c4e2b28673b47935ad388394c37c81b184c00c89aa9663cab569"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/AdvantageScope/Robot_2026/model_1.glb",
+      "file": "model_1.glb",
+      "bytes": 1371316,
+      "sha256": "e81c077ec77c49de1c5142f32218e89b0e21b9a249012e5c68a2d65d741bd542"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/AdvantageScope/Robot_2026/model_2.glb",
+      "file": "model_2.glb",
+      "bytes": 5725964,
+      "sha256": "f0e13551387579d5c02ccee12117e6fce375ad48e39243bafc6757ee24c9a0e9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/AdvantageScope/Robot_2026/model_3.glb",
+      "file": "model_3.glb",
+      "bytes": 5098680,
+      "sha256": "8ef612434f2e40a95b6aa48f065631e4f9658f9987c0095ca0c133cf9b372a52"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/AdvantageScope/Robot_2026/model_4.glb",
+      "file": "model_4.glb",
+      "bytes": 5146260,
+      "sha256": "41819ed889e35c2eafbde2119ab4dd67d966ed4895b9a0cd87d7835d2b1e882f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/src/main/java/frc/robot/Constants.java",
+      "file": "Constants.java",
+      "bytes": 52633,
+      "sha256": "1009a1123c16e954f1787e61ab46a6ace8c193d4f6b3c5d3191da9ec7b38513e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/src/main/java/frc/robot/subsystems/drive/generated/TunerConstants.java",
+      "file": "TunerConstants.java",
+      "bytes": 15228,
+      "sha256": "e16c5fe3228e6923889ab33a398eaf7c2a95fb6a8a63bbaba549e90bdceef383"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/src/main/java/frc/robot/subsystems/intake/IntakeVisualizer.java",
+      "file": "IntakeVisualizer.java",
+      "bytes": 2455,
+      "sha256": "cdd54c8b3db7a1150230a7e9b86d5a7aeb641918187ded53e04b1a584d1ee54e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/src/main/java/frc/robot/subsystems/intake/Intakes.java",
+      "file": "Intakes.java",
+      "bytes": 5833,
+      "sha256": "e2af9cae57d537e4afcef5c9f28725b1bec1b6c1a86bdd1d4446dcd7513e0e9e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/src/main/java/frc/robot/subsystems/turret/TurretVisualizer.java",
+      "file": "TurretVisualizer.java",
+      "bytes": 3344,
+      "sha256": "b517d4f65ee53502b725b27e7bbd0cd83faa4eca69d4168c7c159e0ddf1ce345"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hammerheads5000/2026Rebuilt/279745f273441470f86b78dece9d9c8653db0e2c/LICENSE",
+      "file": "LICENSE",
+      "bytes": 1072,
+      "sha256": "75705d777ee496fc48facdc2f7f5734a7a01228c3c7de8387e266b7831032793"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/logandelaar1/Tech-Binder/17ed028157d5f5848c4e781f1fe7dae90f8ae4de/src/lib/binder-content.ts",
+      "file": "binder-content.ts",
+      "bytes": 40311,
+      "sha256": "2b21e49e23c6f5a5f0fd31225081333f774a7a5d92133e3166bf7ede525059ed"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/logandelaar1/Tech-Binder/17ed028157d5f5848c4e781f1fe7dae90f8ae4de/src/lib/robot-notes.ts",
+      "file": "robot-notes.ts",
+      "bytes": 46663,
+      "sha256": "daa971f9bf7a5e273f94fe6ed8560ba089155811a3c3b1be966d6351aef45c82"
+    }
+  ],
+  "sourceToRobot": {
+    "mapping": "native(X,Y,Z) -> simulator(Z,Y-.223,-X)",
+    "turretNeutralYawRadians": -1.5707963267948966,
+    "hoodMaxElevationDegrees": 83.76,
+    "intakeRack": {
+      "deployedInches": 11.5,
+      "stowedInches": 0.2,
+      "downwardAngleDegrees": 21
+    }
+  },
+  "redistribution": {
+    "status": "pending",
+    "evidence": [],
+    "note": "Owner-authorized noncommercial v1 publication; CAD rights review remains pending. The team software license does not establish CAD clearance."
+  },
+  "estimates": [
+    "66 kg running empty mass includes the source 114.9 lb robot and 17.9 lb bumpers plus an estimated 5.8 kg battery; diagonal inertia is approximate.",
+    "51 full-size sphere capacity and simplified volume/tower contact envelope from visible packaging; no independent measured capacity claim.",
+    "10.0584 m/s\u00b2 powered acceleration and grip 1.05 are estimates; source 25 m/s\u00b2 is a command limit. Optional Icarus-only wheel braking is estimated at 20.1168 m/s\u00b2 and preserves powered acceleration.",
+    "12 shots/s, 38 fuel/s total, 5 rad/s turret response and .28 s feed transit are simulation estimates.",
+    "Per-shot angular/speed uncertainty and moving rating .90 are gameplay estimates, not TBA/Statbotics-derived hit probabilities."
+  ],
+  "limits": [
+    "Independent real intake selection is coupled to one shared scalar/control; both mouths physically collect and reverse.",
+    "Managed dye-rotor feed path, not detailed hook/roller contact physics.",
+    "No supported climb profile established for final CAD; disabled despite retained code constants.",
+    "Opaque SRPP is faithful to the source; modeled nets are incomplete and the envelope is approximate; decals and small hardware are omitted. The embossed outer foam is replaced by four measured plain padding bars; actual backer/frame/mechanisms remain.",
+    "Exact Championship STEP / July GLB geometry equivalence is unverified."
+  ],
+  "integrationFiles": [
+    "src/robot/registry.ts",
+    "src/robot/types.ts",
+    "src/robot/poses.ts",
+    "src/robot/validateDefinition.ts",
+    "src/sim/RobotSimulation.ts",
+    "src/sim/HopperDynamics.ts",
+    "src/sim/SwerveChassis.ts",
+    "src/sim/Shooter.ts",
+    "src/sim/ChassisAim.test.ts",
+    "src/App.tsx"
+  ],
+  "validation": {
+    "status": "Current-main full simulation, release build and refreshed browser checks passed.",
+    "runtime": {
+      "node": "26.13.0",
+      "pnpm": "10.20.0"
+    },
+    "previousBeforeCurrentMainMerge": {
+      "status": "passed",
+      "browser": "Local CAD stowed, deployed, seeded-full and turret poses and full app selection \u2192 practice W/L/Shift/Space/Q \u2192 bindings \u2192 pause/resume \u2192 R \u2192 setup \u2192 red practice passed with no page errors.",
+      "testFiles": [
+        "src/robot/robots/5000-icarus-2/Icarus.test.ts",
+        "src/robot/robots/5000-icarus-2/Animation.test.ts",
+        "src/sim/TurretTravel.test.ts",
+        "src/sim/ShotScatter.test.ts",
+        "src/robot/RobotAcceptance.test.ts",
+        "src/robot/RobotDefinitions.test.ts",
+        "src/robot/RobotAssets.test.ts",
+        "src/robot/RobotManifests.test.ts"
+      ],
+      "runtime": {
+        "node": "26.13.0",
+        "pnpm": "10.20.0"
+      },
+      "robotTests": {
+        "command": "pnpm test:robots --maxWorkers=1",
+        "passed": 32,
+        "files": 7,
+        "log": ".tools/robots-final-node26.log"
+      },
+      "simulation": {
+        "command": "pnpm test:sim",
+        "passed": 169,
+        "files": 28,
+        "seconds": 45.7,
+        "log": ".tools/full-simulation-node26.log"
+      },
+      "release": {
+        "command": "pnpm build:release",
+        "status": "passed",
+        "runtimeSourceFiles": 19,
+        "sourceMiB": 16.95,
+        "hashedBuildAssets": 12,
+        "log": ".tools/build-release-node26.log",
+        "warning": "Existing Rapier bundle-size warning remains."
+      },
+      "asset": {
+        "bytes": 1433012,
+        "triangles": 334907,
+        "primitives": 24,
+        "sha256": "b48a52bb7b4810b20c6663ebaa3b5c3dfe1207dd3be6c42772c51e4a3d62bbf7"
+      },
+      "focused": {
+        "command": "pnpm exec vitest run src/robot/robots/5000-icarus-2 src/sim/ShotScatter.test.ts src/sim/TurretTravel.test.ts --maxWorkers=1 --testTimeout=30000",
+        "passed": 19,
+        "files": 4
+      },
+      "browserArtifacts": [
+        ".tools/icarus-app.json",
+        ".tools/icarus-app.log",
+        ".tools/icarus-stowed.png",
+        ".tools/icarus-deployed.png",
+        ".tools/icarus-full.png",
+        ".tools/icarus-turret.png"
+      ],
+      "qualification": "A preliminary run accidentally used nested fallback Node24/pnpm11; its result is superseded by the recorded pinned Node26/pnpm10 runs."
+    },
+    "asset": {
+      "bytes": 1433216,
+      "triangles": 334619,
+      "primitives": 27,
+      "sha256": "1619540f2ef235331df0149c4eac58cba4e7a7558176d3e487afd406e8f3cf73"
+    },
+    "focused": {
+      "command": "pnpm exec vitest run src/robot/robots/5000-icarus-2 src/sim/ChassisAim.test.ts src/robot/RobotDefinitions.test.ts src/robot/RobotAssets.test.ts --maxWorkers=1 --testTimeout=30000",
+      "coverage": "The combined run passed all simulation, definition and asset cases. All four final animation cases passed in their focused rerun, including the quantized plain-padding envelope.",
+      "logs": [
+        ".tools/plain-bumpers-focused.log",
+        ".tools/plain-bumpers-animation.log"
+      ]
+    },
+    "release": {
+      "command": "pnpm build:release",
+      "status": "passed",
+      "runtimeSourceFiles": 25,
+      "hashedBuildAssets": 18,
+      "log": ".tools/release-integrated.log",
+      "sourceMiB": 32.72
+    },
+    "testFiles": [
+      "src/robot/robots/5000-icarus-2/Icarus.test.ts",
+      "src/robot/robots/5000-icarus-2/Animation.test.ts",
+      "src/sim/TurretTravel.test.ts",
+      "src/sim/ShotScatter.test.ts",
+      "src/robot/RobotAcceptance.test.ts",
+      "src/robot/RobotDefinitions.test.ts",
+      "src/robot/RobotAssets.test.ts",
+      "src/robot/RobotManifests.test.ts",
+      "src/sim/ChassisAim.test.ts"
+    ],
+    "browser": {
+      "status": "passed",
+      "cad": "Four poses: stowed, deployed, full, and rotated turret/hood; plain blue/red padding visually reviewed.",
+      "app": "Current-main search/detail/select \u2192 blue practice W/L/Intake/Shoot/Reverse/Toggle intake \u2192 saved controls \u2192 pause/resume \u2192 restart \u2192 setup \u2192 red practice. No page errors.",
+      "artifacts": [
+        ".tools/icarus-browser.json",
+        ".tools/integrated-5000.json"
+      ],
+      "qualification": "Parent performed isolated Chromium browser checks on the final plain-padding model and current-main UI."
+    },
+    "simulation": {
+      "command": "pnpm test:sim",
+      "passed": 383,
+      "files": 53,
+      "seconds": 169.86,
+      "log": ".tools/full-integrated.log"
+    }
+  },
+  "baseCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+  "previousBaseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
+  "currentMainIntegration": {
+    "base": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+    "method": "Normal merge ancestry; current core behavior retained, optional opposed-intake changes reapplied.",
+    "preserved": "All eight existing robot definitions and their selector/start-map, current scatter/motion estimator, finite turrets, open-rim spills, external contacts, indexers, climbing/juice press, wall response, rigid module support and match cutoff hold. Main ShotScatter.test.ts retained unchanged.",
+    "additionalFix": "At the exact 180-degree chassis-aim tie, retain turn direction until clear of the wrap; preserve DRIVE_RESPONSE.turnRate. Both-alliance real-field ReBlitz original-body pass regressions."
+  }
+}
