@@ -53,6 +53,26 @@ describe('Downpour source CAD articulation', () => {
       }
     } finally { view.dispose(); }
   });
+  it('keeps full-size stored fuel inside the actual polycarbonate faces', () => {
+    source.updateMatrixWorld(true);
+    const panel = source.getObjectByName('hopper-glass') as THREE.Mesh;
+    expect(panel).toBeDefined();
+    const positions = panel.geometry.getAttribute('position'), point = new THREE.Vector3(), frontFaces: number[] = [], sideFaces: number[] = [];
+    for (let i = 0; i < positions.count; i++) {
+      point.fromBufferAttribute(positions, i).applyMatrix4(panel.matrixWorld);
+      if (Math.abs(point.z) < .32 && point.x < -.62) frontFaces.push(point.x);
+      if (point.x > -.60 && point.x < -.20 && Math.abs(point.z) > .33) sideFaces.push(Math.abs(point.z));
+    }
+    const insideFront = Math.max(...frontFaces), insideSide = Math.min(...sideFaces);
+    // The old -.65 contact plane allowed a sphere to cross the real panel by ~10mm.
+    expect(D.hopper.volume!.frontX - insideFront).toBeGreaterThan(.0008);
+    expect(insideSide - D.hopper.volume!.halfWidth).toBeGreaterThan(.002);
+    for (const [x, , z] of D.cargoSlots) {
+      expect(x - .075).toBeGreaterThanOrEqual(D.hopper.volume!.frontX);
+      expect(Math.abs(z) + .075).toBeLessThanOrEqual(D.hopper.volume!.halfWidth);
+      expect(x + .075).toBeLessThanOrEqual(D.hopper.volume!.backX);
+    }
+  });
   it('keeps both crash-bar tubes static while the powered roller spins on its own shaft', () => {
     const { view, nodes, robot, mechanisms } = fixture();
     try {

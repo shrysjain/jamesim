@@ -16,7 +16,8 @@ export const DOWNPOUR: RobotDefinition = {
   modules: swerveModules(.2794, .2794),
   drive: { maxSpeed: 4.8, acceleration: 10, grip: 1.05 },
   intake: { pivot: [-.3032, -.03169, 0], stowedAngle: -110 * Math.PI / 180, manualRetraction: true },
-  hopper: { stowTravel: .30, volume: { frontX: -.65, backX: .04, halfWidth: .337, floorY: -.015, ceilingY: .39, frontTravel: 0 } },
+  // The measured back-panel inner face is X=-.6405245; keep a 1mm contact margin.
+  hopper: { stowTravel: .30, volume: { frontX: -.6395, backX: .04, halfWidth: .337, floorY: -.015, ceilingY: .39, frontTravel: 0 } },
   hood: { pivot: [.26035, .25149, 0], maxAngle: 38 * Math.PI / 180 },
   shooterGeometry: {
     pivot: [.26035, .25149, 0], drumRadius: .0508, guideLength: .14,
@@ -26,10 +27,10 @@ export const DOWNPOUR: RobotDefinition = {
     // Centers clear the actual floor and run behind the three measured feeder shafts.
     feedPath: [[-.20, .065, 0], [.02, .065, 0], [.219, .071, 0], [.187, .14, 0], [.155, .208, 0]],
   },
-  mechanisms: { capacity: 48, intakeRate: 42, compress: false, lanes: [-.2286, -.0762, .0762, .2286], fireRate: 25, feedSeconds: .30, turret: false, movingShots: false, simultaneousIntake: true, climb: false },
+  mechanisms: { capacity: 48, intakeRate: 42, compress: true, lanes: [-.2286, -.0762, .0762, .2286], fireRate: 25, feedSeconds: .30, turret: false, movingShots: false, simultaneousIntake: true, climb: false },
   cargoSlots: Array.from({ length: 48 }, (_, i): Vec3 => {
     const layer = Math.floor(i / 16), row = Math.floor(i % 16 / 4), column = i % 4;
-    return [-.565 + row * .151 + (layer % 2) * .0755, .061 + layer * Math.sqrt(.151 ** 2 - .0755 ** 2 - .035 ** 2), (column - 1.5) * .151 + (layer % 2) * .035];
+    return [-.564 + row * .1507 + (layer % 2) * .07535, .061 + layer * Math.sqrt(.1507 ** 2 - .07535 ** 2 - .035 ** 2), (column - 1.5) * .151 + (layer % 2) * .035];
   }).sort((a, b) => b[0] - a[0]),
   pickup: { minX: -.72, maxX: -.46, halfWidth: .305, mouthX: -.53, ejectX: -.73 },
   colliders: [

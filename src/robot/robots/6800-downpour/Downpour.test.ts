@@ -14,7 +14,7 @@ describe('6800 Downpour', () => {
     expect(validateRobotDefinition(DOWNPOUR)).toEqual([]);
     expect(supportsIntakeToggle(DOWNPOUR)).toBe(true);
     expect(DOWNPOUR.intake.stowTravel).toBeUndefined();
-    expect(DOWNPOUR.mechanisms).toMatchObject({ turret: false, climb: false, lanes: [-.2286, -.0762, .0762, .2286], capacity: 48, compress: false });
+    expect(DOWNPOUR.mechanisms).toMatchObject({ turret: false, climb: false, lanes: [-.2286, -.0762, .0762, .2286], capacity: 48, compress: true });
     for (let i = 0; i < DOWNPOUR.cargoSlots.length; i++) for (let k = i + 1; k < DOWNPOUR.cargoSlots.length; k++) {
       expect(Math.hypot(...DOWNPOUR.cargoSlots[i].map((v, a) => v - DOWNPOUR.cargoSlots[k][a]))).toBeGreaterThanOrEqual(.15);
     }
@@ -31,6 +31,10 @@ describe('6800 Downpour', () => {
       r.input.intake = true; run(s, .3); expect(r.chassis.pose.intake).toBe(1);
       r.input.intake = false; run(s, .6); expect(r.chassis.pose.intake).toBe(0);
       r.input.reverse = true; run(s, .3); expect(r.chassis.pose.intake).toBe(1);
+      r.input.reverse = false; r.requestIntakeToggle(); run(s, .6); expect(r.chassis.pose.intake).toBe(1);
+      r.input.shoot = true; run(s, .6);
+      expect(r.chassis.pose.intake).toBe(0); expect(r.chassis.pose.hopper).toBe(1);
+      r.input.shoot = false; run(s, .6); expect(r.chassis.pose.intake).toBe(1);
       const pose = { ...r.chassis.pose }, angle = r.rollerAngle;
       s.setRunning(false); run(s, .5); expect(r.chassis.pose).toEqual(pose); expect(r.rollerAngle).toBe(angle);
       s.startSession({ ...DEFAULT_MATCH, robot: '6800-downpour', preloads: 0 }, true);
@@ -50,13 +54,17 @@ describe('6800 Downpour', () => {
       run(s, .4); expect(r.chassis.body.mass()).toBeGreaterThan(DOWNPOUR.mass + 9);
       r.input.shoot = true;
       const feedColumns = new Set<number>();
+      let partialFold = false;
       for (let tick = 0; tick < 14 * 120; tick++) {
         s.update(1 / 120);
+        if (r.held.length > 12 && r.held.length < 36 && r.chassis.pose.intake < .9) partialFold = true;
+        expect(r.chassis.pose.hopper).toBe(1);
         for (const f of r.held.filter(f => f.state === 'feeding')) {
           expect(f.local.y).toBeGreaterThan(.045);
           if (f.local.x > .12 && f.local.y < .22) feedColumns.add(Math.round(f.local.z / .0762));
         }
       }
+      expect(partialFold).toBe(true); expect(r.chassis.pose.intake).toBe(0);
       expect(feedColumns.size).toBeGreaterThanOrEqual(4);
       expect(r.shooter.shotsFired).toBe(48); expect(r.held).toHaveLength(0);
       expect(new Set(r.shooter.shots.map(x => x.lane))).toEqual(new Set([0, 1, 2, 3]));
@@ -74,6 +82,10 @@ describe('6800 Downpour', () => {
       for (const [i, f] of s.fuelSystem.records.entries()) { s.fuelSystem.capture(f, r.owner, i, r.storageSlots[i]); f.state = 'stored'; }
       r.chassis.input = { ...NEUTRAL_INPUT, forward: direction }; run(s, 1.5);
       const contact = { ...r.chassis.body.translation() };
+      for (const f of r.held.filter(f => f.state === 'stored')) {
+        expect(f.local.x - .075).toBeGreaterThanOrEqual(DOWNPOUR.hopper.volume!.frontX - 1e-8);
+        expect(Math.abs(f.local.z) + .075).toBeLessThanOrEqual(DOWNPOUR.hopper.volume!.halfWidth + 1e-8);
+      }
       expect(contact.x * direction).toBeLessThan(2 - DOWNPOUR.length / 2 + .02);
       r.chassis.input = { ...NEUTRAL_INPUT, forward: direction, strafe: .15 }; run(s, 1.5);
       const slide = { ...r.chassis.body.translation() };
