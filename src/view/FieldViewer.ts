@@ -531,7 +531,7 @@ export class FieldViewer {
     this.pauseHeld = !!padActions.pause;
     if (!this.driveEnabled || !this.sim.running || !this.sim.match.driverEnabled) return;
     if ((a.intake || a.reverse || a.shoot) && this.sim.robotController?.inspectionPose) this.resumeMechanisms();
-    if (this.sim.robotController) this.sim.robotController.input = { intake: !!a.intake, reverse: !!a.reverse, shoot: !!a.shoot, toggleIntake: this.gamepadArmed && !!padActions.toggleIntake, climb: this.gamepadArmed && !!padActions.climb, supply: !!a.supply };
+    if (this.sim.robotController) this.sim.robotController.input = { intake: !!a.intake, reverse: !!a.reverse, shoot: !!a.shoot, toggleIntake: this.gamepadArmed && !!padActions.toggleIntake, switchIntake: this.gamepadArmed && !!padActions.switchIntake, climb: this.gamepadArmed && !!padActions.climb, supply: !!a.supply };
     const sign = this.sim.robotController?.shooter.alliance === 'red' && this.driveFrame === 'field' ? -1 : 1;
     this.sim.robot.input = toRobotInput({ forward: sign * (a.forward - a.backward), strafe: sign * (a.right - a.left), turn: a.turnLeft - a.turnRight, slow: false, brake: false }, this.sim.robot.telemetry.heading, this.driveFrame);
   }
@@ -658,6 +658,7 @@ export class FieldViewer {
 
       if (this.playerControls.keys.climb.includes(e.code) && this.sim?.running && this.sim.match.driverEnabled) this.sim.robotController?.requestClimbToggle();
       if (this.playerControls.keys.toggleIntake.includes(e.code) && this.sim?.running && this.sim.match.driverEnabled) this.sim.robotController?.requestIntakeToggle();
+      if (this.playerControls.keys.switchIntake.includes(e.code) && this.sim?.running && this.sim.match.driverEnabled) this.sim.robotController?.requestIntakeSwitch();
       this.keys.add(e.code); e.preventDefault();
     }
     if (e.code === 'Escape') { this.keys.clear(); this.flyDragging = false; }
