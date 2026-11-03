@@ -207,7 +207,7 @@
   },
   "runtime": {
     "bytes": 2914900,
-    "sha256": "4900d98486e6b2f40a03975890dadd0f58b97a699774cdcafc15f8cd716eb49e",
+    "sha256": "66714dc2dff08bee0d3375d9342926dd94353909c37333ca58acb59081ae3afa",
     "triangles": 602880,
     "primitives": 42
   },
@@ -229,7 +229,8 @@
       "releaseYawOffsetRadians": 3.141592653589793,
       "guideLengthMetres": 0.09,
       "evidence": "Main shaft and final hood-roller radius define the release tangent; actual projectile/rendered tangent tested at distinct hub/pass elevations."
-    }
+    },
+    "normalOwnership": "Recomputed NORMAL data is assigned to a cloned per-primitive accessor, avoiding mutation if future sources share it. This upload had no shared NORMAL accessors; all5625834 decoded position/normal/color/index scalar values are identical before/after this guard. Binary serialization order changes the hash without changing geometry."
   },
   "estimates": {
     "massKg": 64,
@@ -292,12 +293,12 @@
     "additionalAnimation": "3 prepared-CAD renderer cases passed after the full run: fixed lower bar with sliding upper carriage, every roller around its own shaft over a full revolution, and rigid wheel/fork mounts. Production implementation and runtime CAD unchanged."
   },
   "validation": {
-    "focused": "9 mechanism/physics tests passed; all5 CAD animation cases passed on corrected fixture rerun. First aggregate had a mutable-vector test fixture error; fixed without changing production behavior.",
+    "focused": "14 tests across2files passed after normal-accessor ownership guard:9 mechanism/physics plus5 preparedCAD animation including actual-projectile tangent.",
     "logs": [
-      ".tools/feedback-focused.log",
-      ".tools/feedback-animation.log"
+      ".tools/normal-ownership-focused.log",
+      ".tools/normal-ownership-release.log"
     ],
     "browser": "Five isolated CAD poses recaptured/reviewed, no page errors. Exact moving polycarbonate and intact top cap inspected. .tools/tim-browser.json; .tools/feedback-browser.log",
-    "build": "Node26.13.0 / pnpm10.20.0 pnpm build:release passed: 25 runtime source files,18 hashed production assets, TypeScript/Vite and asset integrity. Existing large Rapier bundle warning. Log .tools/feedback-release.log; combined simulation validation owned by parent."
+    "build": "Node26.13.0 / pnpm10.20.0 pnpm build:release passed after normal ownership guard:25runtime files/34.13MiB,18hashed production assets, TypeScript/Vite, asset integrity. ExistinglargeRapierbundlewarning; combined simulation ownedbyparent."
   }
 }
