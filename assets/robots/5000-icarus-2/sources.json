@@ -156,6 +156,12 @@
       ],
       "centralEightPreloadMaxAbsXPlusRadius": 0.253,
       "closedWallsAbsX": 0.3170437459867731
+    },
+    "hoodPreparation": {
+      "sourceElevationDegrees": 83.76,
+      "additionalBakedTiltDegrees": 0,
+      "runtimeRotation": "Requested elevation minus maximum elevation exactly once.",
+      "validated": "Rendered drum-to-upper-guide-roller tangent matches physical shared turret/chassis launch direction at three elevations and three turret yaws."
     }
   },
   "redistribution": {
@@ -202,24 +208,24 @@
       "pnpm": "10.20.0"
     },
     "asset": {
-      "bytes": 4125312,
-      "sha256": "3182b4060580511f91102ee2a3520d90d94323f2c261a7123d579a6205ea8a56",
+      "bytes": 4125176,
+      "sha256": "f4f147d248cf7ee10adea28adfec42c051aa03118d1ffba426eaae6ecba67aba",
       "triangles": 629533,
       "primitives": 32
     },
     "focused": {
       "command": "pnpm exec vitest run src/controls.test.ts src/robot/robots/5000-icarus-2 --maxWorkers=1 --testTimeout=30000",
-      "passed": 26,
+      "passed": 27,
       "files": 4,
-      "log": ".tools/intake-fixes-final-focused.log",
-      "qualification": "Includes final signed face-normal alignment on all five protected CAD surfaces, actual roof dimensions, continuous full37 collection and original-ID discharge on both selected sides, and loaded cargo clearance from roof/feeder obstacles."
+      "log": ".tools/hood-calibration-focused.log",
+      "qualification": "Includes final signed face-normal alignment on all five protected CAD surfaces, actual roof dimensions, continuous full37 collection and original-ID discharge on both selected sides, and loaded cargo clearance from roof/feeder obstacles. Actual prepared exit tangent matches physical launch direction at all min/mid/max elevations and three turret yaw poses; source hood already has83.76degrees and receives no duplicate prep tilt."
     },
     "release": {
       "command": "pnpm build:release",
       "status": "passed",
       "runtimeSourceFiles": 25,
       "hashedBuildAssets": 18,
-      "log": ".tools/fixes-release.log"
+      "log": ".tools/hood-calibration-release.log"
     },
     "browser": {
       "status": "passed",
