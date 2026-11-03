@@ -3,13 +3,24 @@ import type { RobotDefinition, RobotPart, RobotPose } from './types';
 export const COLLECTING_POSE: RobotPose = { intake: 1, hopper: 1, hood: 0 };
 export function partTransform(definition: RobotDefinition, part: RobotPart, pose: RobotPose) {
   const angle = part === 'intake' ? definition.intake.stowedAngle * (1 - pose.intake) : part === 'hood' ? -definition.hood.maxAngle * pose.hood : 0;
-  const pivot = part === 'opposedIntake' ? definition.intake.opposed?.pivot ?? [0, 0, 0] : part === 'intake' ? definition.intake.pivot : part === 'hood' ? definition.hood.pivot : [0, 0, 0];
+  const pivot = part === 'opposedIntake' ? definition.intake.opposed?.pivot ?? [0,0,0] : part === 'intake' ? definition.intake.pivot : part === 'hood' ? definition.hood.pivot : [0, 0, 0];
   const shift = part === 'opposedIntake' ? -(definition.intake.opposed?.stowTravel ?? 0) * (1 - pose.intake) : part === 'hopper' ? definition.hopper.stowTravel * (1 - pose.hopper) : part === 'intake' ? (definition.intake.stowTravel ?? 0) * (1 - pose.intake) : 0;
-  const rise = part === 'opposedIntake' ? (definition.intake.opposed?.stowRise ?? 0) * (1 - pose.intake) : part === 'intake' ? (definition.intake.stowRise ?? 0) * (1 - pose.intake) : 0;
+  const rise = part === 'opposedIntake' ? (definition.intake.opposed?.stowRise ?? 0) * (1 - pose.intake) : part === 'intake' ? (definition.intake.stowRise ?? 0) * (1 - pose.intake) : part === 'climber' ? (definition.climb?.travel ?? 0) * (pose.climber ?? 0) : 0;
   return { angle, pivot, shift, rise };
 }
 
 export const STARTING_POSE: RobotPose = { intake: 0, hopper: 0, hood: 0 };
 
-/** Capability is explicit for pivot intakes; older slider definitions retain V. */
-export const supportsIntakeToggle = (definition: RobotDefinition) => definition.intake.manualRetraction ?? !!definition.intake.stowTravel;
+/** Explicit false distinguishes a passive slide from a powered retractable one.
+ * Undefined preserves the established behavior of existing sliding intakes. */
+export function supportsIntakeToggle(definition: RobotDefinition): boolean {
+  return definition.intake.manualRetraction ?? !!definition.intake.stowTravel;
+}
+
+/** A definition-owned linkage maps the shared intake actuator to the actual hopper slide. */
+export function linkedHopperExtension(definition: RobotDefinition, intake: number): number {
+  const curve = definition.hopper.intakeCurve;
+  if (!curve) return intake;
+  const t = Math.max(0, Math.min(1, intake)) * (curve.length - 1), i = Math.min(curve.length - 2, Math.floor(t));
+  return curve[i] + (curve[i + 1] - curve[i]) * (t - i);
+}

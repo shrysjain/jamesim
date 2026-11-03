@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "4481-era-ii",
+  "group": {
+    "name": "Team 4481 Rembrandts Era II Worlds CAD",
+    "source": "https://cad.onshape.com/documents/af9429d854eeaa98a1b3eeda/w/2554bb5ba18919b03a73491d/e/0bdb27080b01fd9a708ccf46",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/4481-era-ii/robot.glb",
+        "bytes": 3652424,
+        "sha256": "a3a93d96eacf396aaec50c764ff62975c74f4c9718cca66ac5a1d6c3b69781c6"
+      }
+    ]
+  }
+}

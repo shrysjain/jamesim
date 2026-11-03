@@ -56,4 +56,23 @@ describe('hopper sphere dynamics', () => {
   for(let i=0;i<120;i++)h.step(1/120,balls,open,motion());expect(balls.map(f=>f.local.y)).toEqual([.2,.2]);
   h.reset();balls[0].state='stored';h.step(1/120,balls,open,{...motion(),velocity:v3(5,0,0)});expect(balls[0].local.x).toBe(0);
  });
+ it('lets open-hopper fuel rise above seed height and roll over each finite rim', () => {
+  const volume={...KEPLER.hopper.volume!,rim:{front:.2,back:.2,sides:.2}};
+  const definition={...KEPLER,hopper:{...KEPLER.hopper,volume}};
+  for(const [axis,plane,inward]of [['x',volume.frontX,1],['x',volume.backX,-1],['z',volume.halfWidth,-1],['z',-volume.halfWidth,1]] as const){
+   const h=new HopperDynamics(definition),f=ball(0,-.1,.2,0);f.local[axis]=plane+inward*.01;
+   const retained=h.step(1/120,[f],open,motion());
+   expect(retained).toHaveLength(0);expect((f.local[axis]-plane)*inward).toBeGreaterThanOrEqual(FUEL_RADIUS-.001);
+   f.local.y=volume.ceilingY+.1;
+   h.step(1/120,[f],open,motion());expect(f.local.y).toBeGreaterThan(volume.ceilingY);
+   h.reset();f.local[axis]=plane-inward*.01;f.local.y=.29;
+   expect(h.step(1/120,[f],open,motion()).map(s=>s.id)).toEqual([f.id]);
+  }
+ });
+ it('supports spheres on the rounded rim edge without clipping the wall or adding a lid', () => {
+  const volume={...KEPLER.hopper.volume!,rim:{front:.2,back:.2,sides:.2}},h=new HopperDynamics({...KEPLER,hopper:{...KEPLER.hopper,volume}});
+  const f=ball(0,-.1,.24,volume.halfWidth-.03);
+  expect(h.step(1/120,[f],open,motion())).toHaveLength(0);
+  expect(Math.hypot(volume.halfWidth-f.local.z,f.local.y-.2)).toBeGreaterThanOrEqual(FUEL_RADIUS-.0001);
+ });
 });

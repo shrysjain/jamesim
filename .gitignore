@@ -8,6 +8,7 @@ assets/intermediate/
 *.log
 .tools/
 assets/source/robots/
+/ProductionMain (1).glb
 
 # Keep preparation artifacts local; publish only the v1 runtime allowlist.
 public/assets/**/*.glb

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "robotId": "8592-prismarine",
+  "input": {
+    "filename": "ProductionMain (1).glb",
+    "localPath": "assets/source/robots/8592-prismarine/production-main.glb",
+    "bytes": 238053736,
+    "sha256": "7d51549f59b2a8cfd45d719f277c55fac88a4d8cb6be31cc1d8b200ee53a7860",
+    "provenance": "User-supplied Onshape ProductionMain GLB, November 1, 2026; exact Onshape document/revision not supplied."
+  },
+  "references": [
+    {
+      "url": "https://frc-events.firstinspires.org/2026/team/8592",
+      "description": "FIRST identifies 2026 Prismarine, Team 8592 Newton Squared."
+    },
+    {
+      "url": "https://github.com/FRC8592/2026-Rebuilt/tree/1a919dddd709a1a4ab97c95c543edd9253e48386/robot-production",
+      "revision": "1a919dddd709a1a4ab97c95c543edd9253e48386",
+      "description": "Official production robot code; fixed 64-degree shooter, turret, extending intake and rotary indexer."
+    }
+  ],
+  "redistribution": {
+    "status": "pending",
+    "evidence": [],
+    "notes": "Contributor supplied CAD for implementation. CAD rights/revision are unverified; no clearance inferred from software licensing."
+  },
+  "appearanceReferences": [
+    {
+      "path": "assets/source/robots/8592-prismarine/reference-front.png",
+      "sha256": "6f9972043d692d81cdbc05883b2faeefc865ba799950403ee887f96ae6c1559a",
+      "source": "User-supplied reference, November 2, 2026",
+      "usage": "Robot colors, finishes, cyan pixel wrap and turret orientation; source images excluded from runtime."
+    },
+    {
+      "path": "assets/source/robots/8592-prismarine/reference-rear.png",
+      "sha256": "396b8bff3ce22bcfe0d0411a757067fff2f82fff18179f8260be76c42675ba94",
+      "source": "User-supplied reference, November 2, 2026",
+      "usage": "Robot colors, finishes, cyan pixel wrap and turret orientation; source images excluded from runtime."
+    },
+    {
+      "path": "assets/source/robots/8592-prismarine/reference-cad.png",
+      "sha256": "0ecc545aea91e08b49f817f64e714b822039b12016fd5daa391e421ef69c818b",
+      "source": "User-supplied reference, November 2, 2026",
+      "usage": "Robot colors, finishes, cyan pixel wrap and turret orientation; source images excluded from runtime."
+    }
+  ]
+}

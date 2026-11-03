@@ -30,7 +30,10 @@ export function robotAcceptance(id: RobotId) {
         if (count < r.capacity) expect(extra.owner).toBe(r.owner);
         r.input.intake = false; r.input.reverse = true; run(s, 1);
         expect(r.held.length).toBeLessThan(count);
-        s.startSession(config, true); run(s, .6);
+        s.startSession(config, true);
+        // Exercise feeding at a known shooting range, independent of legal match-start placement.
+        const sign = alliance === 'blue' ? 1 : -1;
+        r.chassis.teleport([sign * 6.1, .26, sign * 2.1], sign === 1 ? 0 : Math.PI); run(s, .6);
         const owned = r.held.map(f => f.id).sort();
         r.input.shoot = true; run(s, 6 + count / Math.min(20, definition.mechanisms.fireRate));
         expect(r.shooter.shotsFired).toBe(count);

@@ -19,7 +19,21 @@
     "pinnedCommit": "279745f273441470f86b78dece9d9c8653db0e2c",
     "meshesLastChangedCommit": "7e117ff831a4b49074b28c8dd8d6fd21d59a4a0f",
     "meshesLastChangedDate": "2026-07-09",
-    "qualification": "Official post-Championship AdvantageScope static mesh and five articulated components, matching the final Icarus 2.0 binder appearance. Exact equivalence to the requested 458 MB Championship STEP is unverified."
+    "qualification": "Official post-Championship AdvantageScope static mesh and five articulated components, matching the final Icarus 2.0 binder appearance. Exact equivalence to the requested 458 MB Championship STEP is unverified.",
+    "derivedPadding": {
+      "replacedSourceBody": "Bumpers:1/Body1 (1):1",
+      "retainedBackerBody": "Bumpers:1/Body19:1",
+      "reason": "Remove source embossed white team numbers so shared game labels are the only number layer.",
+      "approximation": "Four plain padding bars measured from the source outline; mechanisms/frame/backer retain original CAD.",
+      "sourceOutlineMeters": [
+        0.828875,
+        0.128397,
+        0.892375
+      ],
+      "thicknessMeters": 0.05248749256134033,
+      "sourceBodiesRetained": 321,
+      "sourceHardwareBodiesRemoved": 798
+    }
   },
   "binder": {
     "url": "https://logandelaar1.github.io/Tech-Binder/",
@@ -144,30 +158,109 @@
     "Independent real intake selection is coupled to one shared scalar/control; both mouths physically collect and reverse.",
     "Managed dye-rotor feed path, not detailed hook/roller contact physics.",
     "No supported climb profile established for final CAD; disabled despite retained code constants.",
-    "Opaque SRPP is faithful to the source; modeled nets are incomplete and the envelope is approximate; decals and small hardware are omitted.",
+    "Opaque SRPP is faithful to the source; modeled nets are incomplete and the envelope is approximate; decals and small hardware are omitted. The embossed outer foam is replaced by four measured plain padding bars; actual backer/frame/mechanisms remain.",
     "Exact Championship STEP / July GLB geometry equivalence is unverified."
   ],
   "integrationFiles": [
     "src/robot/registry.ts",
     "src/robot/types.ts",
     "src/robot/poses.ts",
-    "src/robot/RobotDefinition.ts",
     "src/robot/validateDefinition.ts",
-    "src/robot/hopperGeometry.ts",
     "src/sim/RobotSimulation.ts",
     "src/sim/HopperDynamics.ts",
-    "src/sim/Shooter.ts",
-    "src/sim/TurretTravel.ts",
-    "src/sim/TurretTravel.test.ts",
-    "src/sim/ShotScatter.ts",
-    "src/sim/ShotScatter.test.ts",
     "src/sim/SwerveChassis.ts",
-    "src/view/RobotView.ts",
+    "src/sim/Shooter.ts",
+    "src/sim/ChassisAim.test.ts",
     "src/App.tsx"
   ],
   "validation": {
-    "status": "passed",
-    "browser": "Local CAD stowed, deployed, seeded-full and turret poses and full app selection \u2192 practice W/L/Shift/Space/Q \u2192 bindings \u2192 pause/resume \u2192 R \u2192 setup \u2192 red practice passed with no page errors.",
+    "status": "Current-main full simulation, release build and refreshed browser checks passed.",
+    "runtime": {
+      "node": "26.13.0",
+      "pnpm": "10.20.0"
+    },
+    "previousBeforeCurrentMainMerge": {
+      "status": "passed",
+      "browser": "Local CAD stowed, deployed, seeded-full and turret poses and full app selection \u2192 practice W/L/Shift/Space/Q \u2192 bindings \u2192 pause/resume \u2192 R \u2192 setup \u2192 red practice passed with no page errors.",
+      "testFiles": [
+        "src/robot/robots/5000-icarus-2/Icarus.test.ts",
+        "src/robot/robots/5000-icarus-2/Animation.test.ts",
+        "src/sim/TurretTravel.test.ts",
+        "src/sim/ShotScatter.test.ts",
+        "src/robot/RobotAcceptance.test.ts",
+        "src/robot/RobotDefinitions.test.ts",
+        "src/robot/RobotAssets.test.ts",
+        "src/robot/RobotManifests.test.ts"
+      ],
+      "runtime": {
+        "node": "26.13.0",
+        "pnpm": "10.20.0"
+      },
+      "robotTests": {
+        "command": "pnpm test:robots --maxWorkers=1",
+        "passed": 32,
+        "files": 7,
+        "log": ".tools/robots-final-node26.log"
+      },
+      "simulation": {
+        "command": "pnpm test:sim",
+        "passed": 169,
+        "files": 28,
+        "seconds": 45.7,
+        "log": ".tools/full-simulation-node26.log"
+      },
+      "release": {
+        "command": "pnpm build:release",
+        "status": "passed",
+        "runtimeSourceFiles": 19,
+        "sourceMiB": 16.95,
+        "hashedBuildAssets": 12,
+        "log": ".tools/build-release-node26.log",
+        "warning": "Existing Rapier bundle-size warning remains."
+      },
+      "asset": {
+        "bytes": 1433012,
+        "triangles": 334907,
+        "primitives": 24,
+        "sha256": "b48a52bb7b4810b20c6663ebaa3b5c3dfe1207dd3be6c42772c51e4a3d62bbf7"
+      },
+      "focused": {
+        "command": "pnpm exec vitest run src/robot/robots/5000-icarus-2 src/sim/ShotScatter.test.ts src/sim/TurretTravel.test.ts --maxWorkers=1 --testTimeout=30000",
+        "passed": 19,
+        "files": 4
+      },
+      "browserArtifacts": [
+        ".tools/icarus-app.json",
+        ".tools/icarus-app.log",
+        ".tools/icarus-stowed.png",
+        ".tools/icarus-deployed.png",
+        ".tools/icarus-full.png",
+        ".tools/icarus-turret.png"
+      ],
+      "qualification": "A preliminary run accidentally used nested fallback Node24/pnpm11; its result is superseded by the recorded pinned Node26/pnpm10 runs."
+    },
+    "asset": {
+      "bytes": 1433216,
+      "triangles": 334619,
+      "primitives": 27,
+      "sha256": "1619540f2ef235331df0149c4eac58cba4e7a7558176d3e487afd406e8f3cf73"
+    },
+    "focused": {
+      "command": "pnpm exec vitest run src/robot/robots/5000-icarus-2 src/sim/ChassisAim.test.ts src/robot/RobotDefinitions.test.ts src/robot/RobotAssets.test.ts --maxWorkers=1 --testTimeout=30000",
+      "coverage": "The combined run passed all simulation, definition and asset cases. All four final animation cases passed in their focused rerun, including the quantized plain-padding envelope.",
+      "logs": [
+        ".tools/plain-bumpers-focused.log",
+        ".tools/plain-bumpers-animation.log"
+      ]
+    },
+    "release": {
+      "command": "pnpm build:release",
+      "status": "passed",
+      "runtimeSourceFiles": 25,
+      "hashedBuildAssets": 18,
+      "log": ".tools/release-integrated.log",
+      "sourceMiB": 32.72
+    },
     "testFiles": [
       "src/robot/robots/5000-icarus-2/Icarus.test.ts",
       "src/robot/robots/5000-icarus-2/Animation.test.ts",
@@ -176,54 +269,33 @@
       "src/robot/RobotAcceptance.test.ts",
       "src/robot/RobotDefinitions.test.ts",
       "src/robot/RobotAssets.test.ts",
-      "src/robot/RobotManifests.test.ts"
+      "src/robot/RobotManifests.test.ts",
+      "src/sim/ChassisAim.test.ts"
     ],
-    "runtime": {
-      "node": "26.13.0",
-      "pnpm": "10.20.0"
-    },
-    "robotTests": {
-      "command": "pnpm test:robots --maxWorkers=1",
-      "passed": 32,
-      "files": 7,
-      "log": ".tools/robots-final-node26.log"
+    "browser": {
+      "status": "passed",
+      "cad": "Four poses: stowed, deployed, full, and rotated turret/hood; plain blue/red padding visually reviewed.",
+      "app": "Current-main search/detail/select \u2192 blue practice W/L/Intake/Shoot/Reverse/Toggle intake \u2192 saved controls \u2192 pause/resume \u2192 restart \u2192 setup \u2192 red practice. No page errors.",
+      "artifacts": [
+        ".tools/icarus-browser.json",
+        ".tools/integrated-5000.json"
+      ],
+      "qualification": "Parent performed isolated Chromium browser checks on the final plain-padding model and current-main UI."
     },
     "simulation": {
       "command": "pnpm test:sim",
-      "passed": 169,
-      "files": 28,
-      "seconds": 45.7,
-      "log": ".tools/full-simulation-node26.log"
-    },
-    "release": {
-      "command": "pnpm build:release",
-      "status": "passed",
-      "runtimeSourceFiles": 19,
-      "sourceMiB": 16.95,
-      "hashedBuildAssets": 12,
-      "log": ".tools/build-release-node26.log",
-      "warning": "Existing Rapier bundle-size warning remains."
-    },
-    "asset": {
-      "bytes": 1433012,
-      "triangles": 334907,
-      "primitives": 24,
-      "sha256": "b48a52bb7b4810b20c6663ebaa3b5c3dfe1207dd3be6c42772c51e4a3d62bbf7"
-    },
-    "focused": {
-      "command": "pnpm exec vitest run src/robot/robots/5000-icarus-2 src/sim/ShotScatter.test.ts src/sim/TurretTravel.test.ts --maxWorkers=1 --testTimeout=30000",
-      "passed": 19,
-      "files": 4
-    },
-    "browserArtifacts": [
-      ".tools/icarus-app.json",
-      ".tools/icarus-app.log",
-      ".tools/icarus-stowed.png",
-      ".tools/icarus-deployed.png",
-      ".tools/icarus-full.png",
-      ".tools/icarus-turret.png"
-    ],
-    "qualification": "A preliminary run accidentally used nested fallback Node24/pnpm11; its result is superseded by the recorded pinned Node26/pnpm10 runs."
+      "passed": 383,
+      "files": 53,
+      "seconds": 169.86,
+      "log": ".tools/full-integrated.log"
+    }
   },
-  "baseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5"
+  "baseCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+  "previousBaseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
+  "currentMainIntegration": {
+    "base": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+    "method": "Normal merge ancestry; current core behavior retained, optional opposed-intake changes reapplied.",
+    "preserved": "All eight existing robot definitions and their selector/start-map, current scatter/motion estimator, finite turrets, open-rim spills, external contacts, indexers, climbing/juice press, wall response, rigid module support and match cutoff hold. Main ShotScatter.test.ts retained unchanged.",
+    "additionalFix": "At the exact 180-degree chassis-aim tie, retain turn direction until clear of the wrap; preserve DRIVE_RESPONSE.turnRate. Both-alliance real-field ReBlitz original-body pass regressions."
+  }
 }

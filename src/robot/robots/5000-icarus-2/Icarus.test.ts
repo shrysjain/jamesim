@@ -43,6 +43,7 @@ describe('5000 Icarus2.0 mechanism integration',()=>{
    expect(Math.abs(p[2])+FUEL_RADIUS).toBeLessThanOrEqual(v.halfWidth);
    expect(p[1]-FUEL_RADIUS).toBeGreaterThanOrEqual(v.floorY-1e-12);expect(p[1]+FUEL_RADIUS).toBeLessThanOrEqual(v.ceilingY);
    for(const o of D.hopper.obstacles!)expect(hopperObstacleContact(p,o).distance).toBeGreaterThanOrEqual(FUEL_RADIUS);
+   if(i<8){expect(p[0]-FUEL_RADIUS).toBeGreaterThanOrEqual(v.frontX+v.frontTravel);expect(p[0]+FUEL_RADIUS).toBeLessThanOrEqual(v.backX-v.backTravel!);}
    for(const q of D.cargoSlots.slice(i+1))expect(Math.hypot(...p.map((n,k)=>n-q[k]))).toBeGreaterThanOrEqual(.15);
   }
  });
