@@ -11,8 +11,8 @@
     "files": [
       {
         "path": "public/assets/robots/5000-icarus-2/robot.glb",
-        "bytes": 4125312,
-        "sha256": "3182b4060580511f91102ee2a3520d90d94323f2c261a7123d579a6205ea8a56"
+        "bytes": 4125176,
+        "sha256": "f4f147d248cf7ee10adea28adfec42c051aa03118d1ffba426eaae6ecba67aba"
       }
     ]
   }
