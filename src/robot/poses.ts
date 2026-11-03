@@ -10,3 +10,6 @@ export function partTransform(definition: RobotDefinition, part: RobotPart, pose
 }
 
 export const STARTING_POSE: RobotPose = { intake: 0, hopper: 0, hood: 0 };
+
+/** Explicit manual capability also supports pivot-only intakes; retain legacy slide defaults. */
+export const supportsIntakeToggle = (definition: RobotDefinition) => definition.intake.manualRetraction ?? !!definition.intake.stowTravel;

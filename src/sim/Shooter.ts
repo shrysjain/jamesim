@@ -1,3 +1,4 @@
+import { sampleShotScatter } from './ShotScatter';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { FIELD_HALF_LENGTH, shotTarget } from '../field/targets';
 import type { Alliance, ShotTarget } from '../field/targets';
@@ -59,6 +60,7 @@ export class Shooter {
   private selection: { alliance: Alliance; kind: ShotTarget['kind']; time: number; extra: number; obstructed: boolean; until: number } | null = null;
   private active = false;
   private blocked = false;
+  private chassisAimTurnSign = 0;
   private randomState = 29102026;
   private feedOrder: number[] = [];
   private laneOrder: number[] = [];
@@ -173,10 +175,16 @@ export class Shooter {
     if (powered) this.elevation = approach(this.elevation, this.solution?.elevation ?? this.maxElevation, dt * SHOOTER.hoodRadiansPerSecond);
     this.drumAngle = (this.drumAngle + this.rpm * 2 * Math.PI / 60 * dt) % (2 * Math.PI);
     if (requested || this.laneState.some(l => l.id !== null)) this.feederAngle += 40 * dt;
-    if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) return undefined;
+    if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) { this.chassisAimTurnSign = 0; return undefined; }
     // Own yaw only while requested. Translation and tire/traction limits remain in SwerveChassis.
     if (this.mechanism.turret) return undefined;
-    return clamp((9 * this.solution.yawError + 1.8 * this.solution.trackingRate - 0.8 * this.chassis.body.angvel().y) / 4.8, -0.75, 0.75);
+    const yawError = this.solution.yawError;
+    // At the 180-degree tie, early module steering forces can cross the wrap
+    // boundary. Hold the chosen direction until clear of it instead of reversing
+    // the wheel commands every tick while the chassis barely moves.
+    if (!this.chassisAimTurnSign || Math.abs(yawError) < Math.PI - .1) this.chassisAimTurnSign = Math.sign(yawError);
+    const steeringError = Math.abs(yawError) >= Math.PI - .1 ? Math.abs(yawError) * this.chassisAimTurnSign : yawError;
+    return clamp((9 * steeringError + 1.8 * this.solution.trackingRate - 0.8 * this.chassis.body.angvel().y) / 4.8, -0.75, 0.75);
   }
 
   private get stable() {
@@ -190,7 +198,12 @@ export class Shooter {
       && Math.abs(this.rpm * this.speedPerRpm - this.solution.speed) < Math.max(0.12, this.solution.speed * 0.02);
   }
 
-  private feedPoints(start: Vector, end: Vector) { return [start, ...(this.geometry.feedPath ?? []).map(p => v3(...p)), end]; }
+  private feedPoints(start: Vector, end: Vector) {
+    // Wide fixed rollers feed along the selected release column, not one central
+    // throat. Use the actual muzzle Z so reversed shooters keep the same path.
+    const lateral = this.geometry.feedAcrossLanes ? end.z - this.geometry.pivot[2] : 0;
+    return [start, ...(this.geometry.feedPath ?? []).map(p => v3(p[0], p[1], p[2] + lateral)), end];
+  }
   private feedLength(start: Vector, end: Vector) {
     const p = this.feedPoints(start, end);
     return p.slice(1).reduce((sum, point, i) => sum + Math.hypot(point.x-p[i].x, point.y-p[i].y, point.z-p[i].z), 0);
@@ -245,12 +258,14 @@ export class Shooter {
       // Reduce precision while translating; the released ball keeps its physical trajectory.
       const accuracy = this.chassis.telemetry.speed >= SHOOTER.movingThreshold ? this.geometry.movingAccuracy ?? 1 : 1;
       const dispersion = 1 / clamp(accuracy, .05, 1);
-      const elevation = this.elevation + (this.random() - 0.5) * 0.008 * dispersion;
-      const yaw = (this.random() - 0.5) * 0.009 * dispersion;
+      const scatter = this.geometry.spread ? sampleShotScatter(this.geometry.spread, this.geometry.movingAccuracy ?? .9, this.chassis.telemetry.speed, this.chassis.body.angvel().y, () => this.random()) : null;
+      const elevation = this.elevation + (scatter?.elevation ?? (this.random() - 0.5) * 0.008 * dispersion);
+      const yaw = scatter?.yaw ?? (this.random() - 0.5) * 0.009 * dispersion;
       const exit = rotate(this.turretRotate(scale(v3(Math.cos(elevation) * Math.cos(yaw), Math.sin(elevation), Math.cos(elevation) * Math.sin(yaw)),
-        this.rpm * this.speedPerRpm * (0.996 + this.random() * 0.008))), q);
+        this.rpm * this.speedPerRpm * (scatter?.speedFactor ?? (0.996 + this.random() * 0.008)))), q);
       const velocity = add(this.chassis.body.velocityAtPoint(position), exit);
       if (!this.fuel.release(f, position, velocity, true)) continue;
+      if (scatter) f.body.setAngvel(rotate(this.turretRotate(scatter.spin), q), true);
       this.payloadChanged();
       this.chassis.body.applyImpulseAtPoint(scale(exit, -FUEL_MASS), position, true);
       this.shotsFired++; this.shots.push({ id: f.id, lane: this.mechanism.lanes.indexOf(lane.z), time: this.fuel.time, position, velocity, target: this.solution.target, flightTime: this.solution.time });
@@ -267,13 +282,14 @@ export class Shooter {
       lane.id = null; lane.age = lane.availableAt = 0; lane.lastShotAt = -Infinity;
     }
     this.turretYaw = 0;
+    this.chassisAimTurnSign = 0;
     this.rpm = this.drumAngle = this.feederAngle = 0; this.elevation = this.maxElevation;
     this.solution = null; this.selection = null; this.active = this.blocked = false;
     this.feedOrder = []; this.laneOrder = []; this.nextFeedAt = this.nextLaunchAt = 0;
     this.randomState = 29102026;
     if (clearShots) { this.shots.length = 0; this.shotsFired = 0; }
   }
-  stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; }
+  stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; this.chassisAimTurnSign = 0; }
   get telemetry(): ShooterTelemetry {
     const solution = this.solution, feeding = this.laneState.filter(l => l.id !== null).length;
     const mode = !this.active ? 'Idle' : !this.fuel.ownedBy(this.owner).length ? 'Empty' : !solution ? 'Out of range' : !this.stable ? 'Unstable'

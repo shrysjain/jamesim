@@ -7,6 +7,7 @@ import { FuelSystem, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { Fuel } from './FuelSystem';
 import type { RobotDefinition, RobotPose } from '../robot/RobotDefinition';
 import { REBLITZ_CARGO, REBLITZ_FEEDER_POCKET } from '../robot/robots/2910-reblitz/cargo';
+import { supportsIntakeToggle } from '../robot/poses';
 import { REBLITZ, STARTING_POSE } from '../robot/RobotDefinition';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
@@ -108,11 +109,11 @@ export class RobotSimulation {
     this.updatePayload();
   }
   requestClimbToggle() { this.climber.requestToggle(); }
-  requestIntakeToggle() { if (this.chassis.definition.intake.stowTravel) this.pendingIntakeToggles++; }
+  requestIntakeToggle() { if (supportsIntakeToggle(this.chassis.definition)) this.pendingIntakeToggles++; }
   preStep(dt: number) {
     if (this.actuatorsEnabled && !this.inspectionPose && this.pendingIntakeToggles % 2 === 1) this.intakeOut = !this.intakeOut;
     this.pendingIntakeToggles = 0;
-    if (this.actuatorsEnabled && !this.inspectionPose && this.chassis.definition.intake.stowTravel && this.input.toggleIntake && !this.toggleHeld) this.intakeOut = !this.intakeOut;
+    if (this.actuatorsEnabled && !this.inspectionPose && supportsIntakeToggle(this.chassis.definition) && this.input.toggleIntake && !this.toggleHeld) this.intakeOut = !this.intakeOut;
     this.toggleHeld = !!this.input.toggleIntake;
     const held = this.held;
     const shoot = !!this.input.shoot && !this.input.reverse && !this.inspectionPose && this.actuatorsEnabled && !this.climber.attached;
@@ -120,7 +121,7 @@ export class RobotSimulation {
     if (!this.inspectionPose && this.actuatorsEnabled) {
       const demand = this.input.reverse || (this.input.intake && (!shoot || this.mechanism.simultaneousIntake));
       const approach = (v: number, target: number, seconds: number) => v + Math.max(-dt / seconds, Math.min(dt / seconds, target - v));
-      const compress = shoot || (!!this.chassis.definition.intake.stowTravel && !this.intakeOut && !this.input.intake && !this.input.reverse);
+      const compress = shoot || (supportsIntakeToggle(this.chassis.definition) && !this.intakeOut && !this.input.intake && !this.input.reverse);
       const manual = this.chassis.definition.intake.manualRetraction && !this.intakeOut && !demand;
       const target = demand ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? cargoExtension(held.length, this.capacity) : 1;
       this.intakeTarget = target;
@@ -250,7 +251,7 @@ export class RobotSimulation {
     const mode = this.inspectionPose ? 'Pose preview' : this.overturnedFor > 0.25 ? 'Spilling' : this.outletBlocked ? 'Outlet blocked'
       : this.input.reverse ? 'Reversing' : !this.deployed ? 'Deploying' : this.mechanism.compress && this.input.shoot && this.chassis.pose.intake > cargoExtension(held.length, this.capacity) + 0.01 ? 'Compressing'
       : this.input.intake ? this.chassis.pose.intake < 0.92 ? 'Deploying' : held.length === this.capacity ? 'Full' : 'Intaking' : held.length ? 'Holding' : this.chassis.pose.intake > 0.92 ? 'Deployed' : 'Stowed';
-    const wantsIn = (this.mechanism.compress && !!this.input.shoot) || (!!this.chassis.definition.intake.stowTravel && !this.intakeOut && !this.input.intake && !this.input.reverse);
+    const wantsIn = (this.mechanism.compress && !!this.input.shoot) || (supportsIntakeToggle(this.chassis.definition) && !this.intakeOut && !this.input.intake && !this.input.reverse);
     const intakeStatus = wantsIn && this.intakeTarget > .02 && Math.abs(this.chassis.pose.intake - this.intakeTarget) < .02 ? 'Cargo limited'
       : this.chassis.pose.intake < .02 ? 'Retracted' : this.chassis.pose.intake > .98 ? 'Extended' : this.intakeTarget > this.chassis.pose.intake ? 'Extending' : 'Retracting';
     return { intakeStatus, climb: this.climber.telemetry, count: held.length, capacity: this.capacity, transferring: counts.transferring, stored: counts.stored, loose: counts.loose,
