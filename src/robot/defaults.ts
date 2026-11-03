@@ -12,7 +12,7 @@ export const swerveModules = (x: number, z: number) => [
 
 /** Existing roller conventions. A robot may supply its own bindings without editing RobotView. */
 export const STANDARD_VISUAL = {
-  bumperMaterial: 'bumper', previewHeight: .223, numberSize: [.295, .083], numberOffset: .0015,
+  bumperMaterial: 'bumper', previewHeight: .223, numberSize: [.36875, .10375], numberOffset: .0015,
   spin: [
     { prefix: 'intake-roller-', source: 'intake', factor: 1 },
     { prefix: 'feeder-roller-', source: 'feeder', factor: 1 },

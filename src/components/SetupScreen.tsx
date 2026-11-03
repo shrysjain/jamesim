@@ -4,7 +4,7 @@ import { ROBOTS } from '../robot/RobotDefinition';
 import type { RobotId } from '../robot/RobotDefinition';
 import { EVENT_PROFILES } from '../sim/MatchRules';
 import type { MatchConfig } from '../sim/MatchRules';
-import { defaultStart, normalizeStart } from '../sim/SessionConfig';
+import { defaultStart, normalizeStart, startProblem } from '../sim/SessionConfig';
 import { FieldMap } from './FieldMap';
 import { RobotStats } from './RobotStats';
 import { RobotBrowser } from './RobotBrowser';
@@ -26,7 +26,8 @@ export function SetupScreen({ config, practice: initialPractice, onStart, onSett
     else if (map && !map.closest('[inert]')) map.focus({ preventScroll: true });
   });
   const robot = ROBOTS[draft.robot ?? '2910-reblitz'], alliance = draft.alliance ?? 'blue';
-  const position = draft.start ?? defaultStart(alliance, draft.spawn);
+  const position = normalizeStart(draft.start, alliance, draft.spawn, robot);
+  const problem = startProblem(position, alliance, robot);
   const chooseAlliance = (next: 'blue' | 'red') => setDraft({ ...draft, alliance: next, start: next === alliance ? position : { x: -position.x, z: -position.z, yaw: position.yaw + Math.PI } });
   const identity = robotIdentity(robot);
   if (browsing) return <RobotBrowser selected={robot.id as RobotId} alliance={alliance} onChoose={id => { setDraft({ ...draft, robot: id }); setBrowsing(false); focusMap(); }} onClose={() => { restoreChangeFocus.current = true; setBrowsing(false); focusMap(); }} />;
@@ -42,9 +43,10 @@ export function SetupScreen({ config, practice: initialPractice, onStart, onSett
         <fieldset className="alliance-choice"><legend>Alliance</legend>{(['blue', 'red'] as const).map(a => <button key={a} className={a} aria-pressed={alliance === a} onClick={() => chooseAlliance(a)}><i />{a}</button>)}</fieldset>
       </section>
       <section className="start-selection" aria-label="Starting position">
-        <div className="section-heading"><h2>Starting position</h2><button className="text-button" onClick={() => setDraft({ ...draft, spawn: 'left', start: defaultStart(alliance) })}>Reset position ↺</button></div>
-        <FieldMap alliance={alliance} robot={robot} position={position} controls={controls} active={active} focusRef={mapFocus} onChange={start => setDraft({ ...draft, start: normalizeStart(start, alliance) })} />
-        <div className="spawn-presets" aria-label="Starting spot presets">{(['left', 'center', 'right'] as const).map(spot => <button key={spot} onClick={() => setDraft({ ...draft, spawn: spot, start: defaultStart(alliance, spot) })}>{spot}</button>)}<span>WASD to drive · J / L to turn · arrow = intake</span></div>
+        <div className="section-heading"><h2>Starting position</h2><button className="text-button" onClick={() => setDraft({ ...draft, spawn: 'left', start: defaultStart(alliance, 'left', robot) })}>Reset position ↺</button></div>
+        <FieldMap alliance={alliance} robot={robot} position={position} valid={!problem} controls={controls} active={active} focusRef={mapFocus} onChange={start => setDraft({ ...draft, start: normalizeStart(start, alliance, draft.spawn, robot) })} />
+        <p className={`start-status${problem ? ' invalid' : ''}`} aria-live="polite">{problem ?? 'Bumpers overlap the starting line. Wall contact and clear trench starts are allowed.'}</p>
+        <div className="spawn-presets" aria-label="Starting spot presets">{(['left', 'center', 'right'] as const).map(spot => <button key={spot} onClick={() => setDraft({ ...draft, spawn: spot, start: defaultStart(alliance, spot, robot) })}>{spot}</button>)}<span>WASD to drive · J / L to turn · arrow = intake</span></div>
         <details className="session-advanced"><summary>Match options <span>{practice ? 'Free practice' : 'Timed match'} · {draft.preloads} preloads</span></summary><div className="session-options">
           <label>Session<select aria-label="Session" value={practice ? 'practice' : 'match'} onChange={e => setPractice(e.target.value === 'practice')}><option value="match">Timed match</option><option value="practice">Free practice</option></select></label>
           <label>Preloads<input aria-label="Preloads" type="number" min="0" max="8" value={draft.preloads} onChange={e => setDraft({ ...draft, preloads: Math.max(0, Math.min(8, Number(e.target.value))) })} /></label>
@@ -53,6 +55,6 @@ export function SetupScreen({ config, practice: initialPractice, onStart, onSett
         </div></details>
       </section>
     </div>
-    <footer className="setup-footer"><p>Keyboard and controller bindings are in Settings.<br /><span>Escape opens the menu during play.</span></p><div><button className="quiet-button" onClick={onRules}>Rules</button><button className="launch-button" onClick={() => onStart({ ...draft, start: position }, practice)}>Start {practice ? 'practice' : 'match'}<span>→</span></button></div></footer>
+    <footer className="setup-footer"><p>Keyboard and controller bindings are in Settings.<br /><span>Escape opens the menu during play.</span></p><div><button className="quiet-button" onClick={onRules}>Rules</button><button className="launch-button" disabled={!!problem} onClick={() => onStart({ ...draft, start: position }, practice)}>Start {practice ? 'practice' : 'match'}<span>→</span></button></div></footer>
   </main>;
 }

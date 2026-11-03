@@ -73,7 +73,7 @@ describe('9496 Matterhorn',()=>{
   // at the feeder centerline. A center-only bound missed this protrusion.
   const guard=[[-.05,.2718],[0,.3035],[.1,.3143],[.2,.3150],[.3,.3011],[.325,.3090]];
   try{
-   s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);run(s,.6);fill(s);
+   s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);s.robot!.teleport([6.1,.26,2.1]);run(s,.6);fill(s);
    const r=s.robotController!;r.input.shoot=true;let samples=0;
    for(let tick=0;tick<720;tick++){
     s.update(1/120);
@@ -106,7 +106,7 @@ describe('9496 Matterhorn',()=>{
  });
  it('collects to its intake limit and conserves every fired or naturally spilled fuel body',async()=>{
   const capacity=D.mechanisms.capacity,s=await FieldSimulation.create(floor,seeds(capacity+4),true);
-  try{s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);run(s,.6);const r=s.robotController!,handles=s.fuel.map(b=>b.handle);r.input.intake=true;
+  try{s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);s.robot!.teleport([6.1,.26,2.1]);run(s,.6);const r=s.robotController!,handles=s.fuel.map(b=>b.handle);r.input.intake=true;
    for(let i=0;i<360&&r.held.length<capacity;i++){const f=s.fuelSystem.records.find(f=>f.owner===null)!;f.body.setTranslation(r.toWorld({x:-.58,y:-.147,z:0}),true);f.body.setLinvel({x:0,y:0,z:0},true);s.world.propagateModifiedBodyPositionsToColliders();s.update(1/120);}
    expect(r.held).toHaveLength(capacity);expect(r.telemetry.mass).toBeCloseTo(D.mass+capacity*.215,3);
    const collected=r.held.map(f=>f.id);r.input.intake=false;r.input.shoot=true;run(s,9);

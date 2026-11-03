@@ -1,6 +1,6 @@
 # Working on Jamesim
 
-Jamesim is a browser-only FRC 2026 REBUILT simulator. Read `docs/STAGE_19_5.md` for the current player flow and cleanup scope and `docs/GAMEPLAY_TUNING.md` for accepted gameplay behavior. Earlier gate notes are historical, not instructions to restore older behavior.
+Jamesim is a browser-only FRC 2026 REBUILT simulator. Read `docs/STAGE_19_5.md` for the player flow, `docs/PR_INTEGRATION.md` for the current eight-robot integration, and `docs/GAMEPLAY_TUNING.md` for accepted gameplay behavior. Earlier gate notes are historical, not instructions to restore older behavior.
 
 ## Workspace and tools
 
@@ -19,11 +19,11 @@ Jamesim is a browser-only FRC 2026 REBUILT simulator. Read `docs/STAGE_19_5.md` 
 - Run simulation at 120 Hz. Rendering, settings and wall-clock timers must not change match progression.
 - Preserve one stable ID/body per fuel. Capturing, storing, shooting, processing, returning and restarting must conserve the configured supply (currently 504).
 - AUTO and teleop are both driver-operated. Keep the disabled assessment gaps and processed-fuel scoring windows.
-- Controls: WASD drive, J/L turn, Shift intake, Space align/shoot/pass, Q reverse, C toggle Kepler climber, V toggle its intake, R restart the selected session.
+- Controls: WASD drive, J/L turn, Shift intake, Space align/shoot/pass, Q reverse, C toggle supported climbers, V toggle supported manual intakes, R restart the selected session.
 - 2910 starts retracted and passively deploys both assemblies. The hopper stays out. Only the intake compresses while shooting and returns out when shooting stops.
 - Retain horizontal fuel displacement and stable collision support. Bump-only visual lean is intentional; free physical tipping is not the current model.
 - Preserve the approved follow-camera framing and field occlusion behavior unless the task changes them.
-- Launch opens singleplayer setup with CAD-backed 2910/1690, alliance and pose selection. Active play shows only the scoreboard. Escape owns pause/settings/restart/back-to-setup; no fuel HUD, controls overlay, toolbar or singleplayer foul UI. High Tide and the fictional trainer are removed. Inspector, tuning and development shortcuts belong only in development builds.
+- Launch opens singleplayer setup with the registered CAD robot roster, alliance and pose selection. Active play shows only the scoreboard. Escape owns pause/settings/restart/back-to-setup; no fuel HUD, controls overlay, toolbar or singleplayer foul UI. High Tide and the fictional trainer are removed. Inspector, tuning and development shortcuts belong only in development builds.
 
 ## Assets and publication
 

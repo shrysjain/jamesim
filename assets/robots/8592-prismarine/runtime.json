@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "8592-prismarine",
+  "group": {
+    "name": "Team 8592 Prismarine CAD",
+    "source": "User-supplied ProductionMain (1).glb; input hash/provenance in assets/robots/8592-prismarine/sources.json",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/8592-prismarine/robot.glb",
+        "bytes": 1470508,
+        "sha256": "e98ee49f4f27c1240026a5f068c609b3be530e3a6c32c72fbd5eb778bb6855aa"
+      }
+    ]
+  }
+}

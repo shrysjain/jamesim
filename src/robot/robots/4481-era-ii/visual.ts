@@ -12,5 +12,5 @@ export const ERA_II_VISUAL: RobotVisualDefinition = {
     { node: 'feeder-roller-2', source: 'feeder', factor: -1, axis: 'x' },
     ...STANDARD_VISUAL.spin,
   ],
-  numberSize: [.28,.078],
+  numberSize: [.35,.0975],
 };

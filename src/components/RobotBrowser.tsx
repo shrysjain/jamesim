@@ -6,7 +6,7 @@ import { RobotStats } from './RobotStats';
 import { robotIdentity, robotStats } from './robotStatData';
 
 const RobotPreview = lazy(() => import('./RobotPreview'));
-const robots = Object.values(ROBOTS);
+const robots = Object.values(ROBOTS).filter(robot => robot.id !== '8592-prismarine'); // Temporarily hidden; retain its implementation and assets.
 
 export function RobotBrowser({ selected, alliance, onChoose, onClose }: {
   selected: RobotId; alliance: Alliance; onChoose: (id: RobotId) => void; onClose: () => void;

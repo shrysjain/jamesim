@@ -1,4 +1,4 @@
-import { defaultStart } from './SessionConfig';
+import { defaultStart, START_HEIGHT } from './SessionConfig';
 import { HumanPlayer } from './HumanPlayer';
 import { ROBOTS } from '../robot/RobotDefinition';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -162,8 +162,8 @@ export class FieldSimulation {
   configureRobot(config: MatchConfig) {
     const r = this.robotController; if (!r) return;
     r.shooter.alliance = config.alliance === 'red' ? 'red' : 'blue';
-    const start = config.start ?? defaultStart(config.alliance ?? 'blue', config.spawn);
-    r.chassis.teleport([start.x, .26, start.z], start.yaw);
+    const start = config.start ?? defaultStart(config.alliance ?? 'blue', config.spawn, r.chassis.definition);
+    r.chassis.teleport([start.x, START_HEIGHT, start.z], start.yaw);
   }
   startSession(config: MatchConfig, practice = false) {
     this.startMatch(config);
