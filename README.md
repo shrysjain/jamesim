@@ -1,6 +1,6 @@
 # Jamesim
 
-A browser FRC 2026 REBUILT simulator built with TypeScript, React, Vite, Three.js and Rapier. The supported robots are CAD-backed **2910 Re•Blitz** and **1690 Orbit / Kepler**.
+A browser FRC 2026 REBUILT simulator built with TypeScript, React, Vite, Three.js and Rapier. The current CAD roster is **2910 Re•Blitz, 1690 Kepler, 6328 Darwin, 1678 Limestone, 9496 Matterhorn, 3847 Infrared FM, 4481 Era II Worlds, and 8592 Prismarine**.
 
 ## Local play
 
