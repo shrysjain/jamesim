@@ -7,7 +7,9 @@ import { RobotView } from '../../../view/RobotView';
 import { STARTING_POSE } from '../../poses';
 import type { SwerveChassis } from '../../../sim/SwerveChassis';
 import type { RobotSimulation } from '../../../sim/RobotSimulation';
-import { SIMBOT_TIM as D } from './definition';
+import { SIMBOT_TIM as D, TIM_TRAVEL, TIM_RISE } from './definition';
+import { FieldSimulation } from '../../../sim/FieldSimulation';
+import { DEFAULT_MATCH } from '../../../sim/MatchRules';
 
 let source: THREE.Group;
 beforeAll(async () => {
@@ -47,6 +49,60 @@ describe('Simbot Tim prepared CAD animation', () => {
       expect(upperPositions[4].distanceTo(upperPositions[0])).toBeLessThan(1e-12);
     } finally { view.dispose(); }
   });
+
+  it('moves the intact polycarbonate wrap and top rim with the carriage, while keeping every preload inside its front wall', () => {
+    const { view, nodes, robot, mechanisms } = fixture();
+    try {
+      const initial = new Map<string, THREE.Vector3>();
+      for (const extension of [0, .5, 1]) {
+        robot.pose.intake = extension; view.update(robot, 0, mechanisms); view.group.updateMatrixWorld(true);
+        for (const id of ['hopper-shell', 'hopper-rim']) {
+          const node = nodes.get(id)!; expect(node.parent).toBe(nodes.get('intake'));
+          const center = new THREE.Box3().setFromObject(node, true).getCenter(new THREE.Vector3());
+          if (extension === 0) initial.set(id, center.clone());
+          const delta = center.sub(initial.get(id)!);
+          expect(delta.x).toBeCloseTo(-TIM_TRAVEL * extension, 5);
+          expect(delta.y).toBeCloseTo(-TIM_RISE * extension, 5);
+        }
+        const front = D.hopper.volume!.frontX + TIM_TRAVEL * (1 - extension);
+        for (const p of D.cargoSlots.slice(0, 8)) expect(p[0] - .075).toBeGreaterThanOrEqual(front);
+      }
+      const rim = nodes.get('hopper-rim')!; let triangles = 0;
+      rim.traverse(n => { if (n instanceof THREE.Mesh) triangles += (n.geometry.index?.count ?? n.geometry.attributes.position.count) / 3; });
+      // The source's .79mm cap retains its complete 524-triangle tessellation;
+      // unbounded decimation previously punched diagonal holes through it.
+      expect(triangles).toBe(524);
+    } finally { view.dispose(); }
+  });
+
+  it('launches along the actual final hood-roller tangent at distinct hub and pass elevations', async () => {
+    const elevations: number[] = [];
+    for (const position of [[6.2, .26, 2.1], [0, .26, 0]] as [number, number, number][]) {
+      const simulation = await FieldSimulation.create({ boxes: [{ element: 'floor', center: [0, -.1, 0], halfExtents: [25, .1, 25] }], meshes: [] }, [[0, .08, 3]], true);
+      const { view, nodes } = fixture();
+      try {
+        simulation.startSession({ ...DEFAULT_MATCH, robot: D.id as '1114-simbot-tim', preloads: 1 }, true);
+        simulation.robot!.teleport(position, 0);
+        const r = simulation.robotController!;
+        for (let tick = 0; tick < 84; tick++) simulation.update(1 / 120);
+        r.input.shoot = true;
+        for (let tick = 0; tick < 1500 && !r.shooter.shotsFired; tick++) simulation.update(1 / 120);
+        expect(r.shooter.shotsFired, JSON.stringify(r.shooter.telemetry)).toBe(1);
+        view.update(r.chassis, 0, r); view.group.updateMatrixWorld(true);
+        const shaft = nodes.get('shooter-drum')!.getWorldPosition(new THREE.Vector3());
+        const lastRoller = nodes.get('hood-roller-2')!.getWorldPosition(new THREE.Vector3());
+        const q = r.chassis.renderRotation, axis = new THREE.Vector3(0, 0, 1).applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
+        const tangent = axis.cross(lastRoller.sub(shaft)).normalize();
+        const shot = r.shooter.shots[0], chassisVelocity = r.chassis.body.velocityAtPoint(shot.position);
+        const launch = new THREE.Vector3(shot.velocity.x - chassisVelocity.x, shot.velocity.y - chassisVelocity.y, shot.velocity.z - chassisVelocity.z).normalize();
+        expect(tangent.dot(launch), 'physical fuel must leave through the sloped roller opening').toBeGreaterThan(Math.cos(.16));
+        const local = launch.clone().applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w).invert());
+        expect(local.x).toBeLessThan(0);
+        elevations.push(r.shooter.elevation);
+      } finally { view.dispose(); simulation.dispose(); }
+    }
+    expect(Math.abs(elevations[0] - elevations[1])).toBeGreaterThan(.08);
+  }, 30000);
 
   it('spins every prepared roller about its own shaft rather than orbiting a neighboring cylinder', () => {
     const { view, nodes, robot, mechanisms } = fixture();
