@@ -77,7 +77,7 @@ export class Shooter {
   }
 
   constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem, private owner: string, private payloadChanged: () => void) { this.laneState = this.makeFeedSlots(); this.elevation = this.maxElevation; }
-  get hood() { return (this.maxElevation - this.elevation) / (this.maxElevation - this.minElevation); }
+  get hood() { return this.maxElevation === this.minElevation ? 0 : (this.maxElevation - this.elevation) / (this.maxElevation - this.minElevation); }
   /** Measured drum tangent plus 155 mm of guide clearance; not the bumper edge. */
   muzzleLocal(elevation: number, z: number) {
     const radius = this.geometry.drumRadius + FUEL_RADIUS + 0.004;
@@ -86,7 +86,7 @@ export class Shooter {
   }
   muzzle(z = 0, elevation = this.elevation) { return add(this.chassis.body.translation(), rotate(this.muzzleLocal(elevation, z), this.chassis.renderRotation)); }
 
-  private candidate(target: ShotTarget, t: number) {
+  private candidate(target: ShotTarget, t: number, ignoreElevationLimits = false) {
     const body = this.chassis.body, q = this.chassis.renderRotation;
     if (target.kind === 'Pass' && Math.hypot(target.position.x - body.translation().x, target.position.z - body.translation().z) > (this.geometry.passRange ?? SHOOTER.passRange)) return null;
     const a = (1 - Math.exp(-FUEL_LINEAR_DAMPING * t)) / FUEL_LINEAR_DAMPING;
@@ -99,7 +99,7 @@ export class Shooter {
       elevation = Math.atan2(local.y, Math.hypot(local.x, local.z));
     }
     const speed = Math.hypot(relative.x, relative.y, relative.z);
-    if (elevation < this.minElevation || elevation > this.maxElevation || speed < SHOOTER.minSpeed || speed > SHOOTER.maxSpeed) return null;
+    if ((!ignoreElevationLimits && (elevation < this.minElevation - 1e-7 || elevation > this.maxElevation + 1e-7)) || speed < SHOOTER.minSpeed || speed > SHOOTER.maxSpeed) return null;
     const muzzle = this.muzzle(0, elevation), launch = add(body.velocityAtPoint(muzzle), relative);
     const verticalAtTarget = launch.y * Math.exp(-FUEL_LINEAR_DAMPING * t) - 9.81 / FUEL_LINEAR_DAMPING * (1 - Math.exp(-FUEL_LINEAR_DAMPING * t));
     if (verticalAtTarget > -1) return null; // Require descending entry/landing.
@@ -124,7 +124,22 @@ export class Shooter {
     for (const extra of base.kind === 'Pass' ? [0, 0.2, 0.4, 0.6, 0.8, 1] : [0]) {
       const target = targetAt(extra), candidates = [];
       for (let t = 0.35; t <= 3.2; t += 0.025) {
-        const candidate = this.candidate(target, t); if (candidate) candidates.push(candidate);
+        if (this.minElevation === this.maxElevation) {
+          // A fixed hood needs a continuous flight-time solution between coarse samples.
+          let low = t, high = t + .025;
+          const a = this.candidate(target, low, true), b = this.candidate(target, high, true);
+          if (!a || !b || (a.solution.elevation - this.minElevation) * (b.solution.elevation - this.minElevation) > 0) continue;
+          for (let i = 0; i < 24; i++) {
+            const mid = (low + high) / 2, c = this.candidate(target, mid, true);
+            if (!c) break;
+            if ((a.solution.elevation - this.minElevation) * (c.solution.elevation - this.minElevation) > 0) low = mid;
+            else high = mid;
+          }
+          const candidate = this.candidate(target, (low + high) / 2);
+          if (candidate) candidates.push(candidate);
+        } else {
+          const candidate = this.candidate(target, t); if (candidate) candidates.push(candidate);
+        }
       }
       candidates.sort((a, b) => a.cost - b.cost);
       blocked ??= candidates[0]?.solution ?? null;
