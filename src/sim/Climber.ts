@@ -34,25 +34,29 @@ export class Climber {
     const wheelBottom = this.chassis.body.translation().y + this.chassis.definition.mountY - Math.max(...this.chassis.modules.map(m => m.suspension)) - this.chassis.definition.wheelRadius;
     return supported ? 0 : bottom > 1.164082 ? 3 : bottom > .706882 ? 2 : wheelBottom > .01 ? 1 : 0;
   }
-  step(dt: number, pressed: boolean, enabled: boolean, alliance: Alliance) {
+  step(dt: number, pressed: boolean, enabled: boolean, alliance: Alliance, hopperTarget = 0, cargoMinimum = 0) {
     const config = this.chassis.definition.climb;
     if (!config) { this.clearInput(); return; }
     if (!enabled) { this.clearInput(); this.status = 'Disabled for assessment'; return; }
     const toggle = this.toggles + Number(pressed && !this.held);
     this.toggles = 0; this.held = pressed;
     if (toggle % 2) { this.raised = !this.raised; if (this.raised) this.captureArmed = true; if (this.attached && this.raised) this.releaseAtBottom = true; }
-    const target = this.raised ? 1 : 0;
+    if (toggle % 2 && !this.raised && !this.attached) this.captureArmed = false;
+    // This shared actuator also carries Limestone's juice press. Collection
+    // opens it without arming tower capture; occupied cargo limits compression.
+    const target = Math.max(cargoMinimum, this.raised ? 1 : this.attached ? 0 : hopperTarget);
     const extensionStep = this.attached ? dt * config.rate / config.travel : dt / config.deploySeconds;
     this.extension += Math.max(-extensionStep, Math.min(extensionStep, target - this.extension));
-    this.status = this.raised ? 'Climber up · approach your tower' : 'Climber down';
+    this.status = this.raised ? 'Climber up · approach your tower' : target > 0 ? 'Hopper expanding' : 'Climber down';
     const p = this.chassis.body.translation(), sign = alliance === 'blue' ? 1 : -1;
-    // The CAD loop slides vertically beside the tower. Its normal is local X,
-    // so approach along the rung's Z axis, not head-on toward the tower face.
-    const hook = add(p, rotate(v3(config.hook[0], config.hook[1] + this.extension * config.travel, config.hook[2]), this.chassis.body.rotation()));
+    // Kepler approaches along the rung. Limestone faces it with either outer
+    // hook over a rung end, matching the team's A/E approach outside the uprights.
+    const hooks = (config.hookOffsetsZ ?? [0]).map(z => add(p, rotate(v3(config.hook[0], config.hook[1] + this.extension * config.travel, config.hook[2] + z), this.chassis.body.rotation())));
     const rungX = sign * 7.208488, rungZ = -sign * .288925;
+    const hook = hooks.find(h => Math.abs(h.x - rungX) < .035 && Math.abs(h.z - rungZ) < .5969 && h.y > .73);
     if (!this.attached && this.captureArmed && this.raised && this.extension > .85
-      && Math.abs(hook.x - rungX) < .035 && Math.abs(hook.z - rungZ) < .5969
-      && Math.abs(Math.sin(this.chassis.telemetry.heading)) > .97 && hook.y > .73
+      && hook
+      && Math.abs(config.approachAxis === 'x' ? Math.cos(this.chassis.telemetry.heading) : Math.sin(this.chassis.telemetry.heading)) > .97
       && this.chassis.telemetry.speed < .5 && this.chassis.telemetry.grounded >= 3) {
       const hit = this.world.castRay(new RAPIER.Ray(v3(rungX, .8, hook.z), v3(0, -1, 0)), .16, true,
         RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC, undefined, undefined, this.chassis.body,

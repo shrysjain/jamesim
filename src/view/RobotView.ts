@@ -7,7 +7,6 @@ import type { SwerveChassis } from '../sim/SwerveChassis';
 import { REBLITZ, ROBOTS, STARTING_POSE, partTransform } from '../robot/RobotDefinition';
 import type { RobotDefinition, RobotPart, SpinSource } from '../robot/RobotDefinition';
 import type { RobotSimulation } from '../sim/RobotSimulation';
-import { rotate, unrotate, v3 } from '../sim/vector';
 
 /** Prepared team CAD, batched around explicit mechanism frames offline. */
 export class RobotView {
@@ -52,6 +51,7 @@ export class RobotView {
       node.position.set(pivot[0]+shift, pivot[1]+rise, pivot[2]); node.rotation.z = angle;
     }
     const climber = this.nodes.get(definition.visual.climber ?? ''); if (climber) climber.position.y = 0;
+    const kicker = this.nodes.get(definition.visual.kicker?.node ?? ''); if (kicker) kicker.rotation.z = 0;
   }
 
   setAlliance(alliance: Alliance) {
@@ -113,7 +113,7 @@ export class RobotView {
     }
     if (mechanisms) {
       for (const { node, axis, source, factor } of this.spinNodes) {
-        const angle = source === 'intake' ? mechanisms.rollerAngle : source === 'feeder' ? mechanisms.rollerAngle * .7 + mechanisms.shooter.feederAngle : mechanisms.shooter.drumAngle;
+        const angle = source === 'indexer' ? mechanisms.indexerAngle : source === 'intake' ? mechanisms.rollerAngle : source === 'feeder' ? mechanisms.rollerAngle * .7 + mechanisms.shooter.feederAngle : mechanisms.shooter.drumAngle;
         node.rotation[axis] = angle * factor;
       }
       const visual = d.visual;
@@ -129,8 +129,8 @@ export class RobotView {
       this.wheelRotation[i] -= m.speed * dt / d.wheelRadius;
       for (const suffix of ['wheel', 'fork']) {
         const node = this.nodes.get(`${id}-${suffix}`); if (!node) continue;
-        const local = unrotate(rotate(v3(m.x, d.mountY - m.suspension, m.z), physicalRotation), q);
-        node.position.set(local.x, local.y, local.z);
+        // The prepared CAD fixes each axle/fork to the frame. Terrain lean moves
+        // the whole robot; contact-query distances never articulate a module.
         const steer = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -m.angle);
         if (suffix === 'wheel') steer.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), this.wheelRotation[i]));
         node.quaternion.copy(steer);

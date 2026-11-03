@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "6328-darwin",
+  "group": {
+    "name": "Team 6328 Darwin CAD",
+    "source": "https://novalabsrobotics.onshape.com/documents/2da573df9d139d7a1e0f08a8/w/5266e52966df9f56fcb472f0/e/15a6a42133f059b818ad5264",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/6328-darwin/robot.glb",
+        "bytes": 3088188,
+        "sha256": "316825cd5874fdc98c0e01ae5ea4f7a3c6950522d034ce801e75116b667fbe9e"
+      }
+    ]
+  }
+}

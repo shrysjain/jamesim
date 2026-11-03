@@ -1,4 +1,4 @@
-import { defaultStart } from './SessionConfig';
+import { defaultStart, START_HEIGHT } from './SessionConfig';
 import { HumanPlayer } from './HumanPlayer';
 import { ROBOTS } from '../robot/RobotDefinition';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -87,13 +87,14 @@ export class FieldSimulation {
           r.clearInput(); r.chassis.stopDrive();
         }
         r.actuatorsEnabled = this.match.actuatorsEnabled;
+        if (!r.actuatorsEnabled) r.chassis.holdDisabledDrive();
         if (!this.match.driverEnabled) {
           r.chassis.input = { ...NEUTRAL_INPUT }; r.input = { intake: false, reverse: false,
             shoot: false };
         }
       }
       const robot = this.robotController;
-      if (robot) robot.climber.step(STEP, !!robot.input.climb, this.match.actuatorsEnabled, robot.shooter.alliance);
+      if (robot) robot.climber.step(STEP, !!robot.input.climb, this.match.actuatorsEnabled, robot.shooter.alliance, robot.hopperLiftTarget, robot.hopperMinimumLift);
       this.robotController?.preStep(STEP);
       this.robotController?.contacts.displaceFuel();
       this.hubs.beforeStep();
@@ -125,6 +126,7 @@ export class FieldSimulation {
         }
       }
       this.match.advance();
+      if (!this.match.actuatorsEnabled) this.robot?.holdDisabledDrive();
       if (this.match.phase === 'Complete') { this.setRunning(false); break; }
     }
     this.physicsMs = performance.now() - start;
@@ -160,8 +162,8 @@ export class FieldSimulation {
   configureRobot(config: MatchConfig) {
     const r = this.robotController; if (!r) return;
     r.shooter.alliance = config.alliance === 'red' ? 'red' : 'blue';
-    const start = config.start ?? defaultStart(config.alliance ?? 'blue', config.spawn);
-    r.chassis.teleport([start.x, .26, start.z], start.yaw);
+    const start = config.start ?? defaultStart(config.alliance ?? 'blue', config.spawn, r.chassis.definition);
+    r.chassis.teleport([start.x, START_HEIGHT, start.z], start.yaw);
   }
   startSession(config: MatchConfig, practice = false) {
     this.startMatch(config);
