@@ -10,7 +10,9 @@ describe(`${D.id}: full-width roller feeding`,()=>{
  it('carries each original ball through its release column and uses the safe roller span',async()=>{
   const s=await FieldSimulation.create(floor,Array.from({length:D.mechanisms.capacity},(_,i)=>[0,.08,4+i*.16]),true);
   try{
-   s.startSession({...DEFAULT_MATCH,robot:D.id as '9496-matterhorn',preloads:0},true);run(s,.6);
+   s.startSession({...DEFAULT_MATCH,robot:D.id as '9496-matterhorn',preloads:0},true);
+   // Fixed-hood feeding requires a physical shot solution; use the original clear-range fixture.
+   s.robot!.teleport([6.1,.26,2.1]);run(s,.6);
    const r=s.robotController!,handles=s.fuel.map(b=>b.handle),seen=new Set<number>(),releaseZ:number[]=[],feedZ=new Map<number,number>();
    for(const [i,f]of s.fuelSystem.records.entries()){s.fuelSystem.capture(f,r.owner,i,r.storageSlots[i]);f.state='stored';}
    r.input.shoot=true;

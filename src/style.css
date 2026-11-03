@@ -68,6 +68,9 @@ kbd { display: inline-flex; align-items:center; justify-content:center; border:1
 .section-heading h2 { margin:0; }
 .text-button { min-height:28px;border:0;background:transparent;color:var(--muted);padding:3px 0;font-size:12px; }
 .field-map { display:block;width:100%;aspect-ratio:1000/490;touch-action:none;border-radius:3px;cursor:crosshair; }
+.start-status { color:#b5c2d5;font-size:13px;line-height:1.4;margin:10px 0; }
+.start-status.invalid { color:#ff919a; }
+.launch-button:disabled { opacity:.45;cursor:not-allowed; }
 .spawn-presets { display:flex;gap:8px;align-items:center;margin:14px 0 20px; }
 .spawn-presets button { min-height:32px;padding:5px 13px;font-size:12px;text-transform:capitalize; }
 .spawn-presets span { font-size:12px;color:var(--muted);margin-left:auto; }

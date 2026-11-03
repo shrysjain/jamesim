@@ -1,4 +1,4 @@
-import { normalizeStart } from './SessionConfig';
+import { defaultStart, normalizeStart, startProblem } from './SessionConfig';
 import type { StartPosition } from './SessionConfig';
 import { ROBOTS } from '../robot/RobotDefinition';
 import type { RobotId } from '../robot/RobotDefinition';
@@ -58,7 +58,10 @@ export class MatchRules {
   start(config: MatchConfig) {
     this.reset(); this.mode = 'match';
     this.config = { alliance: config.alliance === 'red' ? 'red' : 'blue', spawn: config.spawn === 'right' || config.spawn === 'center' ? config.spawn : 'left', humanSupply: config.humanSupply === true, robot: config.robot && Object.hasOwn(ROBOTS, config.robot) ? config.robot : '2910-reblitz', profile: Object.hasOwn(EVENT_PROFILES, config.profile) ? config.profile : 'regional',
-      preloads: Number.isFinite(config.preloads) ? Math.max(0, Math.min(8, Math.floor(config.preloads))) : 8, seed: config.seed >>> 0, start: normalizeStart(config.start, config.alliance ?? 'blue', config.spawn) };
+      preloads: Number.isFinite(config.preloads) ? Math.max(0, Math.min(8, Math.floor(config.preloads))) : 8, seed: config.seed >>> 0 };
+    const robot = ROBOTS[this.config.robot!], alliance = this.config.alliance!;
+    const start = normalizeStart(config.start, alliance, this.config.spawn, robot);
+    this.config.start = startProblem(start, alliance, robot) ? defaultStart(alliance, this.config.spawn, robot) : start;
   }
   enterPractice() { const config = this.config; this.reset(); this.config = config; }
   reset() {
