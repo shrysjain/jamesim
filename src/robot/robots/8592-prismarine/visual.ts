@@ -27,7 +27,7 @@ export const PRISMARINE_VISUAL = {
     { prefix: 'intake-roller-', source: 'intake', factor: 1, axis: 'z' },
     { prefix: 'feeder-roller-', source: 'feeder', factor: 1, axis: 'x' },
     { prefix: 'shooter-roller-', source: 'shooter', factor: -1, axis: 'z' },
-    { node: 'feeder-rotor', source: 'feeder', factor: 0.35, axis: 'y' },
+    { node: 'feeder-rotor', source: 'feeder', factor: -0.35, axis: 'y' },
   ],
   numberSize: [0.3375, 0.0975],
 } satisfies RobotVisualDefinition;
