@@ -5,7 +5,7 @@
   "teamName": "Valor",
   "season": 2026,
   "robotName": "Downpour",
-  "status": "awaiting-cad-export",
+  "status": "implemented-and-locally-validated",
   "baseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
   "requestedCad": {
     "url": "https://cad.onshape.com/documents/15cd41462dc24ff986a4e549/w/1b79a7ae373e0026664ccfff/e/8fdecbfb5ab3c774cb6a4551",
@@ -13,7 +13,8 @@
     "workspaceId": "1b79a7ae373e0026664ccfff",
     "elementId": "8fdecbfb5ab3c774cb6a4551",
     "immutableRevision": null,
-    "variantEvidence": "The official CAD-release opening post links this exact workspace for Downpour; Drizzle is linked separately under workspace 4d637c0ad0806dbfe69f6666."
+    "variantEvidence": "The official CAD-release opening post links this exact workspace for Downpour; Drizzle is linked separately under workspace 4d637c0ad0806dbfe69f6666.",
+    "exportEvidence": "Contributor-provided VR26A-0000 Main.glb, reassembled and hash-verified from five numeric binary parts. Root VR26A-0000 Main and States Hopper/Hotdog Rollers/Chassis/Intake/Shooter assemblies agree with Downpour drum revision; no immutable Onshape revision supplied."
   },
   "sources": [
     {
@@ -68,7 +69,7 @@
     "onshapeWebReader": "Official link resolved to requested URL, zero lines of assembly data.",
     "onshapeDirectRequest": "Proxy CONNECT 403 in selected restricted environment. Not evidence exports are disabled.",
     "derivativeSearch": "No matching 6800 geometry found in TylerHandel/rebuilt-sim-2026 CAD README or repository code search; exact-document GitHub matches were tables/preview metadata, not geometry.",
-    "requiredResource": "GLB or STEP export of requested Downpour assembly, retaining hierarchy when possible."
+    "requiredResource": "Satisfied by contributor GLB upload; direct Onshape network access remains unavailable."
   },
   "inputs": [
     {
@@ -79,14 +80,131 @@
       "sha256": "cdfc23d058c6d64613f63dd3aecf728c5271eb2c1c4ae028d3205203250f6531",
       "ignored": true,
       "note": "Hash verifies this text excerpt only, not original PDF bytes."
+    },
+    {
+      "kind": "contributor-glb-export",
+      "path": "assets/source/robots/6800-downpour/VR26A-0000 Main.glb",
+      "bytes": 127464908,
+      "sha256": "02d163b47e2c0a828ba832370d32d65d3dd61f065f283ba011ad4e754adbcc46",
+      "ignored": true,
+      "parts": 5,
+      "joinMethod": "Concatenated numbered binary parts001..005; checked GLB2 magic, declared length and contributor README/script expected aggregate SHA256. Uploaded PowerShell was read as data and never executed.",
+      "onshapeSource": "https://cad.onshape.com/documents/15cd41462dc24ff986a4e549/w/1b79a7ae373e0026664ccfff/e/8fdecbfb5ab3c774cb6a4551"
     }
   ],
-  "measurements": {},
-  "gameplayEstimates": {},
+  "measurements": {
+    "classification": "Measured from contributor export; values rounded to useful authoring precision.",
+    "nativeFrame": "Y up, intake+Z, widthX, carpetY0; runtime(-Z,Y-.223,X)",
+    "frameSizeMeters": [
+      0.6858,
+      0.6858
+    ],
+    "bumperEnvelopeMeters": [
+      0.8432,
+      0.8432
+    ],
+    "bumperCenterNativeY": 0.0889,
+    "moduleCentersNativeXZ": [
+      -0.2794,
+      0.2794
+    ],
+    "moduleWheelAxleHeightMeters": 0.0508,
+    "intakePivotNative": [
+      0,
+      0.19131,
+      0.3032
+    ],
+    "poweredIntakeRollerNative": [
+      0,
+      0.21824,
+      0.59221
+    ],
+    "staticBarCentersNative": [
+      [
+        0,
+        0.08188,
+        0.49177
+      ],
+      [
+        0,
+        0.27473,
+        0.61171
+      ]
+    ],
+    "drumAxisNative": [
+      0,
+      0.47449,
+      -0.26035
+    ],
+    "drumRadiusMeters": 0.0508,
+    "hoodRollerCentersNative": [
+      [
+        0,
+        0.55767,
+        -0.06855
+      ],
+      [
+        0,
+        0.60024,
+        -0.09334
+      ]
+    ],
+    "horizontalHopperFrontNativeZ": 0.64132,
+    "shooterLanesRuntimeZ": [
+      -0.2286,
+      -0.0762,
+      0.0762,
+      0.2286
+    ]
+  },
+  "gameplayEstimates": {
+    "massKg": 56,
+    "emptyInertiaKgM2": [
+      3.2,
+      5.9,
+      3.6
+    ],
+    "maxSpeedMps": 4.8,
+    "wheelAccelerationMps2": 10,
+    "grip": 1.05,
+    "fuelCapacity": 48,
+    "capacityBasis": "Forty-eight nonoverlapping150mm cargo seeds inside the measured extended envelope plus documented expandable net, not volume divided by fuel count.",
+    "intakeRatePerSecond": 42,
+    "fireRatePerSecond": 25,
+    "feedSeconds": 0.3,
+    "stowedPivotDegrees": -110,
+    "hopperTravelMeters": 0.3,
+    "hoodShotElevationDegrees": [
+      40,
+      78
+    ],
+    "neutralHoodCorrectionDegrees": 24.9,
+    "hoodMapping": "Exported terminal roller tangent approx53.1deg; bake+24.9deg to shared78deg neutral and use38deg operational subset. Packet80deg total travel is not an absolute shot-angle range.",
+    "passingReachMeters": 10,
+    "movingShots": false,
+    "spread": {
+      "yaw": 0.032,
+      "elevation": 0.035,
+      "speed": 0.035,
+      "flyerChance": 0.1,
+      "backspin": 28
+    },
+    "scatterBasis": "Qualitative physical launch-uncertainty estimate, slightly broader than Icarus profile, not a TBA/Statbotics hit probability or forced hit/miss rating.",
+    "hopperDynamics": "Shared local full-size sphere solver; horizontal hopper stays out after deployment while pivot intake can retract as cargo permits. Net is represented by estimated containment envelope, not individually simulated strands.",
+    "climbing": "No identified hook mechanism in inspected export hierarchy/batched surfaces. Team packet describes a real pivoting climber; capability remains disabled in this simulator."
+  },
   "runtime": {
-    "registered": false,
-    "preparedAsset": null,
-    "reason": "No complete source geometry available; do not register an unfinished placeholder."
+    "registered": true,
+    "preparedAsset": "public/assets/robots/6800-downpour/robot.glb",
+    "bytes": 2024604,
+    "sha256": "3c3251b676aec245e65cfb07c2ed7be5473c1ea2d671697b1a5aa1bd7c0e0c35",
+    "triangles": 502380,
+    "primitives": 31,
+    "converter": "src/robot/robots/6800-downpour/prepare.mjs",
+    "keptCadBodies": 396,
+    "omittedHardwareBodies": 1280,
+    "removedEmbeddedFuel": 0,
+    "preparation": "Palette batches preserve CAD colors;10-micron weld reconnects exporter face boundaries before bounded mesh simplification. Real fixed/rotating module geometry split from each WCP X2 occurrence; wheel axes normalized per source instance. Two static bar tubes never bound to roller spin."
   },
   "redistribution": {
     "status": "pending",
@@ -145,5 +263,38 @@
       "totalReduction": 74.1,
       "simulationStatus": "Not implemented; real pivoting-hook attachment requires optional coordinated support contract beyond vertical side-hook-l1."
     }
-  }
+  },
+  "validation": {
+    "node": "26.13.0",
+    "pnpm": "10.20.0",
+    "branchGuard": "passed",
+    "robotTests": {
+      "tests": 31,
+      "files": 8,
+      "result": "passed"
+    },
+    "fullSimulation": {
+      "tests": 165,
+      "files": 28,
+      "result": "passed"
+    },
+    "fieldShots": "4 passed: both-alliance hub scoring after stopping, plus physical passing from the opposite heading with Downpour and Reblitz.",
+    "assetIntegrity": "19 runtime files; 17.51 MiB; passed",
+    "releaseBuild": "Asset integrity, TypeScript/Vite and production payload checks passed; 12 content-hashed runtime assets. Existing physics chunk-size warning.",
+    "browser": "Passed isolated CAD stowed/deployed/seeded-full/shooting/partial poses and full-app robot selection, blue/red practice, W/L/Shift/Space/Q input smoke, visible saved bindings, pause/resume and R restart. No page errors. Initial app attempt overlapped a source update; stable-source repeat passed.",
+    "logs": "Ignored .tools/robots-final.log, full-simulation-node26.log, build-release-node26.log, downpour-browser.json, downpour-app.json"
+  },
+  "integrationFiles": [
+    "src/robot/registry.ts",
+    "src/robot/types.ts",
+    "src/robot/poses.ts",
+    "src/sim/RobotSimulation.ts",
+    "src/sim/Shooter.ts",
+    "src/sim/ShotScatter.ts",
+    "src/sim/ShotScatter.test.ts",
+    "src/sim/SwerveChassis.ts",
+    "src/view/RobotView.ts",
+    "src/App.tsx"
+  ],
+  "sharedAimingFix": "Retain the chosen chassis turn direction within 0.1 radians of the 180-degree wrap tie. Prevents alternating swerve commands from blocking aiming; actual-field passing cases protect Downpour and Reblitz."
 }

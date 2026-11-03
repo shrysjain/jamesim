@@ -1,115 +1,201 @@
 # 6800 Valor — Downpour (2026)
 
-## Status
+The contributor's **VR26A-0000 Main** export implements the Downpour drum-shooter
+revision linked in the requested Onshape workspace. It is selectable through the
+normal registry, uses four physical shooting lanes and has a pivoting intake,
+sliding horizontal hopper and adjustable hood. It shares the existing fixed-step
+simulation, fuel ownership, chassis aiming, controls, scoring and match lifecycle.
 
-Source research branch: `robot/6800-downpour`, based on `origin/main` at
-`0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5`.
-
-The user supplied the team's current Downpour assembly. The official May 13
-CAD release links that exact document, workspace and assembly. The separately
-linked Manor robot, Drizzle, uses another workspace in the same document;
-it must not be substituted for this request.
-
-**Not yet playable or registered.** No complete assembly geometry was available
-in this environment. There is no `definition.ts`, runtime asset record or
-placeholder model. Existing robots and shared interfaces are unchanged.
-
-## Sources and revision
+## Sources and exact revision
 
 - [Requested Downpour CAD](https://cad.onshape.com/documents/15cd41462dc24ff986a4e549/w/1b79a7ae373e0026664ccfff/e/8fdecbfb5ab3c774cb6a4551)
-- [Official CAD release](https://www.chiefdelphi.com/t/frc-6800-valor-2026-robot-cad-release/520715)
-- [Official code release discussion](https://www.chiefdelphi.com/t/frc-6800-valor-2026-robot-cad-release/520715?page=2)
-- [Team-linked technical packet](https://drive.google.com/file/d/11rQrMwCIseY18JbKFytGLXSd__x1JP1S/view)
-- [Team-linked code](https://git.valor6800.com/valor6800/2026/robot)
+- [Team CAD release](https://www.chiefdelphi.com/t/frc-6800-valor-2026-robot-cad-release/520715)
+- [Team mechanism/code discussion](https://www.chiefdelphi.com/t/frc-6800-valor-2026-robot-cad-release/520715?page=2)
+- [Team technical packet](https://drive.google.com/file/d/11rQrMwCIseY18JbKFytGLXSd__x1JP1S/view)
+- [Team code](https://git.valor6800.com/valor6800/2026/robot)
 
-The supplied workspace is mutable, not an immutable version or microversion.
-Record the export's version/microversion when available and hash every input
-before conversion. `assets/robots/6800-downpour/sources.json` preserves the
-exact source identifiers and current access status; it is research metadata,
-not a prepared-runtime manifest.
+The official release links the exact requested workspace for Downpour. Drizzle,
+the earlier Manor robot, uses a different workspace and is not substituted here.
+The mutable workspace has no supplied immutable version/microversion. The actual
+export is pinned by its **127,464,908-byte** length and SHA-256:
+`02d163b47e2c0a828ba832370d32d65d3dd61f065f283ba011ad4e754adbcc46`.
 
-## Verified behavior and evidence limits
+Five uploaded binary segments were joined in numeric order. GLB v2 magic, declared
+length and the contributor's expected SHA-256 matched. The uploaded PowerShell
+was inspected as data and never executed. Raw CAD and conversion reports remain
+ignored under `assets/source/robots/6800-downpour/`.
 
-The team's CAD-release discussion describes a four-fuel-wide shooter and an
-adjustable hood. It says reverse-direction shooting remained an inconsistent
-experiment that was not used in matches.
+Direct Onshape access remains blocked by this environment's network policy;
+that is not evidence that the team disabled exports. The user-provided geometry
+is the source of the runtime model. Its complete root hierarchy contains States
+Hopper, Hotdog Rollers, Chassis, Intake and Shooter assemblies, agreeing with the
+documented drum rebuild. No claim is made that it is the live workspace's newest
+state or identical to every earlier packet illustration.
 
-The technical packet, **States Pages to print.pdf**, was inspected through the
-Google Drive connector's readable extraction. Provider metadata reports
-26,550,129 bytes and modification time `2026-04-13T23:00:56Z`. Its District
-Championship chapters describe the rebuild from a single-stream turret to a
-four-fuel-wide drum shooter. This directly supersedes the secondary dashboard's
-unverified elevator/arm characterization as evidence for this revision. The
-separately linked Drizzle workspace and the initial March binder must not
-silently supply measurements for the requested May CAD workspace.
+The packet **States Pages to print.pdf** was inspected through the Google Drive
+connector's readable extraction. Provider metadata reports 26,550,129 bytes,
+modified `2026-04-13T23:00:56Z`. The extraction hash in `sources.json` verifies the
+text excerpt, not the raw PDF, which was not downloaded. Its District Championship
+chapters identify a four-wide drum rebuild; they supersede the secondary
+research dashboard's unverified elevator/arm summary for this revision.
 
-The packet reports these design specifications; they are **team-stated figures,
-not measurements of the inaccessible CAD**:
+## Team figures versus CAD measurements
 
-| Subsystem | District Championship packet evidence |
+The April District Championship packet reports a 25.5 in acquisition width,
+powered 2 in roller, static 1 in crash-bar tube, 69:1 pivot reduction, hopper volumes
+of 4,613.4/8,683.9 in³, four-fuel-wide transfer, three shooter/two feeder X60s,
+80° total hood travel and a two-hook pivoting climber. These are team-stated
+specifications, not measured simulator performance. Its 1580:21 hood ratio and a
+later May 790:11 ratio are kept as dated records; no silent reconciliation or
+absolute launch-angle range is inferred from them.
+
+The export supplies the actual .6858 m square frame, approximately .8432 m square
+bumper envelope and module centers at native XZ ±.2794 m. Native Y is up and +Z faces
+the intake; preparation maps coordinates to `(-Z,Y-.223,X)`. Runtime +X shoots,
+−X intakes and Z spans the roller length. The model's carpet is native Y=0.
+
+Measured native pivots/shafts include:
+
+| Part | Native center (m) |
 | --- | --- |
-| Intake | 25.5 in (0.6477 m) acquisition width; powered 2 in roller and static 1 in aluminum crash-bar tube; two Kraken X60 roller motors at 1.23:1 |
-| Deployment | Single pivot, two ThriftyBot cycloidal gearboxes, 69:1 reduction; low-mounted Kraken X60 |
-| Hopper | 4,613.4 in³ unextended and 8,683.9 in³ extended; stationary bumper-mounted panels and an expanding top net |
-| Indexer | Four-fuel-wide transfer; two Kraken X44s at 2.5:1; mixed 2 in / 1.25 in rollers |
-| Shooter / feeder | Three Kraken X60 shooter motors at 3:2 and two X60 feeder motors at 20:9; 2 in feeder rollers |
-| Hood | Kraken X44; packet gearing 1580:21; stated 80° total travel |
-| Climber | Two pivoting 3/8 in aluminum hooks; surgical-tubing deployment and Dyneema spool retraction; Kraken X44 and 74.1:1 total reduction |
+| Intake pivot | `(0,.19131,.3032)` |
+| Powered intake roller | `(0,.21824,.59221)` |
+| Lower static tube | `(0,.08188,.49177)` |
+| Upper static crash bar | `(0,.27473,.61171)` |
+| Drum/hood pivot | `(0,.47449,-.26035)` |
+| Hood roller 1 | `(0,.55767,-.06855)` |
+| Hood roller 2 | `(0,.60024,-.09334)` |
 
-The stated hopper volumes do not establish usable full-size-fuel capacity or
-legal cargo seed positions. The 80° hood travel does not specify an absolute
-shot-angle range. A later May discussion gives a different hood ratio, 790:11;
-keep both dated records until CAD/code establishes which applies to the chosen
-export. Neither ratio is a measured launch-performance claim.
+The last hood roller gives an approximately 53.1° terminal tangent. The converter
+bakes 24.9° about the measured drum axis to the shared 78° neutral pose. The
+40–78° operational range is an estimated fit within the documented 80° total
+travel, not a team-published pair of absolute stops. The hood collider receives
+the same neutral transform so it cannot block the corrected muzzle artificially.
 
-The packet's April District Championship documentation and the mutable May
-release workspace are related sources, not proof of identical geometry or
-unchanged operating limits. Verify their differences when the full export is
-available. The two pivoting hooks are not the existing vertical `side-hook-l1`
-family: enabling a climb requires real attachment/support behavior and a
-coordinated optional contract extension, not an animation-only substitute.
+## Gameplay and mechanism behavior
 
-No mass, frame dimensions, wheel locations, full-size cargo layout, intake pivot
-or limits, launch geometry, firing rate or moving-shot accuracy has been
-measured here. Those values remain intentionally unset rather than copied from
-another team. No unsupported capabilities are registered.
+At setup/reset the intake is folded and the horizontal hopper is in. Starting
+play deploys them through the existing shared actuator timing. Toggle intake
+extension folds the pivot as cargo permits; Intake and Reverse/eject extend it.
+The expanding hopper remains out after deployment. This uses the retained
+single intake/hopper mechanism family rather than simulating every guide/link
+constraint. Firing does not automatically fold the pivoting intake.
 
-## CAD access and next implementation step
+Both original 1 in tubes are static on the intake assembly. The powered roller
+spins around its own measured shaft; the lower and upper tubes never receive
+roller spin. Actual fixed mounts, cycloidal housings and the low pivot motor
+remain attached to the chassis. Each hood roller has its own measured axis.
 
-On November 2, 2026 the web reader could resolve the team's exact CAD URL but
-returned no geometry or assembly data. The selected cloud environment rejected
-the direct Onshape request with a proxy CONNECT 403. This is an access limitation
-of this session; it does **not** establish that the team disabled exports.
-The ordinary technical-packet web viewer exposed a loading/sign-in page; its
-mechanical text was subsequently read through the connected Google Drive
-plugin. That text supplies revision evidence, not source mesh geometry. No
-matching 6800 geometry was found in the public derivative mesh pack used by
-existing robots.
+Four lane centers at Z `[-.2286,-.0762,.0762,.2286]` span the actual drum. Owned
+fuel follows explicit waypoints above the roller floor and behind the three
+measured feeder shafts. The optional `feedAcrossLanes` contract preserves each
+release column rather than funneling all four streams through Z=0. The physical
+projectiles leave through the shared muzzle and retain their original IDs and
+bodies; no replacement ammunition or private scoring is introduced.
 
-Provide a GLB or STEP export of the requested Downpour assembly, preferably with
-bumper, intake and hood subassembly hierarchy retained. Source exports belong
-under ignored `assets/source/robots/6800-downpour/`; raw CAD must not enter the
-runtime payload. Once geometry is available:
+Downpour stops to shoot and uses chassis aim. Reverse-direction shooting was
+an inconsistent experiment according to the team release, so it is not enabled.
+Shared passing remains available. At the exact 180° aiming tie, the shared
+shooter holds its chosen turn direction until clear of the wrap boundary. This
+prevents initial swerve steering forces from reversing aim every tick; physical
+passing tests cover Downpour and the original Re•Blitz. No identified hook assembly
+was found in the
+inspected export hierarchy and batched surfaces. The team packet describes a
+real pivoting climber, but this implementation does not falsely enable the
+existing vertical side-hook profile or imply that the actual team lacked one.
 
-1. Inspect the complete assembly, identify real joints/axes, remove embedded fuel
-   and prepare one articulated, self-contained model within the authoring budgets.
-2. Measure frame/modules, pickup, hopper, feed and shooter geometry. Document
-   gameplay estimates separately and use shared mechanisms where they fit.
-3. Implement the robot-owned definition/visual files, actual runtime hash record
-   and registry entry; do not alter shared behavior to hide missing mechanisms.
-4. Run robot acceptance, full simulation and release checks, then inspect both
-   alliances and all supported mechanism poses in a local browser.
+Estimated gameplay values: 56 kg empty mass, inertia `[3.2,5.9,3.6] kg·m²`, 4.8 m/s,
+10 m/s² wheel command, grip 1.05, 42 fuel/s intake,25 fuel/s nominal fire rate,
+.30 s feed transit and 10 m passing reach. Cadence remains gated by aim, spin-up,
+hood, stability and clear exits. No measured BPS or motor-limit model is claimed.
 
-## Validation and integration
+Capacity 48 uses nonoverlapping 150 mm sphere seeds, three staggered layers and
+the shared local hopper dynamics. It accounts for the measured extended hopper
+plus the documented expandable top net; the packet's volume is not naively
+divided into a ball count. The net itself is an estimated containment envelope,
+not individually simulated strands. Manual folding is cargo-limited. Held fuel
+continues to contribute mass/inertia once through the existing system.
 
-The repository branch guard passed for team 6800. The source JSON parses, and the ignored readable-text extraction has a
-recorded byte count and SHA-256. That hash identifies the text extraction, not
-the raw PDF, which was not downloaded.
-Simulation, asset-budget and visual validation have not been run for this robot
-because no robot class or runtime CAD exists yet. This branch currently changes
-only this README and its source research record; it has no shared integration
-points or dependency on another robot PR.
+Shot spread is an estimate: yaw .032 rad, elevation .035 rad, speed fraction .035,
+flyer chance .10 and backspin 28 rad/s. The reused optional uncertainty model adds
+launch variations and occasional wider tails. It does not choose forced misses,
+correct flight after release or claim a hit percentage derived from TBA or
+Statbotics. Existing robots without an explicit profile keep their old launch
+path; no unrelated accuracy tuning is included here.
 
-CAD redistribution clearance is pending under the repository's existing
-owner-authorized noncommercial v1 policy. No unrelated code license is treated
-as CAD permission.
+## Reproduce the prepared model
+
+With the verified export at the ignored source path and pinned dependencies:
+
+```sh
+node src/robot/robots/6800-downpour/prepare.mjs
+pnpm robot:branch --team=6800
+pnpm test:robots
+pnpm test:sim
+pnpm build:release
+```
+
+The model currently has 2,024,604 bytes, 502,380 triangles and 31 primitives. The
+converter keeps 396 CAD bodies and omits 1,280 hardware/origin-detail bodies. No
+embedded fuel bodies were identified in this export. It reconnects exporter
+face boundaries at 10-micron tolerance, simplifies the original surfaces and
+batches around real mechanism frames. It preserves palette colors and makes
+exterior hopper polycarbonate 24% opaque. No substitute robot geometry is used.
+
+The four simplified WCP X2 module occurrences contain their wheel/fork surfaces
+in one batched body. Preparation separates the actual triangles at the measured
+wheel cylinders and lower fork envelope, leaving fixed plates/motors on the
+chassis. It normalizes each occurrence's own exported axle; two were turned 90°
+relative to the other two. The renderer keeps all four axle roots rigid inside
+the frame while retaining steering and wheel rotation.
+
+## Shared integration and validation
+
+Base `origin/main`: `0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5`.
+Robot-only folders own the definition, visual bindings, preparation, provenance,
+runtime record and tests. The existing registry gains one import/entry. Other
+shared integration points are:
+
+- `poses.ts`: optional manual capability helper for pivot-only intake control,
+  preserving legacy sliding-intake defaults.
+- `RobotSimulation.ts`: three intake-toggle guards use that capability helper.
+- `types.ts` and `Shooter.ts`: opt-in wide feed paths and the same optional shot
+  spread interface already used by related robot work; no global profile change.
+  Shooter aiming also fixes the 180° direction tie described above.
+- `ShotScatter.ts` and tests: reused deterministic physical launch uncertainty.
+- `RobotView.ts`: remove numerical-suspension movement of CAD module roots;
+  steering/spin remain active, matching the approved universal rigid-swerve rule.
+- `SwerveChassis.ts`: reuse the reviewed .05/Min contact-friction fix after loaded
+  Downpour reproduced sticking against both ends of a wall. Tire grip is unchanged.
+- `App.tsx`: capability-aware control list, binding-independent Downpour help,
+  stationary-shoot wording and CAD credit; no selector or layout rewrite.
+
+Asset/build manifests are discovered through this robot's own runtime record;
+no common manifest, payload allowance or build configuration changes are made.
+Shared lines overlap related robot PRs and must retain compatible optional
+fields/guards rather than restore an older core file wholesale.
+
+Validation with Node 26.13.0 and pnpm 10.20.0:
+
+- `pnpm test:robots`: 31 tests across 8 files passed.
+- `pnpm test:sim`: 165 tests across 28 files passed, including both-alliance
+  48-fuel discharge through all four lanes, body/ID and mass conservation,
+  above-floor feed paths, pivot controls, pause/reset, loaded wall slide and
+  back-away, static tubes, distinct shafts and rigid wheel/fork roots.
+- Actual-field shooting cases verify hub entry and processing after stopping,
+  plus physical passing from a 180° turn for Downpour and Re•Blitz.
+- `pnpm build:release`: integrity, TypeScript/Vite and production payload checks
+  passed. Nineteen runtime source files total 17.51 MiB; twelve hashed build assets.
+  The existing Rapier chunk-size warning remains.
+- An isolated browser inspected stowed/deployed/seeded-full/shooting/partial
+  CAD poses and both alliance colors, then checked selection, blue/red practice,
+  normal drive/intake/shoot/reverse inputs, saved-key help, pause/resume and R
+  restart. The stable-source flow passed with no page errors. A first UI attempt
+  overlapped a source update and was repeated after edits stopped.
+
+Ignored `.tools/` logs and screenshots retain local QA evidence. Prepared CAD is
+unchanged by the final shooting fix; its manifest hash matches the checked asset.
+
+CAD redistribution remains pending under the repository's owner-authorized
+noncommercial v1 policy. Public attribution and an unrelated code license are
+not treated as CAD clearance. Raw source, QA pages and reports remain ignored.

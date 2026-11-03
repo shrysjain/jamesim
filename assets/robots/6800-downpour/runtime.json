@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "robotId": "6800-downpour",
+  "group": {
+    "name": "Team6800 Downpour contributor CAD",
+    "source": "https://cad.onshape.com/documents/15cd41462dc24ff986a4e549/w/1b79a7ae373e0026664ccfff/e/8fdecbfb5ab3c774cb6a4551",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    },
+    "files": [
+      {
+        "path": "public/assets/robots/6800-downpour/robot.glb",
+        "bytes": 2024604,
+        "sha256": "3c3251b676aec245e65cfb07c2ed7be5473c1ea2d671697b1a5aa1bd7c0e0c35"
+      }
+    ]
+  }
+}
