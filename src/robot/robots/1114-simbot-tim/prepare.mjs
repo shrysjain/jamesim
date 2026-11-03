@@ -34,12 +34,14 @@ group('chassis');group('intake');group('hood',drumPivot);group('shooter-drum',dr
 const hardware=/screw|\bbolt\b|washer|\bnut\b|nylock|rivet|bearing|spacer|collar|retaining|^9\d{4}[A-Z]/i;
 // Simplify source meshes before expanding instanced occurrences. The threshold
 // is bounded in meters; recognizable plates and their cutouts remain CAD.
+// Replace normals on a primitive-owned clone: source glTF primitives can share
+// accessors, and computeVertexNormals zeroes vertices unused by this primitive.
 for(const mesh of src.getRoot().listMeshes())if(!protectedMeshes.has(mesh))for(const p of mesh.listPrimitives()){
  const a=p.getAttribute('POSITION'),indices=p.getIndices();if(p.getMode()!==4||!indices||indices.getCount()<180)continue;
  const v=a.getArray();for(let i=0;i<v.length;i++)v[i]=Math.round(v[i]/.00001)*.00001;
  const remap=MeshoptSimplifier.generatePositionRemap(v,3),w=new Uint32Array(Array.from(indices.getArray(),i=>remap[i]));
  let [r]=MeshoptSimplifier.simplify(w,v,3,Math.floor(w.length*.06/3)*3,.002,['ErrorAbsolute','Prune']);
- indices.setArray(r);const geo=new BufferGeometry().setAttribute('position',new BufferAttribute(v,3)).setIndex(new BufferAttribute(r,1));geo.computeVertexNormals();p.getAttribute('NORMAL')?.setArray(geo.getAttribute('normal').array);geo.dispose();
+ indices.setArray(r);const geo=new BufferGeometry().setAttribute('position',new BufferAttribute(v,3)).setIndex(new BufferAttribute(r,1));geo.computeVertexNormals();if(p.getAttribute('NORMAL'))p.setAttribute('NORMAL',p.getAttribute('NORMAL').clone().setArray(geo.getAttribute('normal').array));geo.dispose();
 }
 function visit(node,path=[]){
  const mesh=node.getMesh(),name=node.getName(),names=path.map(n=>n.getName());
@@ -102,7 +104,7 @@ if(before>600000)for(const m of doc.getRoot().listMeshes())for(const p of m.list
  const a=p.getAttribute('POSITION'),idx=p.getIndices(),v=a.getArray(),target=Math.max(3,Math.floor(idx.getCount()*(590000/before)/3)*3);
  const remap=MeshoptSimplifier.generatePositionRemap(v,3),w=new Uint32Array(Array.from(idx.getArray(),i=>remap[i]));
  const [out]=MeshoptSimplifier.simplify(w,v,3,target,.004,['ErrorAbsolute','Prune']);if(out.length>=3&&out.length<idx.getCount())idx.setArray(out);
- const geo=new BufferGeometry().setAttribute('position',new BufferAttribute(v,3)).setIndex(new BufferAttribute(idx.getArray(),1));geo.computeVertexNormals();p.getAttribute('NORMAL').setArray(geo.getAttribute('normal').array);geo.dispose();
+ const geo=new BufferGeometry().setAttribute('position',new BufferAttribute(v,3)).setIndex(new BufferAttribute(idx.getArray(),1));geo.computeVertexNormals();p.setAttribute('NORMAL',p.getAttribute('NORMAL').clone().setArray(geo.getAttribute('normal').array));geo.dispose();
 }
 await doc.transform(weld(),prune(),meshopt({encoder:MeshoptEncoder,level:'high'}));const result=await io.writeBinary(doc),sha256=createHash('sha256').update(result).digest('hex'),triangles=doc.getRoot().listMeshes().reduce((s,m)=>s+m.listPrimitives().reduce((n,p)=>n+p.getIndices().getCount()/3,0),0),primitives=doc.getRoot().listMeshes().reduce((s,m)=>s+m.listPrimitives().length,0);
 if(result.length>6*1024*1024||triangles>650000||primitives>160)throw Error(`Budget exceeded ${result.length}bytes ${triangles}tris ${primitives}primitives`);

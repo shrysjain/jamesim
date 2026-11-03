@@ -188,3 +188,10 @@ discharge/conservation is covered by the focused simulation cases.
 These corrections touch only this robot's own files and runtime asset. No new
 shared interface is required. Exact slide limits and real-world ballistic
 calibration remain fitted estimates as documented above.
+
+The converter assigns recalculated normals through a primitive-owned accessor
+clone, so future shared source attributes cannot be overwritten. This upload
+had no shared NORMAL accessors; comparing all 5,625,834 decoded geometry/color/
+index scalars before and after the guard found no differences. The asset hash
+changes because serialization order changes; bytes/triangles/primitives and
+rendered geometry remain the same.
