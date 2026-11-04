@@ -196,15 +196,15 @@
   "runtime": {
     "registered": true,
     "preparedAsset": "public/assets/robots/6800-downpour/robot.glb",
-    "bytes": 2010836,
-    "sha256": "d9b8cd967b10ad351b6af4c6aa4c015b5f47618b23218a4187529a4b97b40d9c",
-    "triangles": 499168,
-    "primitives": 31,
+    "bytes": 2679448,
+    "sha256": "a8e5479035384b5a40fb14ba8bc771716a24ad0519bcd213f04f583c7993aad6",
+    "triangles": 640052,
+    "primitives": 38,
     "converter": "src/robot/robots/6800-downpour/prepare.mjs",
-    "keptCadBodies": 392,
-    "omittedHardwareBodies": 1280,
+    "keptCadBodies": 398,
+    "omittedHardwareBodies": 1274,
     "removedEmbeddedFuel": 0,
-    "preparation": "Palette batches preserve CAD colors;10-micron weld reconnects exporter face boundaries before bounded mesh simplification. Real fixed/rotating module geometry split from each WCP X2 occurrence; wheel axes normalized per source instance. Two static bar tubes never bound to roller spin.",
+    "preparation": "Palette batches preserve CAD colors. Original powered/static roller surfaces, exposed intake drive pulleys, support plates and hood hubs retain their actual topology and normals; bounded position-only simplification applies to other batches. Eight-corner world bounds correctly classify rotated bodies. Fixed/rotating module geometry remains split per WCP X2 occurrence; two static bar tubes never receive roller spin.",
     "derivedPaddingBars": 4,
     "padding": "Replace only the four lettered source foam meshes with plain boxes at their measured envelopes. Source backers and mounts remain CAD; shared renderer supplies team numbers."
   },
@@ -324,5 +324,32 @@
       "combinedValidation": "Parent integration task owns the combined full suite and browser review."
     },
     "runtimeModel": "Unchanged; actual CAD pivot and polycarbonate geometry retained."
+  },
+  "rollerAssemblyFollowup": {
+    "baseCommit": "ea6185af02166d587f1dfd12ef3062a4cc1ae5a4",
+    "issues": "Position-only decimation damaged the circular intake tube. Exposed drive pulleys were removed with fasteners while belt loops survived; hood roller hubs remained on the chassis as their shafts moved.",
+    "repairs": [
+      "Preserve the actual 464-triangle Roller 2 tube and its original radial/end normals, with its measured 50.8mm outside diameter and 580.8mm length.",
+      "Retain both 26T intake-drive pulleys, both 32T printed roller hubs and both fixed 18T pivot pulleys with original support plates. Bind moving pulleys to their measured axes; 26T shafts turn at 32/26 of the main roller angle.",
+      "Bind both milled and printed hood-hub pairs to their respective real Back Roller shafts before applying the existing neutral-hood correction.",
+      "Use all eight source bounding-box corners when transforming bounds; keep static pivot supports on the chassis and both bar tubes fixed on the moving intake."
+    ],
+    "sourceGeometry": "Verified original full Downpour GLB and team packet remain unchanged. No replacement roller, procedural gear or model decoder was introduced.",
+    "previousRuntime": {
+      "bytes": 2010836,
+      "sha256": "d9b8cd967b10ad351b6af4c6aa4c015b5f47618b23218a4187529a4b97b40d9c",
+      "triangles": 499168,
+      "primitives": 31
+    },
+    "validation": {
+      "focused": "17 tests across3 files passed on this production patch, including original tube radial normals/diameter, gear/shaft attachment over four fold/hood/spin poses, all prior cargo/shot/actuation cases.",
+      "focusedLog": ".tools/roller-gears-focused.log",
+      "browser": "Five fresh isolated Chromium poses passed without page errors: stowed, deployed, partial fold, intake close-up and hood close-up. Source hardware and intact roller visually inspected.",
+      "browserLog": ".tools/roller-gears-browser.json",
+      "build": "pnpm build:release passed:25 runtime files33.91MiB, TypeScript/Vite,18 hashed production assets. Existing large bundle warning remains.",
+      "buildLog": ".tools/roller-gears-release.log",
+      "fullSimulation": "Parent integration owns the new combined full suite; the earlier380-test result remains historical."
+    },
+    "remainingLimits": "Belts retain their source geometry on the relevant assembly; individual belt deformation, cycloidal internals and drive-train compliance are not simulated."
   }
 }

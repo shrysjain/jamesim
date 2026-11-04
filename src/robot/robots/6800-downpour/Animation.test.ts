@@ -89,6 +89,60 @@ describe('Downpour source CAD articulation', () => {
       }
     } finally { view.dispose(); }
   });
+  it('retains the actual circular intake tube and its original surface normals', () => {
+    const { view, nodes, robot, mechanisms } = fixture();
+    try {
+      robot.pose.intake = 1; view.update(robot, 0, mechanisms); view.group.updateMatrixWorld(true);
+      const roller = nodes.get('intake-roller-main')!;
+      const surface = roller.getObjectByName('intake-roller-main-roller-surface') as THREE.Mesh;
+      expect(surface).toBeDefined();
+      const geometry = surface.geometry, positions = geometry.getAttribute('position'), normals = geometry.getAttribute('normal');
+      expect((geometry.index?.count ?? positions.count) / 3).toBe(464);
+      const pivot = roller.getWorldPosition(new THREE.Vector3()), point = new THREE.Vector3(), normal = new THREE.Vector3();
+      const normalMatrix = new THREE.Matrix3().getNormalMatrix(surface.matrixWorld);
+      let radius = 0, curved = 0;
+      for (let i = 0; i < positions.count; i++) {
+        point.fromBufferAttribute(positions, i).applyMatrix4(surface.matrixWorld).sub(pivot);
+        normal.fromBufferAttribute(normals, i).applyMatrix3(normalMatrix).normalize();
+        radius = Math.max(radius, Math.hypot(point.x, point.y));
+        if (Math.abs(normal.z) > .2) continue; // Original planar tube ends.
+        const radial = new THREE.Vector3(point.x, point.y, 0).normalize();
+        // The hollow inner skin legitimately faces inward; both skins must be radial.
+        expect(Math.abs(normal.dot(radial))).toBeGreaterThan(.985); curved++;
+      }
+      expect(curved).toBeGreaterThan(100);
+      expect(radius).toBeCloseTo(.0254, 4);
+      const size = new THREE.Box3().setFromObject(surface, true).getSize(new THREE.Vector3());
+      expect(size.z).toBeCloseTo(.5808, 3);
+      expect(size.x).toBeCloseTo(.0508, 3); expect(size.y).toBeCloseTo(.0508, 3);
+    } finally { view.dispose(); }
+  });
+  it('keeps drive pulleys and hood hubs on their actual shafts through folding and spinning', () => {
+    const { view, nodes, robot, mechanisms } = fixture();
+    try {
+      const fixed = ['intake-pivot-drive', 'intake-fixed-mounts'].map(id => nodes.get(id)!);
+      const drives = ['intake-roller-main', 'intake-roller-drive'].map(id => nodes.get(id)!);
+      drives.forEach(node => expect(node.parent).toBe(nodes.get('intake')));
+      for (const id of ['hood-roller-1', 'hood-roller-2']) {
+        const hub = nodes.get(id)!.getObjectByName(id + '-attached-hardware');
+        expect(hub).toBeDefined(); expect(hub!.parent).toBe(nodes.get(id));
+      }
+      let fixedMatrices: THREE.Matrix4[] | undefined;
+      for (const [extension, hood, angle] of [[0, 0, 0], [.45, .6, 1.2], [1, 1, 3.4], [.2, .3, 5.5]]) {
+        robot.pose.intake = extension; robot.pose.hopper = 1; robot.pose.hood = hood;
+        mechanisms.rollerAngle = angle; mechanisms.shooter.drumAngle = angle;
+        view.update(robot, 0, mechanisms); view.group.updateMatrixWorld(true);
+        fixedMatrices ??= fixed.map(node => node.matrixWorld.clone());
+        fixed.forEach((node, i) => expect(node.matrixWorld.elements).toEqual(fixedMatrices![i].elements));
+        expect(drives[1].rotation.z).toBeCloseTo(angle * 32 / 26);
+        for (const node of [...drives, nodes.get('hood-roller-1')!, nodes.get('hood-roller-2')!]) {
+          const axis = node.getWorldPosition(new THREE.Vector3());
+          const center = new THREE.Box3().setFromObject(node, true).getCenter(new THREE.Vector3());
+          expect(Math.hypot(center.x - axis.x, center.y - axis.y)).toBeLessThan(.002);
+        }
+      }
+    } finally { view.dispose(); }
+  });
   it('folds only the actual moving intake, slides the horizontal hopper and rotates two separate hood rollers', () => {
     const { view, nodes, robot, mechanisms } = fixture();
     try {

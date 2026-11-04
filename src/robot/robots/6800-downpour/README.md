@@ -143,8 +143,8 @@ pnpm test:sim
 pnpm build:release
 ```
 
-The model currently has 2,010,836 bytes, 499,168 triangles and 31 primitives. The
-converter preserves 392 CAD bodies and derives four plain padding bars and omits 1,280 hardware/origin-detail bodies. No
+The model currently has 2,679,448 bytes, 640,052 triangles and 38 primitives. The
+converter preserves 398 CAD bodies and derives four plain padding bars and omits 1,274 hardware/origin-detail bodies. No
 embedded fuel bodies were identified in this export. It reconnects exporter
 face boundaries at 10-micron tolerance, simplifies the original surfaces and
 batches around real mechanism frames. It preserves palette colors and makes
@@ -181,7 +181,7 @@ no common manifest, payload allowance or build configuration changes are made.
 Shared lines overlap related robot PRs and must retain compatible optional
 fields/guards rather than restore an older core file wholesale.
 
-Final validation with Node 26.13.0 and pnpm 10.20.0 on the integrated base:
+Historical integrated-base validation with Node 26.13.0 and pnpm 10.20.0, before the roller/hardware refinement below:
 
 - `pnpm test:sim`: 380 tests across 53 files passed, including the current
   registered roster, Downpour's full 48-fuel discharge through all four lanes,
@@ -212,4 +212,32 @@ discharge, actual prepared-polycarbonate clearance, accelerated full-hopper
 wall contact, pause/reset and the existing CAD articulation checks are covered
 by 15 focused tests across three files. Shared/core full validation and combined
 preview browser checks are coordinated by the integration task. The runtime
-GLB is unchanged by this contact/actuation correction.
+GLB was unchanged by that earlier contact/actuation correction.
+
+## Roller and floating-drive-hardware repair
+
+The powered intake uses the contributor's original 464-triangle tube, with its
+50.8 mm circular outside diameter, 580.8 mm length and original curved/end normals.
+The converter now protects this surface, both static bar tubes, shooter drums,
+exposed drive parts and their support plates from position-only simplification.
+Bounds use all eight transformed corners, including for rotated occurrences.
+
+The former hardware filter removed the real intake pulleys while retaining their
+belts. Both 26T pulleys, both printed 32T hubs and both fixed 18T pivot pulleys now
+remain assembled with their original mounts. The 26T shafts follow the 32/26
+roller ratio. Both milled and printed hood-hub pairs now belong to their actual
+Back Roller nodes, so they follow hood movement and spin instead of staying
+behind on the chassis. No procedural replacement roller or gear was added.
+
+Current focused evidence: **17 tests across three files passed**, including the
+original tube radius/normals and support/shaft attachment through folding, hood
+movement and spin. A fresh isolated browser checked stowed, deployed, partial
+fold, intake close-up and hood close-up poses without page errors.
+`pnpm build:release` passed 25 runtime files (33.91 MiB), TypeScript/Vite and
+18 hashed production assets. The existing large bundle warning remains.
+Ignored evidence is in `.tools/roller-gears-*`. The parent integration validates
+the complete combined roster; earlier broad test counts above are historical.
+
+This remains the shared pivot/intake mechanism family. Belts are retained on
+their source assembly; belt deformation, cycloidal internals and drive-train
+compliance are not individually simulated.
