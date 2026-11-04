@@ -46,32 +46,39 @@ function visit(node,path=[]){
  const name=node.getName()||'',ancestors=path.map(n=>n.getName()),mesh=node.getMesh();
  if(mesh){
   if(/fuel|game.?piece|origin cube/i.test(name)){removedFuel+=/fuel|game.?piece/i.test(name)?1:0;removed++;return;}
-  const module=name==='Simplified Swerve X2';
-  if(hardware.test(name)&&!module&&!/Shooter Hood Gear/.test(name)){removed++;return;}
+  const module=name==='Simplified Swerve X2',inIntake=ancestors.some(n=>/^VR26A-5000M Intake/.test(n));
+  // Exposed drive pulleys are recognizable hardware, not removable fasteners.
+  // Their belt loops and original support plates must remain assembled together.
+  const intakeDrive=inIntake&&/^(26t Custom HTD|18t Custom HTD|3DP, Pulley Hub)/.test(name);
+  if(hardware.test(name)&&!module&&!/Shooter Hood Gear/.test(name)&&!intakeDrive){removed++;return;}
   const world=new Matrix4().fromArray(node.getWorldMatrix()),transform=frame.clone().multiply(world),normalMatrix=new Matrix3().getNormalMatrix(transform);
-  const bounds=new Box3();for(const p of mesh.listPrimitives()){const a=p.getAttribute('POSITION');if(a)for(const v of [a.getMin([]),a.getMax([])])bounds.expandByPoint(new Vector3(...v).applyMatrix4(world));}
+  const bounds=new Box3();for(const p of mesh.listPrimitives()){const a=p.getAttribute('POSITION');if(a){const lo=a.getMin([]),hi=a.getMax([]);for(let k=0;k<8;k++)bounds.expandByPoint(new Vector3(...lo.map((v,i)=>k&(1<<i)?hi[i]:v)).applyMatrix4(world));}}
   const c=bounds.getCenter(new Vector3()),size=bounds.getSize(new Vector3());
   let g=group('chassis'),correction=0;
   if(ancestors.some(n=>/^VR26A-7200F Horizontal/.test(n)))g=group('hopper');
-  if(ancestors.some(n=>/^VR26A-5000M Intake/.test(n))){
+  if(inIntake){
    // Gearboxes, mounts and their low motor remain bolted to the chassis.
    if(c.z>.345||['Side Plate','Left Guard','Right  Guard','Motor Guard','Motor Plate','Churro','Ramp','Inner Vertical Hopper Pin','Outer Vertical Hopper Pin'].includes(name))g=group('intake',intakePivot);
    if(name==='1" Roller'||name==='Wood dowel')g=group(c.y>.2?'intake-crash-bar':'intake-lower-bar',point([0,c.y,c.z]),'intake');
-   if(name==='Roller 2')g=group('intake-roller-main',point([0,.21824,.59221]),'intake');
+   if(name==='Roller 2'||/^3DP, Pulley Hub/.test(name))g=group('intake-roller-main',point([0,.21824,.59221]),'intake');
+   if(/^26t Custom HTD/.test(name))g=group('intake-roller-drive',point([0,.2911,.567]),'intake');
+   if(intakeDrive&&g.id==='chassis')g=group('intake-pivot-drive');
+   if(['Left Mount','Right Mount','Left Aluminum Plate','Right Aluminum Plate','Pivot Motor Plate','Pivot Small Motor Plate','Chassis Plate'].includes(name))g=group('intake-fixed-mounts');
   }
   if(ancestors.some(n=>/^VR26A-4100E Hotdog Bed/.test(n)) && (size.x>.20&&size.y<.08 || /Thrifty Squish Wheel|Solid Urethane Wheel/.test(name))){
    g=group(`feeder-roller-floor-${c.y.toFixed(4)}-${c.z.toFixed(4)}`,point([0,c.y,c.z]));
   }
   if(ancestors.some(n=>/^VR26A-2000E Shooter/.test(n))){
    if(['Hood Plate','Hood Backing','Hood Reverser Plate','Shooter Hood Gear','Hood Encoder Geat (32 teeth)'].includes(name)){g=group('hood',hoodPivot);correction=hoodCorrection;}
-   if(name==='Back Roller'){
+   if(name==='Back Roller'||name==='Milled Roller Hub'||name==="3DP, Basic Hub, 1.25''OD"){
     const upper=c.y>.58;g=group(`hood-roller-${upper?2:1}`,point([0,upper?.60024:.55767,upper?-.09334:-.06855]),'hood');correction=hoodCorrection;
    }
    if((name==='Part 1'||name==='Part 2')&&size.x>.5&&size.y>.04&&size.y<.065){g=group(`feeder-roller-tower-${c.y.toFixed(4)}`,point([0,c.y,c.z]));}
    if(name==='Flywheel')g=group('shooter-drum',hoodPivot);
   }
   const bumper=/^(Small|Large) Bumper$/.test(name),glass=/Horizontal Side Plate|Main Hopper Plate|Back Plate/.test(name)&&ancestors.some(n=>/^VR26A-7/.test(n));
-  const style=bumper?'bumper':glass?'glass':'paint';
+  const protectedCad=g.id==='shooter-drum'||inIntake&&(intakeDrive||['Roller 2','1\" Roller','Wood dowel','Left Mount','Right Mount','Left Aluminum Plate','Right Aluminum Plate','Pivot Motor Plate','Pivot Small Motor Plate','Chassis Plate','Motor Plate'].includes(name))||g.parent==='hood'&&(name==='Back Roller'||name==='Milled Roller Hub'||name==="3DP, Basic Hub, 1.25''OD");
+  const style=bumper?'bumper':glass?'glass':protectedCad?(name==='Roller 2'||name==='Back Roller'?'roller-surface':'attached-hardware'):'paint';
   let moduleSpec=null;
   if(module){
    const wheelNative=new Vector3(Math.sign(c.x)*.2794,.0508,Math.sign(c.z)*.2794),pivot=wheelNative.clone().applyMatrix4(frame).toArray();
@@ -126,13 +133,13 @@ for(const g of groups.values()){
   g.pivot=after.toArray();
  }
  for(const [style,b] of g.batches){
-  const mat=doc.createMaterial(style).setDoubleSided(true).setRoughnessFactor(style==='bumper'?.95:.62).setMetallicFactor(style==='paint'?.22:0);
+  const mat=doc.createMaterial(style).setDoubleSided(true).setRoughnessFactor(style==='bumper'?.95:.62).setMetallicFactor(!['bumper','glass'].includes(style)?.22:0);
   if(style==='bumper')mat.setBaseColorFactor([.025,.13,.52,1]);
   if(style==='glass')mat.setAlphaMode('BLEND').setBaseColorFactor([.65,.78,.85,.24]);
   const acc=(type,arr,normalized=false)=>doc.createAccessor().setType(type).setArray(arr).setNormalized(normalized).setBuffer(buffer);
   const p=doc.createPrimitive().setAttribute('POSITION',acc('VEC3',new Float32Array(b.positions))).setAttribute('NORMAL',acc('VEC3',new Float32Array(b.normals))).setIndices(acc('SCALAR',new Uint32Array(b.indices))).setMaterial(mat);
-  if(style==='paint')p.setAttribute('COLOR_0',acc('VEC4',new Uint8Array(b.colors),true));
-  g.node.addChild(doc.createNode(g.id+'-'+style).setMesh(doc.createMesh(g.id+'-'+style).addPrimitive(p)));
+  if(!['bumper','glass'].includes(style))p.setAttribute('COLOR_0',acc('VEC4',new Uint8Array(b.colors),true));
+  g.node.addChild(doc.createNode(g.id+'-'+style).setExtras({preservedCad:['roller-surface','attached-hardware'].includes(style)}).setMesh(doc.createMesh(g.id+'-'+style).addPrimitive(p)));
  }
  if(g.parent){const parent=groups.get(g.parent);g.node.setTranslation(g.pivot.map((v,i)=>v-parent.pivot[i]));parent.node.addChild(g.node);}else scene.addChild(g.node);
 }
@@ -140,7 +147,7 @@ await doc.transform(weld());
 let beforeTriangles=0;
 for(const m of doc.getRoot().listMeshes())for(const p of m.listPrimitives()){
  const a=p.getAttribute('POSITION'),idx=p.getIndices();beforeTriangles+=idx.getCount()/3;
- if(idx.getCount()<120)continue;
+ if(idx.getCount()<120||/roller-surface|attached-hardware/.test(m.getName()))continue;
  const vertices=a.getArray();
  for(let i=0;i<vertices.length;i++)vertices[i]=Math.round(vertices[i]*100000)/100000;
  const remap=MeshoptSimplifier.generatePositionRemap(vertices,3),welded=new Uint32Array(Array.from(idx.getArray(),i=>remap[i]));
