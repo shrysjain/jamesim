@@ -1,5 +1,7 @@
 # Shot uncertainty and fuller hoppers — November 2, 2026
 
+The later [lineup performance audit](ROBOT_PERFORMANCE_RESEARCH.md) supersedes motion-quality/throughput estimates. Stationary spread profiles below are retained.
+
 The owner requested less consistent shots for every robot, distinct accuracy between teams, visible rebounds and larger usable hoppers. These changes supersede the earlier nearly perfect hit-rate acceptance and the old 55/50 capacity caps. They do not change fuel size, mass, ownership, tick rate or scoring.
 
 ## Evidence and limits
@@ -14,6 +16,8 @@ The owner requested less consistent shots for every robot, distinct accuracy bet
 Each launch samples bounded, centered angle and wheel-slip variation with occasional broader tails. Per-robot profiles provide yaw/elevation standard deviations in radians, fractional speed spread, an imperfect-feed probability, and backspin. Translation and turning amplify uncertainty, with the existing moving-accuracy rating controlling motion sensitivity. These are gameplay estimates to review, not measured team statistics. The PRNG resets deterministically and is separate from feed/lane ordering.
 
 The original fuel body receives the resulting velocity and spin once. No forced misses, corrected flights, hidden hit counter or post-release steering is used. Existing contacts determine rim/net clips, deflections and scores. Foam restitution varies deterministically by fuel ID within .38–.54 and survives reuse/reset; this is also a physical gameplay estimate, not a laboratory material measurement. Passing retains nominal clearance over nets with additional trajectory headroom for imperfect launches.
+
+Issue #27 follow-up: the listed angle/slip profiles now use a .70 stationary multiplier through 3 m horizontal muzzle-to-target distance, increasing by .05 per meter to 1.05 at 10 m and beyond. Physical angular error already spreads landings with distance; this adds modest launch uncertainty for longer shots. Translation sensitivity is `(.08 + 1 - rating) × min(2, speed / 1.5)` times 8 for fixed shooters or 3 for turrets. Turning adds .20 per rad/s (capped at 1.2) for fixed shooters or .06 (capped at .3) for turrets. These motion terms add to a base multiplier of 1 before the distance multiplier is applied. Existing acceleration/velocity-estimation error remains separate. These are explicit gameplay fits to the requested behavior, not new measured team statistics or hit percentages. Per-robot profiles, ratings, tail probabilities, spin, firing envelopes and physical scores remain in force; even the highest rating retains motion uncertainty.
 
 The current estimated profiles below are deliberately distinct. Angular values are radians; speed is a fractional standard deviation. Flyer probability describes the wider distribution component, **not** a probability of missing.
 

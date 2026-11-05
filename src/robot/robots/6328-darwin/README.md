@@ -1,5 +1,7 @@
 # 6328 Mechanical Advantage · Darwin (2026)
 
+Performance update (November 2, 2026): [the lineup research audit](../../../../docs/ROBOT_PERFORMANCE_RESEARCH.md) supersedes earlier rate, drive/traction and motion-rating estimates below. CAD/capacity and previous validation descriptions remain historical evidence.
+
 Adds selectable `6328-darwin` with the official 26C body, hood, slapdown intake, sliding hopper front, roof, actual MK5i/MK5n modules, feeder rollers, drum and inertia wheel. Uses the shared driver-operated match, local cargo, scoring and stable fuel bodies. Independent branch `robot/6328-darwin` starts at main `0d64cbb`; it does not include/depend on the separate Citrus or other requested robot branches.
 
 ## Sources and exact document

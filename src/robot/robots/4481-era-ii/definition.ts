@@ -1,3 +1,4 @@
+// Performance evidence, estimate ranges and retained CAD limits: docs/ROBOT_PERFORMANCE_RESEARCH.md.
 import type { RobotDefinition, RobotCollider } from '../../types';
 import { STANDARD_SWERVE, swerveModules } from '../../defaults';
 import { ERA_II_VISUAL } from './visual';
@@ -25,12 +26,12 @@ export const ERA_II: RobotDefinition = {
     drumRadius: .040, guideLength: .09, turretRadiansPerSecond: 5,
     turretLimits: [-182.8*DEG,182.8*DEG],
     minElevation: 49*DEG, maxElevation: 75*DEG, passRange: 10,
-    movingAccuracy: .91, movingLimits: { hub: { speed: 1.7, turnRate: 1 }, pass: { speed: 3, turnRate: 3 } },
+    movingAccuracy: .80, movingLimits: { hub: { speed: 1.7, turnRate: 1 }, pass: { speed: 3, turnRate: 3 } },
     spread: { yaw: .028, elevation: .032, speed: .032, flyerChance: .08, backspin: 28 },
     feedPath: [[-.038,-.015,0],[.06,.04,-.15],[.15,.115,-.15],[.15,.18,-.15]],
   },
   mechanisms: { capacity: ERA_CARGO.length, intakeRate: 38, compress: true,
-    lanes: [0], fireRate: 16, feedSeconds: .28, turret: true, movingShots: true,
+    lanes: [0], fireRate: 12, feedSeconds: .28, turret: true, movingShots: true,
     simultaneousIntake: true, climb: false },
   cargoSlots: ERA_CARGO,
   pickup: { minX: -.72, maxX: -.52, halfWidth: .29, mouthX: -.614, ejectX: -.73 },

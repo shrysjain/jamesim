@@ -1,8 +1,38 @@
 # Approved robot PR integration
 
-## November 5 integration
+## November 5 robot follow-ups
 
-Approved and incorporated: #28 Icarus 2.0, #29 Downpour, #30 Simbot Tim, #31 steady follow-camera pitch, #32 controller labels/guide, #33 AUTO coasting, #34 bump support-force budget and #35 reachable opposing-zone passing. #11 performance recalibration and #36 distance/motion scatter tuning remain excluded. Existing Re•Blitz targets, the scatter model, Vercel Analytics and Prismarine's temporary selector filter are retained.
+The owner additionally approved #38 Matterhorn shooting-linked folding, #37 Citrus roller repair and #39 tower-backing visibility. They are integrated in that order as three separate signed commits with corrected `couchpotato7572` authorship and source/PR trailers. #38 preserves #11's researched rates, motion limits and grip while enabling the existing load-aware hopper/intake pose controller. Its regression retains original fuel bodies and covers pause, intake/reverse overrides and full-load contraction. #37 replaces only the two source-fitted roller shells and updates the exact runtime asset/hash; unrelated CAD geometry is retained. #39 removes backing triangles only from the tower render; hub panels, field collisions, rung geometry and climbing assessment are unchanged.
+
+During the earlier tuning integration, #11 advanced from `8ad379a` to `995946d060c88d473c2294625d1e68b3e31bbf27` by merging current main and the #38 feature. That incremental Matterhorn change is now incorporated exactly once through #38. Comparing the resulting tree with the updated #11 head leaves only the separately approved scatter, maintainer contact/documentation, Citrus repair and tower-visibility changes; no research content is omitted. Published history is not reordered or rewritten.
+
+| PR | Incorporated source head |
+| --- | --- |
+| [#38](https://github.com/shrysjain/jamesim/pull/38) | `5d762d5046d51f70261a0c333467fa0555475cfa` |
+| [#37](https://github.com/shrysjain/jamesim/pull/37) | `ab820cda98a58b404123790aaf708d414ed9e7b4` |
+| [#39](https://github.com/shrysjain/jamesim/pull/39) | `a130d6c177edf1d78421ee420d0bd4e0a178240a` |
+
+The corresponding Matterhorn and Citrus issues #22/#23 are completed. #19's physical navigation-clearance request remains separate from the tower-visibility change. No browser session, application server or manual deployment is started for these follow-ups.
+
+After all three follow-ups were integrated, **51 affected checks across 9 files pass**: Matterhorn, Citrus, research envelopes and the real-asset tower regression. The release integrity, TypeScript/Vite and production-payload checks also pass, with 27 runtime files and 20 content-hashed runtime assets. The earlier 492-case complete-suite result for the shared tuning/contact integration is recorded below.
+
+## November 5 tuning follow-up
+
+The owner approved #11 performance recalibration and #36 distance/motion scatter tuning following the isolated #11 preview. Both are now incorporated. #11 uses source head `8ad379aad9f8f8bcbf397675a8f2042e89afeeb8`; #36 uses corrected head `fc942e72d48b7edb231822e789abf8318a7f49fb`.
+
+Five signed, single-parent contributor commits retain the original research change, its legal-start compatibility follow-up, and all three scatter refinements. Already-integrated dependency histories are omitted. Each commit records its original source and PR, with corrected `couchpotato7572 <122821137+couchpotato7572@users.noreply.github.com>` authorship. Before the maintainer contact correction below, the contributor tree exactly matches an ordinary cumulative merge of both approved heads onto main `b7b7515`. Published main and contributor branches are not rewritten; PRs are closed as incorporated after the linear history is pushed, consistent with the earlier integrations.
+
+The seven original robot profiles now use the estimates in [the performance research](ROBOT_PERFORMANCE_RESEARCH.md). Re•Blitz drives at 14.4 ft/s and intakes at 44 fuel/s, retaining stationary hub shooting while allowing moving passes. Fixed-shooter motion limits and relative quality vary by robot; Kepler retains its prior card calibration. New robot profiles are unchanged. [Shot tuning](SHOT_TUNING.md) records the shared distance curve and stronger fixed-shooter motion sensitivity. These remain explicit gameplay estimates, not measured team accuracy percentages. Stable fuel bodies, capacities, CAD, scoring and timing are preserved.
+
+The combined suite exposed a Downpour cargo contact corner: projecting a ball away from the folding intake could push it against the closed hopper ceiling, whose final clamp left about 2.24 mm of intake penetration. The existing full-load shooting test failed its unchanged 1 mm contact tolerance. A separate maintainer correction adds bounded refinement only for remaining frame penetrations in closed hoppers, without repeating ball-pair iterations or changing geometry, cargo size or capacities. The original shooting/manual-fold/last-transfer contact cases and shared hopper checks pass after the correction.
+
+Final verification: `pnpm test:sim` passes **492 tests across 71 files**, including all unit, robot and simulation cases. `pnpm build:release` passes runtime integrity, TypeScript/Vite compilation and production-payload checks: **27 runtime files / 40.62 MiB**, **20 content-hashed runtime assets**. The existing large physics-chunk advisory remains. No test assertions were relaxed for the contact correction.
+
+The isolated tuning server on port 5174 was stopped at the owner's request. No browser test or replacement application server is started for this integration; normal local testing uses `pnpm dev` on main. No manual deployment or hosting changes are performed.
+
+## November 5 initial integration
+
+Approved and incorporated: #28 Icarus 2.0, #29 Downpour, #30 Simbot Tim, #31 steady follow-camera pitch, #32 controller labels/guide, #33 AUTO coasting, #34 bump support-force budget and #35 reachable opposing-zone passing. #11 performance recalibration and #36 distance/motion scatter tuning were initially held for the later follow-up above. That follow-up supersedes the initially retained Re•Blitz targets and scatter coefficients. Vercel Analytics and Prismarine's temporary selector filter are retained.
 
 There are eleven registered CAD robots and ten visible choices. The three additions use the shared optional hopper/contact and opposed-intake contracts. Rebindable N selects Icarus's active mouth; its approved side status and on-robot arrow indicate the selected intake. Prismarine remains hidden, with the incoming shooting-compression configuration retained. Stage 20 has not started.
 

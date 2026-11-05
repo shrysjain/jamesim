@@ -237,9 +237,12 @@ export class Shooter {
     const up = rotate(v3(0, 1, 0), this.chassis.renderRotation);
     return up.y > 0.965 && this.chassis.telemetry.grounded >= 3;
   }
+  private get supportsMovingRelease() {
+    return this.mechanism.movingShots || (!!this.mechanism.movingPasses && this.solution?.target.kind === 'Pass');
+  }
   private get motionReady() {
     const limits = this.solution?.target.kind === 'Pass' ? this.geometry.movingLimits?.pass : this.geometry.movingLimits?.hub;
-    return (this.mechanism.movingShots || this.chassis.telemetry.speed < SHOOTER.movingThreshold)
+    return (this.supportsMovingRelease || this.chassis.telemetry.speed < SHOOTER.movingThreshold)
       && (!limits || this.chassis.telemetry.speed <= limits.speed && Math.abs(this.chassis.body.angvel().y) <= limits.turnRate);
   }
   private get ready() {
@@ -306,9 +309,10 @@ export class Shooter {
         RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
       if (hit || !this.clearExit(z)) { this.blocked = true; continue; }
       const scatter = sampleShotScatter(this.geometry.spread ?? DEFAULT_SHOT_SPREAD, this.geometry.movingAccuracy ?? .9,
-        this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom);
+        this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom,
+        { distance: Math.hypot(this.solution.target.position.x - position.x, this.solution.target.position.z - position.z), turret: this.mechanism.turret });
       const speed = this.chassis.telemetry.speed, turn = Math.abs(this.chassis.body.angvel().y);
-      const motion = this.mechanism.movingShots ? clamp(Math.max(0, speed-.1)/.4 + Math.max(0, turn-.1)/1.4, 0, 1) : 0;
+      const motion = this.supportsMovingRelease ? clamp(Math.max(0, speed-.1)/.4 + Math.max(0, turn-.1)/1.4, 0, 1) : 0;
       // One spread distribution, with transient acceleration sensitivity.
       const transient = 1 + motion * this.motionAcceleration * .04;
       const elevation = this.elevation + scatter.elevation * transient, yaw = scatter.yaw * transient;

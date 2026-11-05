@@ -1,5 +1,7 @@
 # Orbit 1690 Kepler integration
 
+The [lineup research audit](ROBOT_PERFORMANCE_RESEARCH.md) reviewed and retained Kepler’s existing card calibration; its 95/100 SOTM rating is not a measured hit percentage.
+
 Kepler is selectable on the singleplayer setup screen for timed matches and free practice, on either alliance. 2910 is the default selection. The existing physics, fuel ownership, match timing and scoring systems are shared; there is no separate Kepler simulator.
 
 ## CAD provenance

@@ -1,5 +1,7 @@
 # 3847 Spectrum — Infrared, 2026 Final Machine
 
+Performance update (November 2, 2026): [the lineup research audit](../../../../docs/ROBOT_PERFORMANCE_RESEARCH.md) supersedes earlier rate, drive/traction and motion-rating estimates below. CAD/capacity and previous validation descriptions remain historical evidence.
+
 The contributor explicitly selected **FM (Final Machine)** rather than PM on November 2, 2026. The original reference is [this Onshape document/tab](https://cad.onshape.com/documents/363f51f69b0f6094e6657347/w/2da37c11ab641d1d095c37e0/e/3373ed9eb771d6e08a7d8782). Spectrum's [2026 season page](https://spectrum3847.org/seasons/2026/) identifies this document with Infrared. Direct access to that particular element was unavailable; it is **not claimed to be an exact element match**. Instead, this contribution uses Spectrum's own explicitly labeled Final Machine exports, approved by the contributor.
 
 ## Reproducible CAD

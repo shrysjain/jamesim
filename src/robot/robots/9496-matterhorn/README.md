@@ -1,5 +1,7 @@
 # 9496 LYNK · Matterhorn (2026)
 
+Performance update (November 2, 2026): [the lineup research audit](../../../../docs/ROBOT_PERFORMANCE_RESEARCH.md) supersedes earlier rate, drive/traction and motion-rating estimates below. CAD/capacity and previous validation descriptions remain historical evidence.
+
 Independent contribution `robot/9496-matterhorn`, based on `origin/main` at `0d64cbb`. Adds selectable owner-supplied release CAD, real MK5n modules, passive slapdown intake, sliding hopper front/side panels, roller floor, vertical feeder and a full-width drum with its brass flywheels. Uses the existing driver-operated match, stable fuel ownership and physical hub scoring. No separate robot simulation is introduced.
 
 ## Exact source and reproduction
@@ -36,7 +38,7 @@ Final CAD payload: **2,989,292 bytes / 617,626 rendered triangles / 121 primitiv
 | Acceleration / grip | 10 m/s² command / 1.05 | Gameplay estimates, with force-limited traction |
 | Empty mass / inertia | 66 kg / `[3.5, 6, 3.8]` kg·m² | Estimates; team reports a robot near the weight limit |
 | Intake pivot | `[-.32385, -.03885, 0]` | Actual source hinge |
-| Fold at reset | −115 degrees | Stow-pose fit; no powered retraction is enabled |
+| Fold at reset | −115 degrees | Stow-pose fit; shooting-linked folding is an owner-requested gameplay approximation |
 | Hopper front travel | .3048 m | Fit between expanded front panel and fixed-panel overlap |
 | Drum center/radius | `[.127, .231025, 0]` / .0508 m | Measured source drum and brass-wheel axle |
 | Shooter direction | Toward intake, yaw offset π | The source drum/guide arrangement uses the intake-facing exit; barrel/muzzle, clearance and launch all use this same frame |
@@ -57,7 +59,7 @@ Stored fuel subsequently moves in the existing local sphere solver. Full-size en
 
 ## Controls and behavior
 
-WASD drive, J/L turn, Shift collect, Q reverse, Space aim/shoot/pass and R restart retain editable shared bindings. Intake and front deploy at session start and stay out. There is no V retraction or C climbing capability. The real drum, brass wheels, intake rollers, floor rollers and feeder rollers animate around their authored axles; feeder/floor spin directions transport toward the shooter, while the intake collects below its roller.
+WASD drive, J/L turn, Shift collect, Q reverse, Space aim/shoot/pass and R restart retain editable shared bindings. Intake and front deploy at session start. Holding Space contracts the hopper front and folds the intake/kicker assembly upward as the remaining cargo permits; releasing Space extends them. Shift or Q overrides contraction, including simultaneous Shift/Space. This uses the existing load-aware pose controller and the real pivot/slide geometry. There is no V retraction or C climbing capability. The team source confirms passive deployment; automatic retraction is the owner-requested gameplay behavior, not a newly verified powered real-team mechanism. The real drum, brass wheels, intake rollers, floor rollers and feeder rollers animate around their authored axles; feeder/floor spin directions transport toward the shooter, while the intake collects below its roller.
 
 Shoot aims the chassis with the intake facing the target, holds the real fixed hood angle, and solves for flywheel speed/flight time. A fixed-hood robot can have an infeasible near/obstructed shot; it does not secretly adjust its hood or force a hit. Passing searches farther legal landing points within its alliance zone when a shorter fixed-angle arc would hit the field net. Physical release scatter/spin is sampled once, with no in-flight correction or selected misses. Simultaneous collection/firing is enabled; exact team motor-pulsing/agitation timing is not modeled.
 
