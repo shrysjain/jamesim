@@ -263,7 +263,9 @@ export class SwerveChassis {
       if (!hit || !m.grounded) return;
       const velocity = this.body.velocityAtPoint(m.point);
       const compression = this.definition.springLength - m.suspension;
-      m.load = Math.max(0, Math.min(this.definition.mass * 9.81 * 1.8, compression * 18000 - dot(velocity, up) * 650));
+      // Share the vehicle's support-force budget across its modules, including
+      // payload. Applying the whole budget at every wheel launches the chassis.
+      m.load = Math.max(0, Math.min(this.totalMass * 9.81 * 1.8 / this.modules.length, compression * 18000 - dot(velocity, up) * 650));
       const normalForce = mul(up, m.load);
       this.body.addForceAtPoint(normalForce, m.point, true);
       const wheelDirection = rotate(vec(Math.cos(m.angle), 0, Math.sin(m.angle)), q);
