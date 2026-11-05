@@ -271,16 +271,27 @@
     }
   },
   "integrationFiles": [
-    "src/robot/registry.ts",
     "src/App.tsx",
+    "src/components/SetupScreen.tsx",
+    "src/controls.test.ts",
+    "src/controls.ts",
+    "src/robot/HopperGeometry.test.ts",
+    "src/robot/hopperGeometry.ts",
+    "src/robot/poses.ts",
+    "src/robot/registry.ts",
+    "src/robot/testing/hopperMotionAcceptance.ts",
     "src/robot/types.ts",
     "src/robot/validateDefinition.ts",
+    "src/sim/ChassisAim.test.ts",
+    "src/sim/HopperContactPhysics.test.ts",
+    "src/sim/HopperDynamics.ts",
     "src/sim/RobotSimulation.ts",
     "src/sim/Shooter.ts",
-    "src/robot/hopperGeometry.ts",
-    "src/sim/HopperDynamics.ts",
-    "src/robot/testing/hopperMotionAcceptance.ts",
-    "src/robot/poses.ts"
+    "src/sim/SlidingIntakeCompression.test.ts",
+    "src/sim/SwerveChassis.ts",
+    "src/style.css",
+    "src/view/FieldViewer.ts",
+    "src/view/RobotView.ts"
   ],
   "previousValidation": {
     "branchGuard": "passed",
@@ -335,5 +346,18 @@
     ],
     "browser": "Five isolated CAD poses recaptured/reviewed, no page errors. Exact moving polycarbonate and intact top cap inspected. .tools/tim-browser.json; .tools/feedback-browser.log",
     "build": "Node26.13.0 / pnpm10.20.0 pnpm build:release passed after normal ownership guard:25runtime files/34.13MiB,18hashed production assets, TypeScript/Vite, asset integrity. ExistinglargeRapierbundlewarning; combined simulation ownedbyparent."
+  },
+  "independentPrIntegration": {
+    "main": "4154227b2200009ef7e0be6ece0a9d2e605604a3",
+    "existingOpenPr": 11,
+    "existingOpenPrHead": "8ad379aad9f8f8bcbf397675a8f2042e89afeeb8",
+    "mergeOrdersChecked": 24,
+    "cleanOrders": 24,
+    "commonMechanismAncestors": [
+      "56a2273",
+      "191c137"
+    ],
+    "qualification": "All three robot branches and PR11 merged in every order onto main, producing one identical tree. Original main robot IDs/relative order retained; each feature branch adds only its own robot. Recheck after future edits.",
+    "standaloneRelease": "pnpm build:release passed with pinned Node26/pnpm10.20.0; ignored evidence .tools/pr-release.log."
   }
 }
