@@ -12,7 +12,7 @@ export function sampleShotScatter(profile: ShotSpread, movingAccuracy: number, s
   // launch uncertainty at distance beyond the physical angular-error growth.
   const range = .7 + .05 * clamp(context.distance - 3, 0, 7);
   const sensitivity = .08 + 1 - clamp(movingAccuracy, .05, 1);
-  const motion = 1 + sensitivity * (context.turret ? 1.5 : 6) * Math.min(2, Math.max(0, speed) / 1.5)
+  const motion = 1 + sensitivity * (context.turret ? 3 : 8) * Math.min(2, Math.max(0, speed) / 1.5)
     + Math.min(context.turret ? .3 : 1.2, Math.abs(turnRate) * (context.turret ? .06 : .2));
   const spread = range * motion;
   // Occasional imperfect feeding/deformed fuel broadens the tails without
