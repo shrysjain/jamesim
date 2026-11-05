@@ -12,6 +12,8 @@ import { NEUTRAL_INPUT } from '../sim/SwerveChassis';
 import type { DriveTelemetry, DriveSpawn } from '../sim/SwerveChassis';
 import { RobotView } from './RobotView';
 import { FOLLOW_FRAME, stabilizeFollowCamera } from './followCamera';
+import { playerCameraFrame } from './playerCamera';
+import type { PlayerCamera } from './playerCamera';
 import { toRobotInput } from '../sim/driveInput';
 import type { DriveFrame } from '../sim/driveInput';
 import type { RobotPose } from '../robot/RobotDefinition';
@@ -28,7 +30,7 @@ import { runtimeAsset } from '../runtimeAssets';
 import { unpackCollisions } from '../field/collisionAsset';
 import { removeTowerBacking } from './towerBacking';
 
-export type CameraMode = 'follow' | 'orbit' | 'fly';
+export type CameraMode = PlayerCamera | 'orbit';
 export type CameraPreset = 'overview' | 'overhead' | 'blue' | 'red';
 export type ViewerStats = { fps: number; drawCalls: number; triangles: number; colliders: number; awake: number; physicsMs: number; running: boolean; humanPlayer: HumanPlayer['telemetry'] | null; robot: DriveTelemetry | null; mechanisms: MechanismTelemetry | null; hubs: HubTelemetry | null; match: MatchTelemetry | null };
 export type ViewerOptions = { colliders: boolean; visuals: boolean; fuel: boolean; grid: boolean; labels: boolean };
@@ -52,6 +54,7 @@ export class FieldViewer {
   manifest!: FieldManifest;
   sim!: FieldSimulation;
   mode: CameraMode = 'follow';
+  private playerCamera: PlayerCamera = 'follow';
   driveEnabled = true;
   driveFrame: DriveFrame = 'field';
   inspectEnabled = false;
@@ -167,11 +170,10 @@ export class FieldViewer {
     const canvas = this.renderer.domElement;
     canvas.addEventListener('pointerdown', this.onPointerDown);
     canvas.addEventListener('webglcontextlost', this.onContextLost);
-    if (import.meta.env.DEV) {
-      canvas.addEventListener('pointerup', this.onPointerUp);
-      canvas.addEventListener('pointermove', this.onPointerMove);
-      canvas.addEventListener('contextmenu', this.onContextMenu);
-    }
+    canvas.addEventListener('pointerup', this.onPointerUp);
+    canvas.addEventListener('pointercancel', this.onPointerUp);
+    canvas.addEventListener('pointermove', this.onPointerMove);
+    canvas.addEventListener('contextmenu', this.onContextMenu);
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('pointerdown', this.matchAudio.unlock);
     window.addEventListener('keydown', this.matchAudio.unlock);
@@ -261,7 +263,7 @@ export class FieldViewer {
     if (import.meta.env.DEV) this.makeLabels();
     this.updateOptions(this.options);
     this.resize();
-    this.setMode('follow');
+    this.setMode(this.playerCamera);
     this.callbacks.progress('Field ready');
     this.sim.setRunning(false);
     if (document.hidden || !document.hasFocus()) this.setRunning(false);
@@ -373,7 +375,8 @@ export class FieldViewer {
   }
 
   setMode(mode: CameraMode) {
-    if (!import.meta.env.DEV && mode !== 'follow') return;
+    if (!import.meta.env.DEV && mode === 'orbit') return;
+    this.clearInput();
     this.mode = mode;
     if (mode !== 'follow') this.restoreCameraOccluders();
     this.animation = null;
@@ -387,6 +390,10 @@ export class FieldViewer {
       this.controls.update();
     }
     if (mode === 'follow' && this.sim?.robot) { this.select(null); this.followCamera(0, true); }
+    if ((mode === 'station' || mode === 'pov') && this.sim?.robot) this.moveCamera(0);
+    if (mode === 'fly' && this.sim?.robot && this.camera.position.lengthSq() < .01) {
+      this.followCamera(0, true); this.restoreCameraOccluders();
+    }
     this.callbacks.camera(null, mode);
   }
 
@@ -439,8 +446,14 @@ export class FieldViewer {
 
   private moveCamera(delta: number) {
     if (this.mode === 'follow') { this.followCamera(delta); return; }
-    if (!import.meta.env.DEV) return;
-    if (this.animation) {
+    if ((this.mode === 'station' || this.mode === 'pov') && this.sim?.robot) {
+      const robot = this.sim.robot, ceiling = robot.definition.hopper.volume?.ceilingY ?? .35;
+      const frame = playerCameraFrame(this.mode, robot.body.translation(), robot.telemetry.heading,
+        this.sim.robotController!.shooter.alliance, Math.max(.35, ceiling) + .12);
+      this.camera.position.set(...frame.position); this.camera.lookAt(...frame.target);
+      return;
+    }
+    if (import.meta.env.DEV && this.animation) {
       this.animation.t = Math.min(this.animation.t + delta / 0.55, 1);
       const { from, targetFrom, to, target, t } = this.animation;
       const eased = t * t * (3 - 2 * t);
@@ -448,7 +461,7 @@ export class FieldViewer {
       this.controls.target.lerpVectors(targetFrom, target, eased);
       if (t === 1) this.animation = null;
     }
-    if (this.mode !== 'fly') return;
+    if (this.mode !== 'fly' || !this.driveEnabled || !this.sim.running) return;
     const direction = new THREE.Vector3(
       Number(this.keys.has('KeyD')) - Number(this.keys.has('KeyA')),
       0, Number(this.keys.has('KeyS')) - Number(this.keys.has('KeyW')),
@@ -522,7 +535,6 @@ export class FieldViewer {
 
   private readDriveInput() {
     if (!this.sim.robot) return;
-    if (this.mode === 'fly') return;
     const pad = this.playerControls.gamepad ? Array.from(navigator.getGamepads?.() ?? []).find(p => p?.connected) : null;
     const identity = pad ? `${pad.index}:${pad.id}` : '';
     if (identity !== this.gamepadIdentity) { this.gamepadArmed = false; this.restartHeld = this.pauseHeld = false; this.gamepadIdentity = identity; }
@@ -533,6 +545,7 @@ export class FieldViewer {
     this.restartHeld = !!padActions.restart;
     if (padActions.pause && this.gamepadArmed && !this.pauseHeld) { this.pauseHeld = true; this.callbacks.pauseRequested(); return; }
     this.pauseHeld = !!padActions.pause;
+    if (this.mode === 'fly') return;
     if (!this.driveEnabled || !this.sim.running || !this.sim.match.driverEnabled) return;
     if ((a.intake || a.reverse || a.shoot) && this.sim.robotController?.inspectionPose) this.resumeMechanisms();
     if (this.sim.robotController) this.sim.robotController.input = { intake: !!a.intake, reverse: !!a.reverse, shoot: !!a.shoot, toggleIntake: this.gamepadArmed && !!padActions.toggleIntake, switchIntake: this.gamepadArmed && !!padActions.switchIntake, climb: this.gamepadArmed && !!padActions.climb, supply: !!a.supply };
@@ -545,7 +558,7 @@ export class FieldViewer {
 
   setDriveFrame(frame: DriveFrame) { if (!import.meta.env.DEV) return; this.driveFrame = frame; this.clearInput(); }
 
-  clearInput() { this.gamepadArmed = false; this.keys.clear(); if (this.sim?.robot) this.sim.robot.input = { ...NEUTRAL_INPUT }; this.sim?.robotController?.clearInput(); }
+  clearInput() { this.gamepadArmed = false; this.flyDragging = false; this.keys.clear(); if (this.sim?.robot) this.sim.robot.input = { ...NEUTRAL_INPUT }; this.sim?.robotController?.clearInput(); }
   setRunning(running: boolean) { this.clearInput(); this.sim?.setRunning(running); }
   respawn(spawn: DriveSpawn = 'practice') {
     if (!import.meta.env.DEV) return;
@@ -566,7 +579,7 @@ export class FieldViewer {
   }
 
   reset() { if (!import.meta.env.DEV) return; this.matchAudio.reset(); this.clearInput(); this.sim.reset(); this.syncFuel(); this.setMode('follow'); if (this.options.colliders) this.updateDebug(); }
-  startMatch(config: MatchConfig) { this.sessionPractice = false; this.matchAudio.reset(true); this.clearInput(); this.sim.startMatch(config); this.sessionConfig = { ...config }; this.syncFuel(); this.setMode('follow'); }
+  startMatch(config: MatchConfig) { this.sessionPractice = false; this.matchAudio.reset(true); this.clearInput(); this.sim.startMatch(config); this.sessionConfig = { ...config }; this.syncFuel(); this.setMode(this.playerCamera); }
   startPractice() { this.startSession(this.sessionConfig, true); }
   restartMatch() { this.startSession(this.sessionConfig, this.sessionPractice); }
   startSession(config: MatchConfig, practice = false) {
@@ -579,6 +592,7 @@ export class FieldViewer {
   }
   applySettings(settings: Settings) {
     if (this.playerControls !== settings.controls) { this.playerControls = settings.controls; this.clearInput(); }
+    if (this.playerCamera !== settings.camera) { this.playerCamera = settings.camera; this.setMode(settings.camera); }
     this.matchAudio.setLevel(settings.volume, settings.muted);
     const preset = GRAPHICS[settings.graphics], shadows = preset.shadowSize > 0;
     const changed = this.renderer.shadowMap.enabled !== shadows;
@@ -624,17 +638,16 @@ export class FieldViewer {
   private onContextMenu = (e: Event) => e.preventDefault();
   private onPointerDown = (e: PointerEvent) => {
     this.renderer.domElement.focus({ preventScroll: true });
-    if (!import.meta.env.DEV) return;
-    this.pointerStart.set(e.clientX, e.clientY);
-    if (this.mode === 'fly' && e.button === 2) {
+    if (import.meta.env.DEV) this.pointerStart.set(e.clientX, e.clientY);
+    if (this.mode === 'fly' && this.driveEnabled && e.button === 2) {
       this.flyDragging = true;
       this.renderer.domElement.setPointerCapture(e.pointerId);
     }
   };
   private onPointerUp = (e: PointerEvent) => {
-    if (!import.meta.env.DEV) return;
     this.flyDragging = false;
     if (this.renderer.domElement.hasPointerCapture(e.pointerId)) this.renderer.domElement.releasePointerCapture(e.pointerId);
+    if (!import.meta.env.DEV || e.type === 'pointercancel') return;
     if (e.button !== 0 || this.pointerStart.distanceTo(new THREE.Vector2(e.clientX, e.clientY)) > 5) return;
     if (!this.inspectEnabled || this.mode === 'follow') return;
     const rect = this.renderer.domElement.getBoundingClientRect();
@@ -647,8 +660,7 @@ export class FieldViewer {
     this.select(this.manifest.elements.find((element) => element.id === id) ?? null);
   };
   private onPointerMove = (e: PointerEvent) => {
-    if (!import.meta.env.DEV) return;
-    if (this.mode !== 'fly' || !this.flyDragging) return;
+    if (this.mode !== 'fly' || !this.flyDragging || !this.driveEnabled || !this.sim?.running) return;
     const euler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
     euler.y -= e.movementX * 0.003;
     euler.x = THREE.MathUtils.clamp(euler.x - e.movementY * 0.003, -Math.PI / 2 + 0.01, Math.PI / 2 - 0.01);
@@ -657,7 +669,13 @@ export class FieldViewer {
   private onKeyDown = (e: KeyboardEvent) => {
     if (e.repeat) return;
     if ((e.target as HTMLElement).closest('input, select, textarea, [role="dialog"]') || e.ctrlKey || e.metaKey || e.altKey || !this.driveEnabled) return;
-    if ([...Object.values(this.playerControls.keys).flat(), ...(import.meta.env.DEV && this.mode === 'fly' ? ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ShiftLeft', 'ShiftRight'] : [])].includes(e.code)) {
+    if (this.mode === 'fly') {
+      if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ShiftLeft', 'ShiftRight'].includes(e.code)) {
+        this.keys.add(e.code); e.preventDefault();
+      }
+      return;
+    }
+    if (Object.values(this.playerControls.keys).flat().includes(e.code)) {
       if (e.code === 'Space' && (e.target as HTMLElement).closest('button')) return;
 
       if (this.playerControls.keys.climb.includes(e.code) && this.sim?.running && this.sim.match.driverEnabled) this.sim.robotController?.requestClimbToggle();
@@ -684,6 +702,7 @@ export class FieldViewer {
     canvas.removeEventListener('webglcontextlost', this.onContextLost);
     canvas.removeEventListener('pointerdown', this.onPointerDown);
     canvas.removeEventListener('pointerup', this.onPointerUp);
+    canvas.removeEventListener('pointercancel', this.onPointerUp);
     canvas.removeEventListener('pointermove', this.onPointerMove);
     canvas.removeEventListener('contextmenu', this.onContextMenu);
     window.removeEventListener('keydown', this.onKeyDown);
