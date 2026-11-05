@@ -154,7 +154,10 @@ export class RobotSimulation {
         if (width !== undefined) end.z = Math.max(-width,Math.min(width,f.start.z));
         const control = v3(-0.4, 0.25, f.start.z * 0.5 + end.z * 0.5);
         f.local = lerp(lerp(f.start, control, t), lerp(control, end, t), t);
-        if (t === 1) f.state = 'stored';
+        if (t === 1) {
+          f.state = 'stored';
+          if (this.chassis.definition.hopper.physics) this.hopper.arrive(f.id, scale(sub(end,control),2/INTAKE.transferSeconds));
+        }
       } else if (f.state === 'stored' && !this.chassis.definition.hopper.volume) f.local = this.storedPosition(f.slot);
     }
     if (!this.inspectionPose && this.chassis.definition.hopper.volume) {
