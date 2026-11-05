@@ -1,5 +1,6 @@
 import { linkedHopperExtension, supportsIntakeToggle } from '../robot/poses';
 import { HopperDynamics } from './HopperDynamics';
+import { hopperObstacles, hopperObstacleContact } from '../robot/hopperGeometry';
 import { Climber } from './Climber';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { SwerveChassis } from './SwerveChassis';
@@ -243,6 +244,21 @@ export class RobotSimulation {
     const spilling = this.overturnedFor > 0.25;
     const shoot = !!this.input.shoot && !this.input.reverse && !spilling && !this.climber.attached;
     this.shooter.postStep(dt, shoot);
+    // Managed feeder paths still yield to a retracting intake frame. Static
+    // feeder contacts are intentionally omitted: the path runs through them.
+    const movingContacts = this.chassis.definition.hopper.obstacles?.some(b => b.part === 'intake' || b.part === 'opposedIntake')
+      ? hopperObstacles(this.chassis.definition, this.chassis.pose).filter(b => b.part === 'intake' || b.part === 'opposedIntake') : [];
+    if (movingContacts.length) for (const f of this.held) if (f.state === 'feeding') {
+      for (let i = 0; i < 4; i++) for (const box of movingContacts) {
+        const contact = hopperObstacleContact([f.local.x, f.local.y, f.local.z], box);
+        const penetration = FUEL_RADIUS - contact.distance;
+        if (penetration > 0) {
+          f.local.x += contact.normal[0] * penetration;
+          f.local.y += contact.normal[1] * penetration;
+          f.local.z += contact.normal[2] * penetration;
+        }
+      }
+    }
     this.updatePayload();
     this.outletBlocked = false;
     if (spilling || this.input.reverse) {
