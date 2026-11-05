@@ -21,12 +21,33 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(!d.hopper.entry || vector(d.hopper.entry), 'Hopper entry must be a finite local position.');
   if (d.hopper.entryHalfWidth !== undefined) check(!!d.hopper.entry && positive(d.hopper.entryHalfWidth), 'A wide hopper entry requires a finite entry and positive half-width.');
   check(!d.hopper.obstacles || d.hopper.obstacles.every(b => vector(b.center) && b.halfExtents.length === 3 && b.halfExtents.every(positive) && (b.angle === undefined || Number.isFinite(b.angle))), 'Hopper obstacles require finite centers/angles and positive extents.');
+  check(!d.hopper.obstacles || d.hopper.obstacles.every(b =>
+    (b.shape === undefined || ['box', 'cylinder', 'annulus'].includes(b.shape)) &&
+    (!(b.shape === 'cylinder' || b.shape === 'annulus') || Math.abs(b.halfExtents[0] - b.halfExtents[2]) < 1e-9) &&
+    (b.shape === 'annulus' ? positive(b.innerRadius ?? 0) && b.innerRadius! < b.halfExtents[0] : b.innerRadius === undefined) &&
+    (!b.clipHalfExtents || b.shape !== undefined && b.shape !== 'box' && vector(b.clipHalfExtents) && b.clipHalfExtents.every(positive))),
+  'Round hopper contacts require equal radii, a valid annular opening and finite clipping extents.');
+  check(!d.hopper.obstacles || d.hopper.obstacles.every(b => b.part === undefined ||
+    ['intake','opposedIntake','hopper'].includes(b.part) && (b.part !== 'opposedIntake' || !!d.intake.opposed)),
+  'Moving hopper contacts require a supported mechanism part.');
+  if (d.hopper.floorProfile) check(d.hopper.floorProfile.length >= 2 && d.hopper.floorProfile.every(p =>
+    Number.isFinite(p.x) && Number.isFinite(p.y) && (p.part === undefined || ['intake', 'opposedIntake', 'hopper'].includes(p.part)) &&
+    (p.part !== 'opposedIntake' || !!d.intake.opposed)), 'Hopper floor profiles require finite points and supported moving parts.');
+  if (d.hopper.physics) {
+    const p = d.hopper.physics;
+    check(Number.isFinite(p.restitution) && p.restitution >= 0 && p.restitution <= 1 && Number.isFinite(p.friction) && p.friction >= 0 &&
+      (p.linearDamping === undefined || Number.isFinite(p.linearDamping) && p.linearDamping >= 0), 'Cargo contact response requires passive restitution, friction and damping.');
+  }
   if (d.hopper.indexer) check(vector(d.hopper.indexer.center) && positive(d.hopper.indexer.radius) && positive(d.hopper.indexer.friction) && Number.isFinite(d.hopper.indexer.angularSpeed) && d.hopper.indexer.angularSpeed !== 0, 'Indexer requires a finite center, nonzero angular speed and positive radius/friction.');
   if (d.hopper.autoLift) check(!!d.climb && (d.hopper.volume?.ceilingTravel ?? 0) > 0 && Number.isInteger(d.hopper.autoLift.loweredCapacity) && d.hopper.autoLift.loweredCapacity > 0 && d.hopper.autoLift.loweredCapacity < m.capacity,
     'Automatic hopper lift requires the real vertical stage and a valid lowered capacity.');
   check(vector(d.intake.pivot) && vector(d.hood.pivot) && Number.isFinite(d.intake.stowedAngle) && Number.isFinite(d.hood.maxAngle), 'Mechanism transforms must be finite.');
-  check(d.colliders.length > 0 && d.colliders.every(c => ['chassis', 'intake', 'hopper', 'hood', 'climber'].includes(c.part) && vector(c.center) && c.halfExtents.every(positive) && (c.radius === undefined || Number.isFinite(c.radius) && c.radius >= 0)), 'Collider envelopes must be finite with positive extents.');
-  check(Object.values(d.pickup).every(Number.isFinite) && d.pickup.minX < d.pickup.maxX && positive(d.pickup.halfWidth), 'Pickup bounds must be finite and ordered.');
+  if (d.intake.shootingMinExtension !== undefined) check(Number.isFinite(d.intake.shootingMinExtension) && d.intake.shootingMinExtension >= 0 && d.intake.shootingMinExtension <= 1 && positive(d.intake.stowTravel ?? 0) && m.compress, 'Shooting minimum extension requires a compressing slide and a fraction in [0,1].');
+  check(d.colliders.length > 0 && d.colliders.every(c => ['chassis', 'intake', 'opposedIntake', 'hopper', 'hood', 'climber'].includes(c.part) && vector(c.center) && c.halfExtents.every(positive) && (c.radius === undefined || Number.isFinite(c.radius) && c.radius >= 0)), 'Collider envelopes must be finite with positive extents.');
+  const pickupValid = (p: typeof d.pickup) => [p.minX,p.maxX,p.halfWidth,p.mouthX,p.ejectX].every(Number.isFinite) && p.minX < p.maxX && positive(p.halfWidth);
+  check(pickupValid(d.pickup), 'Pickup bounds must be finite and ordered.');
+  if (d.intake.opposed || d.pickup.opposed || d.visual.poseNodes.opposedIntake || d.colliders.some(c => c.part === 'opposedIntake')) check(!!d.intake.opposed && vector(d.intake.opposed.pivot) && positive(d.intake.opposed.stowTravel) && Number.isFinite(d.intake.opposed.stowRise ?? 0) && !!d.pickup.opposed && pickupValid(d.pickup.opposed) && d.pickup.opposed.minX > 0 && d.pickup.opposed.mouthX > 0 && d.pickup.opposed.ejectX > 0 && !!d.visual.poseNodes.opposedIntake, 'An opposed intake requires matching transform, pickup and visual bindings.');
+  if (d.hopper.volume?.backTravel !== undefined) check(Number.isFinite(d.hopper.volume.backTravel) && d.hopper.volume.backTravel >= 0 && !!d.intake.opposed, 'Rear hopper travel requires an opposed intake.');
   const geometry = d.shooterGeometry;
   check(vector(geometry.pivot) && [geometry.drumRadius, geometry.guideLength, geometry.turretRadiansPerSecond].every(positive), 'Shooter geometry must be finite and positive.');
   check(!m.turret || !!geometry.turretPivot && vector(geometry.turretPivot), 'A turret requires its bearing pivot.');

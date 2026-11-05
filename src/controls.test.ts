@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONTROLS, axisValue, bindKey, bindButton, readActions, validateControls } from './controls';
 describe('player controls', () => {
+  it('adds an independent intake key and gamepad button without overwriting saved assignments', () => {
+    expect(DEFAULT_CONTROLS.keys.switchIntake).toEqual(['KeyN']);
+    const c = validateControls({ keys: { forward: ['KeyN'] }, buttons: { shoot: 3 } });
+    expect(c.keys.forward).toEqual(['KeyN']); expect(c.keys.switchIntake).toEqual([]);
+    expect(c.buttons.shoot).toBe(3); expect(c.buttons.switchIntake).toBeNull();
+    expect(readActions(new Set(['KeyN']), bindKey(c, 'switchIntake', 'KeyN')).switchIntake).toBe(1);
+  });
   it('uses C for the climber and migrates the prior default without changing custom keys', () => {
     expect(DEFAULT_CONTROLS.keys.climb).toEqual(['KeyC']);
     expect(validateControls({ keys: { climb: ['KeyT'] } }).keys.climb).toEqual(['KeyC']);
