@@ -1,7 +1,19 @@
 import type { Vec3 } from '../../../field/types';
-import type { RobotDefinition, RobotCollider } from '../../types';
+import type { RobotDefinition, RobotCollider, HopperObstacle } from '../../types';
 import { STANDARD_SWERVE, swerveModules } from '../../defaults';
 import { DOWNPOUR_VISUAL } from './visual';
+
+// Conservative cargo contacts around the actual moving tubes, crossbars and
+// side plates. Field colliders alone do not contact owned hopper fuel.
+export const DOWNPOUR_INTAKE_CONTACTS: HopperObstacle[] = [
+  { part: 'intake', center: [-.59221, -.00476, 0], halfExtents: [.0264, .0264, .2915] },
+  { part: 'intake', center: [-.61171, .05173, 0], halfExtents: [.0137, .0137, .3185] },
+  { part: 'intake', center: [-.49177, -.14112, 0], halfExtents: [.0137, .0137, .3185] },
+  { part: 'intake', center: [-.38435, -.01303, 0], halfExtents: [.0086, .0094, .3185] },
+  { part: 'intake', center: [-.45255, -.08834, 0], halfExtents: [.0086, .0094, .3185] },
+  ...[-1, 1].map((sign): HopperObstacle => ({ part: 'intake',
+    center: [-.48503, -.03499, sign * .32065], halfExtents: [.1718, .1443, .0042] })),
+];
 
 /** Contributor's exact Downpour export: native(X,Y,Z)→(-Z,Y-.223,X).
  * CAD geometry and team packet identify a fixed four-wide drum. Performance is
@@ -17,7 +29,8 @@ export const DOWNPOUR: RobotDefinition = {
   drive: { maxSpeed: 4.8, acceleration: 10, grip: 1.05 },
   intake: { pivot: [-.3032, -.03169, 0], stowedAngle: -110 * Math.PI / 180, manualRetraction: true },
   // The measured back-panel inner face is X=-.6405245; keep a 1mm contact margin.
-  hopper: { stowTravel: .30, volume: { frontX: -.6395, backX: .04, halfWidth: .337, floorY: -.015, ceilingY: .39, frontTravel: 0 } },
+  hopper: { stowTravel: .30, obstacles: DOWNPOUR_INTAKE_CONTACTS,
+    volume: { frontX: -.6395, backX: .04, halfWidth: .337, floorY: -.015, ceilingY: .39, frontTravel: 0 } },
   hood: { pivot: [.26035, .25149, 0], maxAngle: 38 * Math.PI / 180 },
   shooterGeometry: {
     pivot: [.26035, .25149, 0], drumRadius: .0508, guideLength: .14,
