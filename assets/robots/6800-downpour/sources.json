@@ -298,9 +298,27 @@
     }
   },
   "integrationFiles": [
-    "src/robot/registry.ts",
     "src/App.tsx",
-    "src/sim/Shooter.ts"
+    "src/components/SetupScreen.tsx",
+    "src/controls.test.ts",
+    "src/controls.ts",
+    "src/robot/HopperGeometry.test.ts",
+    "src/robot/hopperGeometry.ts",
+    "src/robot/poses.ts",
+    "src/robot/registry.ts",
+    "src/robot/testing/hopperMotionAcceptance.ts",
+    "src/robot/types.ts",
+    "src/robot/validateDefinition.ts",
+    "src/sim/ChassisAim.test.ts",
+    "src/sim/HopperContactPhysics.test.ts",
+    "src/sim/HopperDynamics.ts",
+    "src/sim/RobotSimulation.ts",
+    "src/sim/Shooter.ts",
+    "src/sim/SlidingIntakeCompression.test.ts",
+    "src/sim/SwerveChassis.ts",
+    "src/style.css",
+    "src/view/FieldViewer.ts",
+    "src/view/RobotView.ts"
   ],
   "sharedAimingFix": "Retain the chosen chassis turn direction within 0.1 radians of the 180-degree wrap tie. Prevents alternating swerve commands from blocking aiming; actual-field passing cases protect Downpour and Reblitz.",
   "initialBaseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
@@ -360,6 +378,20 @@
     "fuelMassChanged": false,
     "feeding": "Managed feeding also yields to moving intake contacts; static feeder obstacles do not deflect its intended feed path.",
     "focused": "31 cases across six files passed, including full48 automatic shooting and manual16-fuel retraction, all held states checked within1mm of full-radius contact.",
-    "log": ".tools/intake-cargo-final.log"
+    "log": ".tools/intake-cargo-final.log",
+    "browser": "Live physical intake filled and retained48; automatic shooting captured34 remaining at intake .6565 with full .075m contact clearance, then released all48 original IDs and fully retracted, no page errors. Combined preview .tools/valor-retraction-browser.json."
+  },
+  "independentPrIntegration": {
+    "main": "4154227b2200009ef7e0be6ece0a9d2e605604a3",
+    "existingOpenPr": 11,
+    "existingOpenPrHead": "8ad379aad9f8f8bcbf397675a8f2042e89afeeb8",
+    "mergeOrdersChecked": 24,
+    "cleanOrders": 24,
+    "commonMechanismAncestors": [
+      "56a2273",
+      "191c137"
+    ],
+    "qualification": "All three robot branches and PR11 merged in every order onto main, producing one identical tree. Original main robot IDs/relative order retained; each feature branch adds only its own robot. Recheck after future edits.",
+    "standaloneRelease": "pnpm build:release passed with pinned Node26/pnpm10.20.0; ignored evidence .tools/pr-release.log."
   }
 }
