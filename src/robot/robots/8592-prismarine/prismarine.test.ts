@@ -125,7 +125,7 @@ describe('8592 Prismarine', () => {
       s.dispose();
     }
   });
-  it('keeps the intake extended while firing and defers shooting until translation settles', async () => {
+  it('compresses its sliding intake while aiming and defers shooting until translation settles', async () => {
     const floor: CollisionAsset = {
       boxes: [
         { element: 'floor', center: [0, -0.1, 0], halfExtents: [25, 0.1, 25] },
@@ -148,10 +148,16 @@ describe('8592 Prismarine', () => {
       r.input.shoot = true;
       run(s, 1.5);
       expect(r.shooter.shotsFired).toBe(0);
-      expect(r.chassis.pose.intake).toBe(1);
+      expect(r.held).toHaveLength(8);
+      expect(r.chassis.pose.intake).toBe(0);
       s.robot!.input = { ...NEUTRAL_INPUT };
       run(s, 5);
       expect(r.shooter.shotsFired).toBe(8);
+      expect(r.held).toHaveLength(0);
+      expect(r.chassis.pose.intake).toBe(0);
+      r.input.shoot = false;
+      run(s, .6);
+      expect(r.chassis.pose.intake).toBe(1);
       s.startSession(
         { ...DEFAULT_MATCH, robot: '8592-prismarine', preloads: 0 },
         true,
