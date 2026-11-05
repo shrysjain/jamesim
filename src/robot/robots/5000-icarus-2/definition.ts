@@ -19,6 +19,7 @@ export const ICARUS:RobotDefinition={
  intake:{pivot:[0,0,0],stowedAngle:0,stowTravel:ICARUS_TRAVEL,stowRise:ICARUS_RISE,manualRetraction:true,
   opposed:{pivot:[0,0,0],stowTravel:ICARUS_TRAVEL,stowRise:ICARUS_RISE}},
  hopper:{stowTravel:0,entry:[-.26,.035,0],entryHalfWidth:.23,obstacles:ICARUS_CONTACTS,
+  retainingNet:{bottomY:-.11,centerGap:[-.328613,.328613]},
   volume:ICARUS_VOLUME,physics:{restitution:.22,friction:.15,linearDamping:.35}},
  hood:{pivot:[.0967212688,.2605249918,0],maxAngle:(47-6.24)*DEG},
  shooterGeometry:{pivot:[.0967212688,.2605249918,0],turretPivot:[0,.2883,0],drumRadius:.0381,guideLength:.09,

@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {MATTERHORN as D} from './definition';
 import {validateRobotDefinition} from '../../validateDefinition';
 import {FieldSimulation} from '../../../sim/FieldSimulation';
+import {RobotSimulation} from '../../../sim/RobotSimulation';
 import {DEFAULT_MATCH} from '../../../sim/MatchRules';
 import {NEUTRAL_INPUT} from '../../../sim/SwerveChassis';
 import {HopperDynamics} from '../../../sim/HopperDynamics';
@@ -43,8 +44,9 @@ describe('9496 Matterhorn',()=>{
   }
   expect(spilled.size).toBe(0);
  });
- it('releases spilled fuel as the same dynamic body with chassis velocity and no shot credit',async()=>{
-  const s=await FieldSimulation.create(floor,seeds(1),true);
+ it('the uncovered control releases spilled fuel as the same dynamic body with chassis velocity and no shot credit',async()=>{
+  const s=await FieldSimulation.create(floor,seeds(1),false);
+  s.robotController=new RobotSimulation(s.world,s.fuelSystem,s.colliderElements,{...D,hopper:{...D.hopper,retainingNet:undefined}});
   try{
    s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:0},true);run(s,.6);
    const r=s.robotController!,f=s.fuelSystem.records[0],handle=f.body.handle;

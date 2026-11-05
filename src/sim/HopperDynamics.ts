@@ -22,8 +22,11 @@ export class HopperDynamics {
   private floorPoints: FloorPoint[] = [];
   private obstacles: HopperObstacle[] = [];
   private lastMotion: Motion | null = null;
-  constructor(private definition: RobotDefinition) {}
-  get volume(): HopperVolume { return this.definition.hopper.volume!; }
+  private netVolume: HopperVolume | null;
+  constructor(private definition: RobotDefinition) {
+    this.netVolume = definition.hopper.retainingNet && definition.hopper.volume ? { ...definition.hopper.volume, rim: undefined } : null;
+  }
+  get volume(): HopperVolume { return this.netVolume ?? this.definition.hopper.volume!; }
   reset() { this.particles.clear(); this.arrivals.clear(); this.floorPoints = []; this.lastMotion = null; }
   /** Continue the incoming transfer's local motion when ownership becomes stored. */
   arrive(id: number, velocity: Vector) { this.arrivals.set(id, { ...velocity }); }

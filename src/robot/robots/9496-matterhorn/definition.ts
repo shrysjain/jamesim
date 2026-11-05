@@ -17,7 +17,8 @@ export const MATTERHORN: RobotDefinition = {
   intake:{pivot:[-.32385,.18415-.223,0],stowedAngle:-115*Math.PI/180},
   // Keep stored spheres ahead of the shooter housing, including its side plates.
   // Finite CAD panel tops: fuel can roll over the rim and return to field physics.
-  hopper:{stowTravel:.3048,coupledToIntake:true,entry:[-.45,.24,0],volume:{frontX:-.618,backX:-.006,halfWidth:.307,
+  hopper:{stowTravel:.3048,coupledToIntake:true,entry:[-.45,.24,0],retainingNet:{bottomY:.308},
+    physics:{restitution:0,friction:.25,linearDamping:1.8},volume:{frontX:-.618,backX:-.006,halfWidth:.307,
     floorY:-.0705,floorSlope:-.1764,ceilingY:.44,frontTravel:.3048,
     rim:{front:.308,back:.34,sides:.31}}},
   hood:{pivot:[.127,.454025-.223,0],maxAngle:0},

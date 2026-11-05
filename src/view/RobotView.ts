@@ -7,6 +7,7 @@ import type { SwerveChassis } from '../sim/SwerveChassis';
 import { REBLITZ, ROBOTS, STARTING_POSE, partTransform } from '../robot/RobotDefinition';
 import type { RobotDefinition, RobotPart, SpinSource } from '../robot/RobotDefinition';
 import type { RobotSimulation } from '../sim/RobotSimulation';
+import { RetainingNetView } from './RetainingNetView';
 
 /** Prepared team CAD, batched around explicit mechanism frames offline. */
 export class RobotView {
@@ -23,9 +24,10 @@ export class RobotView {
   private wheelRotation = [0, 0, 0, 0];
   private disposed = false;
   private badges = new THREE.Group();
+  private retainingNet = new RetainingNetView();
   private intakeMarker = new THREE.ArrowHelper(new THREE.Vector3(-1,0,0), new THREE.Vector3(), .24, 0xffd04f, .09, .06);
   constructor() {
-    this.intakeMarker.visible = false; this.group.add(this.intakeMarker);
+    this.intakeMarker.visible = false; this.group.add(this.intakeMarker, this.retainingNet.group);
     if (this.contacts) { this.contacts.frustumCulled = false; this.contacts.renderOrder = 22; this.contacts.visible = false; }
   }
   setDefinition(definition: RobotDefinition) {
@@ -62,6 +64,7 @@ export class RobotView {
     }
     const climber = this.nodes.get(definition.visual.climber ?? ''); if (climber) climber.position.y = 0;
     const kicker = this.nodes.get(definition.visual.kicker?.node ?? ''); if (kicker) kicker.rotation.z = 0;
+    this.retainingNet.update(definition, STARTING_POSE);
   }
 
   setAlliance(alliance: Alliance) {
@@ -117,6 +120,7 @@ export class RobotView {
     if (mechanisms) this.setAlliance(mechanisms.shooter.alliance);
     const p = robot.body.translation(), q = robot.renderRotation, physicalRotation = robot.body.rotation(), d = robot.definition;
     this.group.position.set(p.x, p.y, p.z); this.group.quaternion.set(q.x, q.y, q.z, q.w);
+    this.retainingNet.update(d, robot.pose);
     this.intakeMarker.visible = !!d.intake.opposed && !!mechanisms;
     if (this.intakeMarker.visible) { const sign = mechanisms!.intakeSide === 'Opposite' ? 1 : -1; this.intakeMarker.position.set(sign*.39, .20, 0); this.intakeMarker.setDirection(new THREE.Vector3(sign,0,0)); }
     for (const { part, node } of this.poseNodes) {
@@ -160,5 +164,5 @@ export class RobotView {
     object.traverse(o => { if (o instanceof THREE.Mesh) { geometries.add(o.geometry); (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => materials.add(m)); } });
     geometries.forEach(g => g.dispose()); materials.forEach(m => { if ('map' in m) (m.map as THREE.Texture | null)?.dispose(); m.dispose(); });
   }
-  dispose() { this.disposed = true; this.intakeMarker.dispose(); this.disposeObject(this.group); this.contacts?.geometry.dispose(); (this.contacts?.material as THREE.Material | undefined)?.dispose(); }
+  dispose() { this.disposed = true; this.intakeMarker.dispose(); this.retainingNet.group.removeFromParent(); this.retainingNet.dispose(); this.disposeObject(this.group); this.contacts?.geometry.dispose(); (this.contacts?.material as THREE.Material | undefined)?.dispose(); }
 }
