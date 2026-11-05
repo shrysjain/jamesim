@@ -146,10 +146,10 @@ export function App() {
           Team 2910 Jack in the Bot,{' '}
           Team 1690 Orbit,{' '}
           Team 6328 Mechanical Advantage,{' '}
+          Team 5000 Hammerheads,{' '}
           Team 1678 Citrus Circuits,{' '}
           Team 9496 LYNK,{' '}
           Team 3847 Spectrum,{' '}
-          Team 5000 Hammerheads,{' '}
           Team 4481 Rembrandts
         </p>
         <p>Match audio · Team 254 Cheesy Arena</p>
