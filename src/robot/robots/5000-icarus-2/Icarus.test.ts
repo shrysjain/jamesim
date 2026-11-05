@@ -37,7 +37,7 @@ describe('5000 Icarus2.0 mechanism integration',()=>{
   expect(nextWheelSpeed(5,0,.01,10,20)).toBeCloseTo(4.8);
  });
  it('packs full150mm fuel inside the actual hopper envelope and outside the coaxial feeder',()=>{
-  expect(D.cargoSlots.length).toBe(37);const v=D.hopper.volume!;
+  expect(D.cargoSlots.length).toBe(50);const v=D.hopper.volume!;
   for(const [i,p] of D.cargoSlots.entries()){
    expect(p[0]-FUEL_RADIUS).toBeGreaterThanOrEqual(v.frontX);expect(p[0]+FUEL_RADIUS).toBeLessThanOrEqual(v.backX-v.backTravel!);
    expect(Math.abs(p[2])+FUEL_RADIUS).toBeLessThanOrEqual(v.halfWidth);

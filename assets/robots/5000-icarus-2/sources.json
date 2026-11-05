@@ -34,7 +34,17 @@
       "sourceBodiesRetained": 321,
       "sourceHardwareBodiesRemoved": 798
     },
-    "surfaceRepair": "Retain source triangle topology for Super Structure, both Intake SRPP plates, lower top plate shell, and the unnamed upper roof identified by its Top Plate:1 ancestry. Rebuild planar face normals and avoid unsafe spatial clustering on these surfaces. Raw source normals checked good; confirmed conversion shading artifact, not source corruption."
+    "surfaceRepair": "Retain source triangle topology for Super Structure, both Intake SRPP plates, lower top plate shell, and the unnamed upper roof identified by its Top Plate:1 ancestry. Rebuild planar face normals and avoid unsafe spatial clustering on these surfaces. Raw source normals checked good; confirmed conversion shading artifact, not source corruption.",
+    "cargoContacts": {
+      "capacity": 50,
+      "bowlFloorY": -0.137275,
+      "platformTopY": -0.05155,
+      "netFloorY": -0.08,
+      "netFloorQualification": "Conservative estimate; flexible net geometry incomplete.",
+      "roofInnerRadius": 0.22225,
+      "minimumSeedSpacing": 0.1502,
+      "offlineGenerator": "src/robot/robots/5000-icarus-2/pack.py"
+    }
   },
   "binder": {
     "url": "https://logandelaar1.github.io/Tech-Binder/",
@@ -171,10 +181,11 @@
   },
   "estimates": [
     "66 kg running empty mass includes the source 114.9 lb robot and 17.9 lb bumpers plus an estimated 5.8 kg battery; diagonal inertia is approximate.",
-    "37 full-size sphere capacity with only one intake open and the other closed; simplified volume/tower contact envelope from visible packaging; no independent measured capacity claim.",
+    "50 full-size 150 mm spheres with only one intake open; fitted to the measured recessed bowl, clipped raised platform, circular roof opening and actual feeder package. Flexible net floor remains estimated. Not an official capacity claim.",
     "10.0584 m/s\u00b2 powered acceleration and grip 1.05 are estimates; source 25 m/s\u00b2 is a command limit. Optional Icarus-only wheel braking is estimated at 20.1168 m/s\u00b2 and preserves powered acceleration.",
     "12 shots/s, 38 fuel/s total, 5 rad/s turret response and .28 s feed transit are simulation estimates.",
-    "Per-shot angular/speed uncertainty and moving rating .90 are gameplay estimates, not TBA/Statbotics-derived hit probabilities."
+    "Per-shot angular/speed uncertainty and moving rating .90 are gameplay estimates, not TBA/Statbotics-derived hit probabilities.",
+    "Hopper restitution .22, friction .15 and linear damping .35/s are gameplay estimates; fuel/chassis mass unchanged."
   ],
   "limits": [
     "Side selection is manual/rebindable N (default controller button 3), not the real robot autonomous leading-side selection. A switch is refused above the shared eight-fuel compact packing limit; both sides never open together.",
@@ -199,47 +210,19 @@
     "src/view/FieldViewer.ts",
     "src/view/RobotView.ts",
     "src/components/SetupScreen.tsx",
-    "src/style.css"
+    "src/style.css",
+    "src/robot/hopperGeometry.ts",
+    "src/robot/testing/hopperMotionAcceptance.ts"
   ],
   "validation": {
-    "status": "Exclusive intake selection, source-surface repair, focused simulation, browser and release checks passed; full combined suite belongs to preview integration.",
-    "runtime": {
-      "node": "26.13.0",
-      "pnpm": "10.20.0"
-    },
-    "asset": {
-      "bytes": 4125176,
-      "sha256": "f4f147d248cf7ee10adea28adfec42c051aa03118d1ffba426eaae6ecba67aba",
-      "triangles": 629533,
-      "primitives": 32
-    },
-    "focused": {
-      "command": "pnpm exec vitest run src/controls.test.ts src/robot/robots/5000-icarus-2 --maxWorkers=1 --testTimeout=30000",
-      "passed": 27,
-      "files": 4,
-      "log": ".tools/hood-calibration-focused.log",
-      "qualification": "Includes final signed face-normal alignment on all five protected CAD surfaces, actual roof dimensions, continuous full37 collection and original-ID discharge on both selected sides, and loaded cargo clearance from roof/feeder obstacles. Actual prepared exit tangent matches physical launch direction at all min/mid/max elevations and three turret yaw poses; source hood already has83.76degrees and receives no duplicate prep tilt."
-    },
-    "release": {
-      "command": "pnpm build:release",
-      "status": "passed",
-      "runtimeSourceFiles": 25,
-      "hashedBuildAssets": 18,
-      "log": ".tools/hood-calibration-release.log"
-    },
-    "browser": {
-      "status": "passed",
-      "checks": [
-        "Default N and saved X show in setup and controls and switch the live status to Opposite.",
-        "Fresh stowed, one deployed side, full cargo and moving turret/hood poses; actual upper and lower roof and slide panels uniformly shaded.",
-        "Final server GLB bytes match prepared SHA-256."
-      ],
-      "logs": [
-        ".tools/side-ui.json",
-        ".tools/icarus-repaired-browser.log"
-      ],
-      "pageErrors": []
-    }
+    "focused": "27 existing robot/control cases across four files plus two actual continuous-intake/motion cases passed. Both selected mouths fill to 50 and original-ID full-hopper firing/conservation remains covered.",
+    "logs": [
+      ".tools/icarus-new-capacity-tests.log",
+      ".tools/icarus-continuous-cargo.log",
+      ".tools/cargo-release.log"
+    ],
+    "shared": "20 hopper/contact cases across three files passed in the combined preview.",
+    "build": "Node 26.13.0 / pnpm 10.20.0 pnpm build:release passed: asset integrity, TypeScript/Vite and 18 content-hashed production assets. Existing bundle-size warning."
   },
   "baseCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
   "previousBaseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
@@ -364,6 +347,46 @@
       "files": 53,
       "seconds": 169.86,
       "log": ".tools/full-integrated.log"
+    }
+  },
+  "previousBeforeCargoFix": {
+    "status": "Exclusive intake selection, source-surface repair, focused simulation, browser and release checks passed; full combined suite belongs to preview integration.",
+    "runtime": {
+      "node": "26.13.0",
+      "pnpm": "10.20.0"
+    },
+    "asset": {
+      "bytes": 4125176,
+      "sha256": "f4f147d248cf7ee10adea28adfec42c051aa03118d1ffba426eaae6ecba67aba",
+      "triangles": 629533,
+      "primitives": 32
+    },
+    "focused": {
+      "command": "pnpm exec vitest run src/controls.test.ts src/robot/robots/5000-icarus-2 --maxWorkers=1 --testTimeout=30000",
+      "passed": 27,
+      "files": 4,
+      "log": ".tools/hood-calibration-focused.log",
+      "qualification": "Includes final signed face-normal alignment on all five protected CAD surfaces, actual roof dimensions, continuous full37 collection and original-ID discharge on both selected sides, and loaded cargo clearance from roof/feeder obstacles. Actual prepared exit tangent matches physical launch direction at all min/mid/max elevations and three turret yaw poses; source hood already has83.76degrees and receives no duplicate prep tilt."
+    },
+    "release": {
+      "command": "pnpm build:release",
+      "status": "passed",
+      "runtimeSourceFiles": 25,
+      "hashedBuildAssets": 18,
+      "log": ".tools/hood-calibration-release.log"
+    },
+    "browser": {
+      "status": "passed",
+      "checks": [
+        "Default N and saved X show in setup and controls and switch the live status to Opposite.",
+        "Fresh stowed, one deployed side, full cargo and moving turret/hood poses; actual upper and lower roof and slide panels uniformly shaded.",
+        "Final server GLB bytes match prepared SHA-256."
+      ],
+      "logs": [
+        ".tools/side-ui.json",
+        ".tools/icarus-repaired-browser.log"
+      ],
+      "pageErrors": []
     }
   }
 }
