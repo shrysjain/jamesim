@@ -14,20 +14,45 @@ const field = JSON.parse(readFileSync('public/assets/field-collisions.json', 'ut
 const run = (s: FieldSimulation, seconds: number) => { for (let i = 0; i < Math.round(seconds * 120); i++) s.update(1 / 120); };
 describe('physical shooting uncertainty', () => {
   it('has unbiased bounded variation, occasional wider shots and reproducible spin', () => {
-    const random = rng(), samples = Array.from({ length: 10000 }, () => sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, random));
+    const random = rng(), samples = Array.from({ length: 10000 }, () => sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, random, { distance: 3, turret: false }));
     const mean = samples.reduce((sum, s) => sum + s.yaw, 0) / samples.length;
     expect(Math.abs(mean)).toBeLessThan(.001);
     expect(Math.sqrt(samples.reduce((sum, s) => sum + s.yaw*s.yaw, 0) / samples.length)).toBeGreaterThan(.02);
     expect(samples.some(s => Math.abs(s.yaw) > .08)).toBe(true);
     for (const s of samples) { expect(Math.abs(s.yaw)).toBeLessThanOrEqual(.16); expect(s.speedFactor).toBeGreaterThanOrEqual(.85); expect(s.speedFactor).toBeLessThanOrEqual(1.15); expect(s.spin.z).toBeGreaterThan(0); }
-    expect(sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, rng())).toEqual(sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, rng()));
+    expect(sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, rng(), { distance: 3, turret: false })).toEqual(sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, rng(), { distance: 3, turret: false }));
   });
   it('scales with travel, turning and robot rating without selecting misses', () => {
     const sample = (rating: number, speed: number, turn: number) => {
-      const random = rng(); return Array.from({ length: 3000 }, () => sampleShotScatter(DEFAULT_SHOT_SPREAD, rating, speed, turn, random)).reduce((sum, s) => sum + s.yaw*s.yaw, 0);
+      const random = rng(); return Array.from({ length: 3000 }, () => sampleShotScatter(DEFAULT_SHOT_SPREAD, rating, speed, turn, random, { distance: 3, turret: false })).reduce((sum, s) => sum + s.yaw*s.yaw, 0);
     };
     expect(sample(.9, 3, 1)).toBeGreaterThan(sample(.9, 0, 0) * 2);
     expect(sample(.95, 3, 0)).toBeLessThan(sample(.8, 3, 0));
+  });
+  it('tightens close stationary shots while increasing angle and slip uncertainty at distance', () => {
+    const spread = (distance: number) => {
+      const random = rng(), samples = Array.from({ length: 6000 }, () => sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, random, { distance, turret: false }));
+      const rms = (value: (s: typeof samples[number]) => number) => Math.sqrt(samples.reduce((sum, s) => sum + value(s) ** 2, 0) / samples.length);
+      return [rms(s => s.yaw), rms(s => s.elevation), rms(s => s.speedFactor - 1)];
+    };
+    const close = spread(3), far = spread(10);
+    expect(close[0]).toBeGreaterThan(.015); expect(close[0]).toBeLessThan(.03);
+    for (let i = 0; i < close.length; i++) expect(far[i]).toBeGreaterThan(close[i] * 1.35);
+    // Each robot's existing profile still controls its relative launch spread.
+    const quiet = { ...DEFAULT_SHOT_SPREAD, yaw: DEFAULT_SHOT_SPREAD.yaw / 2 };
+    const base = sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, rng(), { distance: 3, turret: false });
+    expect(sampleShotScatter(quiet, .9, 0, 0, rng(), { distance: 3, turret: false }).yaw).toBeCloseTo(base.yaw / 2);
+  });
+  it('penalizes fixed-shooter motion more than turret motion while retaining rating differences', () => {
+    const rms = (turret: boolean, rating: number, speed: number, turn: number) => {
+      const random = rng(); return Math.sqrt(Array.from({ length: 6000 }, () => sampleShotScatter(DEFAULT_SHOT_SPREAD, rating, speed, turn, random, { distance: 3, turret }))
+        .reduce((sum, s) => sum + s.yaw ** 2, 0) / 6000);
+    };
+    const stationary = rms(true, .95, 0, 0), turret = rms(true, .95, 2, .5), fixed = rms(false, .95, 2, .5);
+    expect(turret).toBeGreaterThan(stationary); expect(turret).toBeLessThan(stationary * 1.6);
+    expect(fixed).toBeGreaterThan(turret * 1.4);
+    expect(rms(false, .35, 2, .5)).toBeGreaterThan(fixed * 1.5);
+    expect(rms(false, .95, 0, 1)).toBeGreaterThan(rms(true, .95, 0, 1));
   });
   it('gives original fuel bodies different physical rebounds while keeping their materials on reset', async () => {
     const floor: CollisionAsset = { boxes: [{ element: 'floor', center: [0, -.1, 0], halfExtents: [10, .1, 10] }], meshes: [] };

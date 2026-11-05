@@ -309,7 +309,8 @@ export class Shooter {
         RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
       if (hit || !this.clearExit(z)) { this.blocked = true; continue; }
       const scatter = sampleShotScatter(this.geometry.spread ?? DEFAULT_SHOT_SPREAD, this.geometry.movingAccuracy ?? .9,
-        this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom);
+        this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom,
+        { distance: Math.hypot(this.solution.target.position.x - position.x, this.solution.target.position.z - position.z), turret: this.mechanism.turret });
       const speed = this.chassis.telemetry.speed, turn = Math.abs(this.chassis.body.angvel().y);
       const motion = this.supportsMovingRelease ? clamp(Math.max(0, speed-.1)/.4 + Math.max(0, turn-.1)/1.4, 0, 1) : 0;
       // One spread distribution, with transient acceleration sensitivity.
