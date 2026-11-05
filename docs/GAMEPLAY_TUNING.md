@@ -39,6 +39,12 @@ Samples are unmodified local evaluation copies from [Team 254 Cheesy Arena](http
 
 November 1 follow-up: bump-only pitch/roll is now rendered from the four module terrain heights, smoothed and capped at 15°, while stable collision support and horizontal fuel displacement remain active. Owned fuel and the shooter muzzle follow that lean. Full-hopper rendering accounts for the sloped rear panel. Final aim response is faster; empty shooters no longer own yaw. Disabled-period boundaries clear drive/aim commands and yaw, with passive yaw damping during assessment. This follow-up was applied and refreshed without tests at the user's request.
 
+## Passing from the opposing zone
+
+Space selects Pass outside the robot's own alliance line, including the center and opposing zones. If the preferred home-zone landing exceeds the robot's rated passing range, aim assist selects an intermediate landing toward home within that range, leaving fuel-radius clearance around the prepared field footprints and guardrails. Preferred home-zone landings remain unchanged when reachable. Physical arc and exit checks can still block a shot; fuel follows its original body after launch, with normal scatter and collisions.
+
+Chassis aim retains its chosen turn direction near the 180° wrap so facing away from the target does not repeatedly reverse the turn command. Entering the robot's own alliance zone still switches aim assist to Hub.
+
 ## Kepler card update
 
 The user's Kepler FRSim card sets 14.4 ft/s maximum wheel speed, 33 ft/s² command acceleration, 130 lbf nominal empty traction, 13 shots/s in one turret lane, 40 fuel/s intake, approximately 50-fuel capacity, 95% moving-shot accuracy rating and 32 ft passing. Adjustable hood, simultaneous intake/shooting and L1 support remain enabled. These settings belong to Kepler's definition; selecting it does not change 2910 defaults.
