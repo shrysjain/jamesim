@@ -21,7 +21,7 @@ export function RobotBrowser({ selected, alliance, onChoose, onClose }: {
   const identity = robot ? robotIdentity(robot) : null;
   // Some robot contributions add optional moving-shot metadata.
   const movingLimits = robot && 'movingLimits' in robot.shooterGeometry
-    ? robot.shooterGeometry.movingLimits as { hub: { speed: number; turnRate: number } } | undefined : undefined;
+    ? robot.shooterGeometry.movingLimits as { hub: { speed: number; turnRate: number }; pass: { speed: number; turnRate: number } } | undefined : undefined;
   const visible = robots.filter(r => `${r.name} ${r.summary}`.toLowerCase().includes(query.toLowerCase().trim()));
 
   useEffect(() => {
@@ -44,8 +44,8 @@ export function RobotBrowser({ selected, alliance, onChoose, onClose }: {
         <section className="detail-inspection" aria-label="Robot inspection"><div className="robot-preview"><Suspense fallback={<p>Loading robot…</p>}><RobotPreview robot={robot} alliance={alliance} /></Suspense><span>Drag to inspect</span></div><p>{robot.summary}</p></section>
         <section className="detail-spec" aria-label={`${robot.name} stats`}><div className="detail-identity"><span className="team-number">{robot.teamNumber}</span><div><h2>{identity?.machine ?? identity?.team}</h2><span>{identity?.team}</span></div>{selected === detail && <span className="selected-badge">Selected</span>}</div>
           <RobotStats robot={robot} />
-          {movingLimits && <p className="stats-note">Moving hub shots: up to {movingLimits.hub.speed} m/s and {movingLimits.hub.turnRate} rad/s.</p>}
-          <p className="stats-note">Configured simulator stats and gameplay estimates. Rates are nominal; moving-shot ratings describe spread, not guaranteed hits.</p>
+          {movingLimits && <p className="stats-note">{robot.mechanisms.movingShots ? `Hub shots: up to ${movingLimits.hub.speed} m/s and ${movingLimits.hub.turnRate} rad/s.` : 'Hub shots require settling.'} Passes: up to {movingLimits.pass.speed} m/s and {movingLimits.pass.turnRate} rad/s.</p>}
+          <p className="stats-note">Configured simulator stats and gameplay estimates. Rates are nominal; motion ratings estimate quality rather than a hit percentage.</p>
           <button className="launch-button choose-robot" onClick={() => onChoose(detail)}>Use this robot<span>→</span></button>
         </section>
       </div>

@@ -26,6 +26,7 @@ import { GRAPHICS } from '../settings';
 import type { Settings } from '../settings';
 import { runtimeAsset } from '../runtimeAssets';
 import { unpackCollisions } from '../field/collisionAsset';
+import { removeTowerBacking } from './towerBacking';
 
 export type CameraMode = 'follow' | 'orbit' | 'fly';
 export type CameraPreset = 'overview' | 'overhead' | 'blue' | 'red';
@@ -200,6 +201,7 @@ export class FieldViewer {
     this.model.updateMatrixWorld(true);
     this.model.traverse((object) => {
       if (object instanceof THREE.Mesh) {
+        removeTowerBacking(object);
         object.castShadow = !object.userData.transparent;
         object.receiveShadow = true;
         if (object.userData.kind === 'carpet') {

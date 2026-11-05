@@ -39,8 +39,9 @@ describe('timed match and shared physics integration', () => {
     const s = await FieldSimulation.create(floor, [], true);
     try {
       s.startMatch({ ...DEFAULT_MATCH, preloads: 0 });
+      const startX = s.robot!.body.translation().x;
       s.robot!.input = { ...NEUTRAL_INPUT, forward: 1 }; run(s, 1);
-      expect(s.robot!.body.translation().x).toBeGreaterThan(8);
+      expect(s.robot!.body.translation().x - startX).toBeGreaterThan(2);
       s.setRunning(false); run(s, 2); expect(s.match.elapsed).toBe(1);
       s.setRunning(true); run(s, 19.1); expect(s.match.phase).toBe('Auto scoring'); expect(s.robotController!.actuatorsEnabled).toBe(false);
       s.robot!.input = { ...NEUTRAL_INPUT, forward: 1 }; run(s, 2.9); expect(s.match.phase).toBe('Transition'); expect(s.robot!.input.forward).toBe(0);

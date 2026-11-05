@@ -22,6 +22,35 @@ function localBounds(root: Node){
   };visit(root);return {min,max};
 }
 describe('Limestone CAD articulation',()=>{
+  it('uses one regular outer cylinder on each main roller and retains its narrower end shafts',()=>{
+    for(const id of ['intake-roller-0','shooter-drum']){
+      const root=assembly(id),inv=new Matrix4().fromArray(root.getWorldMatrix()).invert();
+      let shells=0,shaftVertices=0;const shellZ=[Infinity,-Infinity],shaftZ=[Infinity,-Infinity];
+      root.traverse(node=>{
+        const matrix=inv.clone().multiply(new Matrix4().fromArray(node.getWorldMatrix()));
+        for(const p of node.getMesh()?.listPrimitives()??[]){
+          const pos=p.getAttribute('POSITION')!,idx=p.getIndices()!.getArray()!;
+          const vertices=Array.from({length:pos.getCount()},(_,i)=>new Vector3(...pos.getElement(i,[])).applyMatrix4(matrix));
+          const cx=(Math.min(...vertices.map(v=>v.x))+Math.max(...vertices.map(v=>v.x)))/2;
+          const cy=(Math.min(...vertices.map(v=>v.y))+Math.max(...vertices.map(v=>v.y)))/2;
+          const radii=vertices.map(v=>Math.hypot(v.x-cx,v.y-cy)),radius=Math.max(...radii);
+          if(radius<.02){for(const v of vertices){shaftVertices++;shaftZ[0]=Math.min(shaftZ[0],v.z);shaftZ[1]=Math.max(shaftZ[1],v.z);}continue;}
+          let longFaces=0;
+          for(let i=0;i<idx.length;i+=3){const z=[vertices[idx[i]].z,vertices[idx[i+1]].z,vertices[idx[i+2]].z];if(Math.max(...z)-Math.min(...z)>.45)longFaces++;}
+          if(!longFaces)continue;
+          shells++;expect(longFaces,id).toBe(96);
+          const outer=radii.filter(r=>r>.02);
+          expect(Math.max(...outer)-Math.min(...outer),id).toBeLessThan(.0002);
+          for(const v of vertices){shellZ[0]=Math.min(shellZ[0],v.z);shellZ[1]=Math.max(shellZ[1],v.z);}
+        }
+      });
+      expect(shells,id).toBe(1);expect(shaftVertices,id).toBeGreaterThan(20);
+      expect(shaftZ[0],id).toBeLessThan(shellZ[0]-.015);expect(shaftZ[1],id).toBeGreaterThan(shellZ[1]+.015);
+      const bounds=localBounds(root);
+      expect(bounds.max[0]-bounds.min[0],id).toBeCloseTo(id==='shooter-drum'?.0921:.0508,3);
+      expect(bounds.max[2]-bounds.min[2],id).toBeCloseTo(id==='shooter-drum'?.6631:.6604,3);
+    }
+  });
   it('uses one long cylindrical surface per intake bar and hood roller, keeping short end hardware',()=>{
     for(const id of ['intake-roller-1','intake-roller-2','hood-roller-0','hood-roller-1','hood-roller-2']){
       const root=assembly(id),inv=new Matrix4().fromArray(root.getWorldMatrix()).invert();let shells=0;
