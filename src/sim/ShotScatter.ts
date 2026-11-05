@@ -6,7 +6,7 @@ const clamp = (v: number, low: number, high: number) => Math.max(low, Math.min(h
 /** Launch uncertainty only. Misses, rim bounces and later flight remain physical.
  * Ratings scale motion sensitivity; they are not a forced hit/miss percentage. */
 export function sampleShotScatter(profile: ShotSpread, movingAccuracy: number, speed: number, turnRate: number, random: () => number,
-  context: { distance: number; turret: boolean }) {
+  context: { distance: number; turret: boolean } = { distance: 3, turret: false }) {
   const normal = () => clamp(Math.sqrt(-2 * Math.log(Math.max(1e-9, random()))) * Math.cos(2 * Math.PI * random()), -3, 3);
   // Gameplay estimates: tighter repeatability at short range, with additional
   // launch uncertainty at distance beyond the physical angular-error growth.

@@ -21,6 +21,8 @@ describe('physical shooting uncertainty', () => {
     expect(samples.some(s => Math.abs(s.yaw) > .08)).toBe(true);
     for (const s of samples) { expect(Math.abs(s.yaw)).toBeLessThanOrEqual(.16); expect(s.speedFactor).toBeGreaterThanOrEqual(.85); expect(s.speedFactor).toBeLessThanOrEqual(1.15); expect(s.spin.z).toBeGreaterThan(0); }
     expect(sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, rng(), { distance: 3, turret: false })).toEqual(sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, rng(), { distance: 3, turret: false }));
+    // Existing callers without launch context retain a defined reference bench.
+    expect(sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, rng())).toEqual(sampleShotScatter(DEFAULT_SHOT_SPREAD, .9, 0, 0, rng(), { distance: 3, turret: false }));
   });
   it('scales with travel, turning and robot rating without selecting misses', () => {
     const sample = (rating: number, speed: number, turn: number) => {
