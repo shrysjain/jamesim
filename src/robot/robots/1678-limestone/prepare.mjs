@@ -78,22 +78,30 @@ function put(s, parent, transform, mat) {
     p.push(...new Vector3(...s.pts[i]).applyMatrix4(transform).sub(origin).toArray());
     n.push(...new Vector3(...s.normals[i]).applyMatrix3(nm).normalize().toArray());
   }
-  // The two thin bars and three hood rollers contain coincident long shells,
+  // The intake bars, main intake tube and shooter drum contain irregular or overlapping long shells,
   // with different triangulations. Face deduplication alone cannot remove
   // their depth fighting. Rebuild only those cylindrical surfaces from their
-  // measured envelope; keep the original short end hardware and axle frames.
-  if (/^(intake-roller-[12]|hood-roller-[012])$/.test(parent) && s.max[2] - s.min[2] > .5) {
+  // measured envelope; keep the original shafts, short end hardware and axle frames.
+  let rebuilt = false;
+  if (/^(intake-roller-[012]|hood-roller-[012]|shooter-drum)$/.test(parent) && s.max[2] - s.min[2] > .5) {
     const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
     for (let i = 0; i < p.length; i += 3) for (let k = 0; k < 3; k++) {
       lo[k] = Math.min(lo[k], p[i + k]); hi[k] = Math.max(hi[k], p[i + k]);
     }
     const diameter = Math.max(hi[0] - lo[0], hi[1] - lo[1]);
-    if (diameter > (parent.startsWith('intake') ? .025 : .05)) throw new Error(`Unexpected roller envelope: ${parent}`);
-    const shell = rollerShells.get(parent) ?? { lo: [...lo], hi: [...hi], mat, diameter, replacedSolids: 0 };
-    for (let k = 0; k < 3; k++) { shell.lo[k] = Math.min(shell.lo[k], lo[k]); shell.hi[k] = Math.max(shell.hi[k], hi[k]); }
-    if (diameter > shell.diameter) { shell.diameter = diameter; shell.mat = mat; }
-    shell.replacedSolids++; rollerShells.set(parent, shell);
-  } else append(parent, p, n, s.indices.map(i => map.get(i)), mat);
+    const main = parent === 'intake-roller-0' || parent === 'shooter-drum';
+    // Narrow full-length shafts extend beyond the main tubes. Retain them;
+    // unioning their bounds would incorrectly extend the thicker outer shell.
+    if (!main || diameter > .04) {
+      const limit = parent === 'shooter-drum' ? .1 : parent === 'intake-roller-0' ? .06 : parent.startsWith('intake') ? .025 : .05;
+      if (diameter > limit) throw new Error(`Unexpected roller envelope: ${parent}`);
+      const shell = rollerShells.get(parent) ?? { lo: [...lo], hi: [...hi], mat, diameter, replacedSolids: 0 };
+      for (let k = 0; k < 3; k++) { shell.lo[k] = Math.min(shell.lo[k], lo[k]); shell.hi[k] = Math.max(shell.hi[k], hi[k]); }
+      if (diameter > shell.diameter) { shell.diameter = diameter; shell.mat = mat; }
+      shell.replacedSolids++; rollerShells.set(parent, shell); rebuilt = true;
+    }
+  }
+  if (!rebuilt) append(parent, p, n, s.indices.map(i => map.get(i)), mat);
   report.assignments[parent] = (report.assignments[parent] ?? 0) + 1;
 }
 function axle(name, parent, position, transform = frame) {
@@ -156,7 +164,7 @@ function shape(parent, geometry, matrix, mat) {
   for (let i = 0; i < a.count; i++) { p.push(...new Vector3().fromBufferAttribute(a,i).applyMatrix4(matrix).toArray()); normals.push(...new Vector3().fromBufferAttribute(n,i).applyMatrix3(nm).normalize().toArray()); }
   append(parent, p, normals, Array.from(geometry.index.array), mat); geometry.dispose();
 }
-if (rollerShells.size !== 5) throw new Error('Expected two intake and three hood roller shells');
+if (rollerShells.size !== 7) throw new Error('Expected three intake, three hood and one shooter drum shell');
 report.rebuiltRollerShells = {};
 for (const [parent, shell] of rollerShells) {
   const size = shell.hi.map((v, k) => v - shell.lo[k]), center = shell.lo.map((v, k) => (v + shell.hi[k]) / 2);
