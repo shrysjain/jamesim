@@ -318,7 +318,10 @@
     "src/sim/SwerveChassis.ts",
     "src/style.css",
     "src/view/FieldViewer.ts",
-    "src/view/RobotView.ts"
+    "src/view/RobotView.ts",
+    "src/robot/robots/8592-prismarine/definition.ts",
+    "src/robot/robots/8592-prismarine/prismarine.test.ts",
+    "src/robot/robots/8592-prismarine/README.md"
   ],
   "sharedAimingFix": "Retain the chosen chassis turn direction within 0.1 radians of the 180-degree wrap tie. Prevents alternating swerve commands from blocking aiming; actual-field passing cases protect Downpour and Reblitz.",
   "initialBaseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
@@ -405,5 +408,17 @@
     ],
     "qualification": "All three robot branches and PR11 merged in every order onto main, producing one identical tree. Original main robot IDs/relative order retained; each feature branch adds only its own robot. Recheck after future edits.",
     "standaloneRelease": "Final pnpm build:release passed on Node26/pnpm10.20.0; ignored evidence .tools/pr-release-final.log."
+  },
+  "standaloneCiCorrection": {
+    "cause": "Shared sliding compression regression was included but the existing preview Prismarine compress setting and matching regression were omitted from standalone branches.",
+    "commonCommit": "4cd9ff5",
+    "behavior": "Carry the approved universal sliding-intake compression to Prismarine; preserve movement firing gate, original8 body releases and extension after shooting. Selector remains hidden.",
+    "files": [
+      "src/robot/robots/8592-prismarine/definition.ts",
+      "src/robot/robots/8592-prismarine/prismarine.test.ts",
+      "src/robot/robots/8592-prismarine/README.md"
+    ],
+    "scope": "Existing Prismarine config/test/docs only; no new robot, CAD, capacity, mass or shot tuning.",
+    "validation": "Focused shared-base11 cases passed; standalone cases and fresh GitHub runs tracked in PR notes."
   }
 }
