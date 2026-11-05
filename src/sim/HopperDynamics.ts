@@ -1,7 +1,7 @@
-import { hopperFloorContact, hopperFloorHeight, hopperFloorPoints, hopperObstacleContact } from '../robot/hopperGeometry';
+import { hopperFloorContact, hopperFloorHeight, hopperFloorPoints, hopperObstacleContact, hopperObstacles } from '../robot/hopperGeometry';
 import type { FloorPoint } from '../robot/hopperGeometry';
 import { COLLECTING_POSE } from '../robot/poses';
-import type { HopperVolume, RobotDefinition, RobotPose } from '../robot/RobotDefinition';
+import type { HopperObstacle, HopperVolume, RobotDefinition, RobotPose } from '../robot/RobotDefinition';
 import { FUEL_RADIUS } from './FuelSystem';
 import type { Fuel } from './FuelSystem';
 import { add, sub, scale, unrotate, v3 } from './vector';
@@ -20,6 +20,7 @@ export class HopperDynamics {
   private particles = new Map<number, Particle>();
   private arrivals = new Map<number, Vector>();
   private floorPoints: FloorPoint[] = [];
+  private obstacles: HopperObstacle[] = [];
   private lastMotion: Motion | null = null;
   constructor(private definition: RobotDefinition) {}
   get volume(): HopperVolume { return this.definition.hopper.volume!; }
@@ -29,6 +30,7 @@ export class HopperDynamics {
 
   step(dt: number, held: HopperFuel[], pose: RobotPose, motion: Motion, externalContact?: ExternalContact, indexerDirection = 0) {
     this.floorPoints = hopperFloorPoints(this.definition, pose);
+    this.obstacles = hopperObstacles(this.definition, pose);
     const ids = new Set(held.filter(f => f.state === 'stored').map(f => f.id));
     for (const id of this.particles.keys()) if (!ids.has(id)) this.particles.delete(id);
     for (const fuel of held) if (fuel.state === 'stored' && !this.particles.has(fuel.id)) {
@@ -176,7 +178,7 @@ export class HopperDynamics {
           if (floor.distance <= FUEL_RADIUS+.001) stop(velocity,v3(...floor.normal));
         }
         if (!rim && p.y >= this.volume.ceilingY-FUEL_RADIUS-.001) stop(velocity,v3(0,-1,0));
-        for (const box of this.definition.hopper.obstacles ?? []) {
+        for (const box of this.obstacles) {
           const contact = hopperObstacleContact([p.x,p.y,p.z],box);
           if (contact.distance <= FUEL_RADIUS+.001) stop(velocity,v3(...contact.normal));
         }
@@ -185,7 +187,7 @@ export class HopperDynamics {
   }
   private constrain(p: Vector, front: number, width: number, pose: RobotPose) {
     const back = this.back(pose);
-    for (const box of this.definition.hopper.obstacles ?? []) {
+    for (const box of this.obstacles) {
       const contact = hopperObstacleContact([p.x,p.y,p.z],box), penetration = FUEL_RADIUS-contact.distance;
       if (penetration > 0) {
         p.x += contact.normal[0]*penetration; p.y += contact.normal[1]*penetration; p.z += contact.normal[2]*penetration;

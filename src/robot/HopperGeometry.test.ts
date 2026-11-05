@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hopperFloorContact, hopperFloorHeight, hopperFloorPoints, hopperObstacleContact } from './hopperGeometry';
+import { hopperFloorContact, hopperFloorHeight, hopperFloorPoints, hopperObstacleContact, hopperObstacles } from './hopperGeometry';
 import { KEPLER } from './registry';
 import { validateRobotDefinition } from './validateDefinition';
 import type { HopperObstacle } from './types';
@@ -50,5 +50,13 @@ describe('measured hopper contact geometry', () => {
   it('rejects invalid round solids and active contact tuning', () => {
     expect(validateRobotDefinition({...KEPLER,hopper:{...KEPLER.hopper,obstacles:[{...cylinder,halfExtents:[.3,.1,.2]}]}})).not.toEqual([]);
     expect(validateRobotDefinition({...KEPLER,hopper:{...KEPLER.hopper,physics:{restitution:1.2,friction:.2}}})).not.toEqual([]);
+  });
+  it('moves an intake rim with its actual carriage while retaining fixed machinery', () => {
+    const fixed = {center:[0,.2,0] as [number,number,number],halfExtents:[.1,.1,.1] as [number,number,number]};
+    const moving = {...fixed,center:[-.5,.47,0] as [number,number,number],part:'intake' as const};
+    const definition = {...KEPLER,intake:{...KEPLER.intake,stowTravel:.34417,stowRise:.057},hopper:{...KEPLER.hopper,obstacles:[fixed,moving]}};
+    const contacts = hopperObstacles(definition,{intake:0,hopper:1,hood:0});
+    expect(contacts[0]).toBe(fixed);expect(contacts[1].center[0]).toBeCloseTo(-.15583);
+    expect(contacts[1].center[1]).toBeCloseTo(.527);expect(moving.center).toEqual([-.5,.47,0]);
   });
 });
