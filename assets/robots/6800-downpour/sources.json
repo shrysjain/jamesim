@@ -351,5 +351,15 @@
       "fullSimulation": "Parent integration owns the new combined full suite; the earlier380-test result remains historical."
     },
     "remainingLimits": "Belts retain their source geometry on the relevant assembly; individual belt deformation, cycloidal internals and drive-train compliance are not simulated."
+  },
+  "retractingIntakeCargoContacts": {
+    "source": "Contributor complete VR26A-0000 export, measured moving roller/tube/crossbar/side-plate bounds.",
+    "count": 7,
+    "shape": "Conservative moving boxes around major surfaces with approximately 1 mm margin.",
+    "capacity": 48,
+    "fuelMassChanged": false,
+    "feeding": "Managed feeding also yields to moving intake contacts; static feeder obstacles do not deflect its intended feed path.",
+    "focused": "31 cases across six files passed, including full48 automatic shooting and manual16-fuel retraction, all held states checked within1mm of full-radius contact.",
+    "log": ".tools/intake-cargo-final.log"
   }
 }

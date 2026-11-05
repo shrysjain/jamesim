@@ -241,3 +241,30 @@ the complete combined roster; earlier broad test counts above are historical.
 This remains the shared pivot/intake mechanism family. Belts are retained on
 their source assembly; belt deformation, cycloidal internals and drive-train
 compliance are not individually simulated.
+
+## Retraction contacts and independent PR integration
+
+Stored fuel now contacts seven conservative boxes around the source intake's
+powered roller, two fixed tubes, two crossbars and two side plates. They use the
+same `partTransform` pivot and angle as the rendered CAD at every fixed step.
+Field-only mechanism colliders did not previously contact owned local fuel.
+The boxes include roughly 1 mm of clearance around measured major surfaces;
+they do not model every tooth or cutout. Capacity stays 48 and fuel mass is unchanged.
+
+Feeding fuel also yields to these moving intake contacts; static feeder envelopes
+remain excluded from that managed path so normal internal feeding still works.
+Two new cases check every held sphere against all seven contacts throughout
+full-load automatic shooting and a manual partial-load fold, retaining original
+IDs/bodies, all 48 physical releases, pause/reset behavior in existing cases and
+correct payload mass. The focused robot/contact run passes 31 cases across six
+files. Runtime CAD bytes/hash are unchanged by this contact correction.
+
+The three contributions share optional mechanism code through common merge
+ancestors, with their registrations and credits on separate lines. Each branch
+still owns only its own added robot definition/model. Shared changes include the
+registry format, types/validation/poses, local hopper solver/geometry, transfer
+and feeder contacts, optional opposed-intake controls/view hints and shared aim/
+compression behavior. These are disclosed in each PR; the complete current shared
+path list is generated from its diff against main. Existing robot IDs/order are
+retained relative to one another. The new robots can therefore be merged in any
+order without discarding registration, credits or mechanism behavior.
