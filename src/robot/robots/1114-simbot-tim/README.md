@@ -232,3 +232,15 @@ response unless they opt in. The runtime CAD asset is unchanged by this correcti
 The refreshed Node 26 / pnpm 10.20.0 release build passes asset integrity,
 TypeScript/Vite and production-payload checks (18 hashed assets). The existing
 large Rapier bundle warning remains.
+
+## Independent PR integration
+
+All three new robot contributions share common ancestors for optional mechanism
+code (`56a2273`, `191c137`), including hopper contacts, transfer/feeding clearance,
+opposed intake controls/view hints, slide compression and aim stability. Each
+branch adds only its own robot definition/model. Registration and credits are
+split onto separate contributor lines while preserving original robot IDs and
+relative order. All 24 merge orders of the three robots plus existing tuning
+PR #11 onto main `4154227` passed and produced the same final tree. The source
+record's `integrationFiles` lists every shared path; PR descriptions disclose
+them. The refreshed standalone release build passes. Recheck future edits.
