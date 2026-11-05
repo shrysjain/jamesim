@@ -27,6 +27,8 @@ Pitch and roll are locked; yaw and vertical suspension remain physical. The simu
 
 Bump triangles provide a level, damped support platform sampled over the robot footprint. The complete robot leans with the bump while its modules remain rigidly mounted at the prepared CAD positions. This avoids bellypan/intake beaching while preserving the bump's height change. The remaining field geometry still blocks the chassis normally.
 
+Issue #14: the wheel-spring support ceiling is now 1.8 times the loaded vehicle weight shared across its four modules. Previously each module could apply 1.8 times the empty robot weight, multiplying the ceiling to 7.2 times vehicle weight and amplifying bump rebound. The fast empty-Darwin reproduction reached 4.87 times vehicle weight and a .421 m chassis peak; sharing the budget reduced these to 1.8 and .398 m. The 1.8 factor is a gameplay force limit, not a measured real-robot acceleration. Regression cases cover empty/full48 Darwin in both bump lanes, clearance, settled landing and original fuel bodies; collision support remains force-based rather than a height clamp.
+
 Low fuel is displaced horizontally by the bumper footprint, including when landing on it. Sweeps prevent displacement through the static field. A trapped ball may briefly overlap the underside until space opens; it cannot provide vertical chassis support. Fuel-to-fuel, carpet and field physics, airborne contacts and stable IDs remain active.
 
 ## Timing and audio
@@ -38,6 +40,12 @@ Normal period audio follows [2026 manual Table 5-4](https://firstfrc.blob.core.w
 Samples are unmodified local evaluation copies from [Team 254 Cheesy Arena](https://github.com/Team254/cheesy-arena/tree/248d9de497e701223e2cdbc986a19bbfea054c21/static/audio), pinned at `248d9de497e701223e2cdbc986a19bbfea054c21`. Download hashes, original timing source and license are retained in `assets/source/audio/`. Public launch needs an audio redistribution review under that retained license. No runtime audio, CAD or code depends on a system cache.
 
 November 1 follow-up: bump-only pitch/roll is now rendered from the four module terrain heights, smoothed and capped at 15°, while stable collision support and horizontal fuel displacement remain active. Owned fuel and the shooter muzzle follow that lean. Full-hopper rendering accounts for the sloped rear panel. Final aim response is faster; empty shooters no longer own yaw. Disabled-period boundaries clear drive/aim commands and yaw, with passive yaw damping during assessment. This follow-up was applied and refreshed without tests at the user's request.
+
+## Passing from the opposing zone
+
+Space selects Pass outside the robot's own alliance line, including the center and opposing zones. If the preferred home-zone landing exceeds the robot's rated passing range, aim assist selects an intermediate landing toward home within that range, leaving fuel-radius clearance around the prepared field footprints and guardrails. Preferred home-zone landings remain unchanged when reachable. Physical arc and exit checks can still block a shot; fuel follows its original body after launch, with normal scatter and collisions.
+
+Chassis aim retains its chosen turn direction near the 180° wrap so facing away from the target does not repeatedly reverse the turn command. Entering the robot's own alliance zone still switches aim assist to Hub.
 
 ## Kepler card update
 
@@ -83,6 +91,8 @@ Registry-wide regressions reproduce wall pressure with small sideways commands, 
 
 The moving-shot PR is integrated using the newer per-robot spread profiles as the single release distribution. Acceleration scales angular uncertainty; the 60 ms velocity estimate retains transient compensation error. Spin and recoil apply to original fuel bodies. This supersedes the older independent spread sampler without stacking both distributions.
 
-At AUTO, teleop and manual early-stop cutoffs, the chassis clears wheel commands and yaw, then zeros horizontal velocity while supported by grounded wheels. The hold runs at the cutoff tick and through disabled assessment, preventing momentum from carrying the robot across the carpet. Vertical falling, suspension settling and tower support remain physical, and unsupported airborne horizontal travel continues until landing. Pause and practice behavior are unchanged.
+At teleop and manual early-stop cutoffs, the chassis clears wheel commands and yaw, then zeros horizontal velocity while supported by grounded wheels. The hold runs at the cutoff tick and through final assessment. Vertical falling, suspension settling and tower support remain physical, and unsupported airborne horizontal travel continues until landing.
+
+Issue #15 changes the normal AUTO cutoff: driver and mechanism commands clear at 20 seconds, but chassis velocity continues through the three-second Auto scoring gap. The existing unpowered wheel contacts, yaw damping, body drag and field collisions evolve that momentum. Driver input cannot power the robot during the gap. Pause and practice behavior are unchanged.
 
 Integration order is moving-shot/match-stop, Darwin, then Citrus. These branch merges do not merge into main. Local hopper contacts and per-fuel mass remain unchanged.

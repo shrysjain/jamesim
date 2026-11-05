@@ -1,13 +1,13 @@
 export const ACTION_LABELS = {
   forward: 'Forward', backward: 'Backward', left: 'Strafe left', right: 'Strafe right',
   turnLeft: 'Turn left', turnRight: 'Turn right', intake: 'Intake', shoot: 'Aim / shoot / pass',
-  reverse: 'Reverse / eject', toggleIntake: 'Toggle intake extension', climb: 'Toggle climber', supply: 'Human-player supply', restart: 'Restart session', pause: 'Pause / resume',
+  reverse: 'Reverse / eject', toggleIntake: 'Toggle intake extension', switchIntake: 'Switch active intake side', climb: 'Toggle climber', supply: 'Human-player supply', restart: 'Restart session', pause: 'Pause / resume',
 } as const;
 export type Action = keyof typeof ACTION_LABELS;
 export type Controls = { keys: Record<Action, string[]>; buttons: Record<Action, number | null>; deadzone: number; gamepad: boolean };
 export const DEFAULT_CONTROLS: Controls = {
-  keys: { forward: ['KeyW', 'ArrowUp'], backward: ['KeyS', 'ArrowDown'], left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'], turnLeft: ['KeyJ'], turnRight: ['KeyL'], intake: ['ShiftLeft', 'ShiftRight'], shoot: ['Space'], reverse: ['KeyQ'], toggleIntake: ['KeyV'], climb: ['KeyC'], supply: ['KeyB'], restart: ['KeyR'], pause: ['KeyP'] },
-  buttons: { forward: null, backward: null, left: null, right: null, turnLeft: null, turnRight: null, intake: 4, shoot: 7, reverse: 5, toggleIntake: null, climb: 0, supply: 2, restart: 8, pause: 9 },
+  keys: { forward: ['KeyW', 'ArrowUp'], backward: ['KeyS', 'ArrowDown'], left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'], turnLeft: ['KeyJ'], turnRight: ['KeyL'], intake: ['ShiftLeft', 'ShiftRight'], shoot: ['Space'], reverse: ['KeyQ'], toggleIntake: ['KeyV'], switchIntake: ['KeyN'], climb: ['KeyC'], supply: ['KeyB'], restart: ['KeyR'], pause: ['KeyP'] },
+  buttons: { forward: null, backward: null, left: null, right: null, turnLeft: null, turnRight: null, intake: 4, shoot: 7, reverse: 5, toggleIntake: null, switchIntake: 3, climb: 0, supply: 2, restart: 8, pause: 9 },
   deadzone: 0.15, gamepad: true,
 };
 export const ACTIONS = Object.keys(ACTION_LABELS) as Action[];

@@ -85,12 +85,20 @@ describe('9496 Matterhorn',()=>{
    expect(samples).toBeGreaterThan(100);expect(r.shooter.shotsFired).toBe(8);
   }finally{s.dispose();}
  });
- it('passively deploys once and does not invent powered retraction, hood articulation or climbing',async()=>{
+ it('automatically contracts the hopper and folds the intake during shooting, with intake/reverse overrides',async()=>{
   const s=await FieldSimulation.create(floor,seeds(8),true);
   try{s.startSession({...DEFAULT_MATCH,robot:ROBOT_ID,preloads:8},true);run(s,.7);const r=s.robotController!;
+   const handles=s.fuel.map(b=>b.handle);
    expect(r.chassis.pose.intake).toBe(1);expect(r.chassis.pose.hopper).toBe(1);
    r.requestIntakeToggle();r.requestClimbToggle();run(s,.5);expect(r.chassis.pose.intake).toBe(1);expect(r.climber.attached).toBe(false);
-   r.input.shoot=true;run(s,1);expect(r.chassis.pose.intake).toBe(1);expect(r.shooter.hood).toBe(0);
+   r.input.shoot=true;run(s,.5);expect(r.chassis.pose.intake).toBeLessThan(.05);expect(r.chassis.pose.hopper).toBeCloseTo(r.chassis.pose.intake,8);expect(r.shooter.hood).toBe(0);
+   expect(r.held.length+r.shooter.shotsFired).toBe(8);
+   const paused={...r.chassis.pose};s.setRunning(false);run(s,.4);expect(r.chassis.pose).toEqual(paused);s.setRunning(true);r.input.shoot=true;
+   r.input.intake=true;run(s,.3);expect(r.chassis.pose.intake).toBe(1);expect(r.chassis.pose.hopper).toBe(1);
+   r.input.intake=false;run(s,.5);expect(r.chassis.pose.intake).toBeLessThan(.05);
+   r.input.reverse=true;run(s,.3);expect(r.chassis.pose.intake).toBe(1);expect(r.chassis.pose.hopper).toBe(1);
+   r.input.reverse=false;r.input.shoot=false;run(s,.3);expect(r.chassis.pose.intake).toBe(1);
+   expect(s.fuel.map(b=>b.handle)).toEqual(handles);expect(s.fuelSystem.records).toHaveLength(8);
    const angle=r.shooter.elevation;run(s,1);expect(r.shooter.elevation).toBeCloseTo(angle,7);
   }finally{s.dispose();}
  });
@@ -117,6 +125,7 @@ describe('9496 Matterhorn',()=>{
    expect(shots.size).toBe(r.shooter.shotsFired);expect(shots.size+spilled.length).toBe(capacity);
    for(const id of spilled){const f=s.fuelSystem.records[id];expect(f.owner).toBeNull();expect(f.state).toBe('loose');expect(f.body.isEnabled()).toBe(true);}
    expect(r.held).toHaveLength(0);
+   expect(r.chassis.pose.intake).toBeLessThan(.05);expect(r.chassis.pose.hopper).toBeCloseTo(r.chassis.pose.intake,8);
    expect(r.telemetry.mass).toBeCloseTo(D.mass,3);expect(s.fuel.map(b=>b.handle)).toEqual(handles);
   }finally{s.dispose();}
  },30000);

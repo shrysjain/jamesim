@@ -136,7 +136,10 @@ export class SwerveChassis {
   /** Update the articulated collision proxies for simulation or pose inspection. */
   setPose(pose: RobotPose) {
     const next = { intake: Math.max(0, Math.min(1, pose.intake)), hopper: Math.max(0, Math.min(1, pose.hopper)), hood: Math.max(0, Math.min(1, pose.hood)), climber: Math.max(0, Math.min(1, pose.climber ?? 0)) };
-    if (this.poseInitialized && next.intake === this.pose.intake && next.hopper === this.pose.hopper && next.hood === this.pose.hood && next.climber === this.pose.climber) return;
+    const nextOpposed = this.definition.intake.opposed ? Math.max(0, Math.min(1, pose.opposedIntake ?? 0)) : undefined;
+    const previousOpposed = this.pose.opposedIntake;
+    if (nextOpposed !== undefined) Object.assign(next, { opposedIntake: nextOpposed });
+    if (this.poseInitialized && nextOpposed === previousOpposed && next.intake === this.pose.intake && next.hopper === this.pose.hopper && next.hood === this.pose.hood && next.climber === this.pose.climber) return;
     this.poseInitialized = true; this.pose = next;
     for (const { collider, definition: shape } of this.mechanismColliders) {
       const { angle, pivot, shift, rise } = partTransform(this.definition, shape.part, this.pose);
@@ -197,7 +200,8 @@ export class SwerveChassis {
     // contacts are assisted; walls, trench posts and overhead beams stay solid.
     let terrain = 0;
     const rearReach = this.definition.pickup ? Math.abs(this.definition.pickup.ejectX) - (this.definition.intake.stowTravel ?? 0) * (1 - this.pose.intake) : this.definition.length / 2 + .06 + .2 * this.pose.intake;
-    if (position.y < 0.8) for (const x of [-rearReach, 0, this.definition.length / 2 + 0.06]) {
+    const frontReach = this.definition.pickup.opposed ? this.definition.pickup.opposed.ejectX - (this.definition.intake.opposed?.stowTravel ?? 0) * (1 - (this.pose.opposedIntake ?? 0)) : this.definition.length / 2 + .06;
+    if (position.y < 0.8) for (const x of [-rearReach, 0, frontReach]) {
       for (const z of [-this.definition.width / 2, 0, this.definition.width / 2]) {
         const sample = add(position, rotate(vec(x, 0, z), q));
         const hit = this.world.castRay(new RAPIER.Ray(vec(sample.x, 0.5, sample.z), vec(0, -1, 0)), 0.5, false,
@@ -263,7 +267,9 @@ export class SwerveChassis {
       if (!hit || !m.grounded) return;
       const velocity = this.body.velocityAtPoint(m.point);
       const compression = this.definition.springLength - m.suspension;
-      m.load = Math.max(0, Math.min(this.definition.mass * 9.81 * 1.8, compression * 18000 - dot(velocity, up) * 650));
+      // Share the vehicle's support-force budget across its modules, including
+      // payload. Applying the whole budget at every wheel launches the chassis.
+      m.load = Math.max(0, Math.min(this.totalMass * 9.81 * 1.8 / this.modules.length, compression * 18000 - dot(velocity, up) * 650));
       const normalForce = mul(up, m.load);
       this.body.addForceAtPoint(normalForce, m.point, true);
       const wheelDirection = rotate(vec(Math.cos(m.angle), 0, Math.sin(m.angle)), q);

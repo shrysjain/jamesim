@@ -25,12 +25,37 @@ describe('moving shots and disabled drive hold',()=>{
   }
   expect(hits[0]).toBeGreaterThanOrEqual(48);expect(hits[1],JSON.stringify(hits)).toBeLessThan(hits[0]);expect(hits[1]).toBeLessThan(50);expect(hits[1]).toBeGreaterThanOrEqual(32);
  });
- for(const end of ['auto','teleop','early'] as const)it(`stops sliding and turning at the ${end} cutoff`,async()=>{
+ it('preserves AUTO cutoff momentum while ignoring driver and shooting commands',async()=>{
+  const endings: {x:number;y:number;z:number}[]=[];
+  for(const heldCommands of [false,true]){
+   const s=await FieldSimulation.create(floor,[],true);
+   try{
+    s.startMatch({...DEFAULT_MATCH,preloads:0});s.robot!.teleport([0,.26,0]);run(s,.5);
+    s.robot!.input={...NEUTRAL_INPUT,forward:1};run(s,.3);
+    const before=s.robot!.telemetry.speed;
+    while(s.match.elapsed<MATCH_TIMES.autoEnd-1/120-1e-8)s.match.advance();
+    run(s,1/120);expect(s.match.phase).toBe('Auto scoring');
+    expect(s.robot!.telemetry.speed).toBeGreaterThan(before*.9);
+    const start={...s.robot!.body.translation()};
+    for(let tick=0;tick<60;tick++){
+     if(heldCommands){s.robot!.input={...NEUTRAL_INPUT,forward:-1,strafe:1,turn:1};s.robotController!.input={intake:true,shoot:true,reverse:true};}
+     s.update(1/120);
+     expect(s.robotController!.actuatorsEnabled).toBe(false);
+    }
+    expect(s.robot!.body.translation().x-start.x).toBeGreaterThan(.2);
+    expect(s.robotController!.shooter.shotsFired).toBe(0);
+    const paused={...s.robot!.body.translation()};s.setRunning(false);run(s,.2);
+    expect(s.robot!.body.translation()).toEqual(paused);endings.push(paused);
+   }finally{s.dispose();}
+  }
+  expect(endings[0]).toEqual(endings[1]);
+ });
+ for(const end of ['teleop','early'] as const)it(`stops sliding and turning at the ${end} cutoff`,async()=>{
   const s=await FieldSimulation.create(floor,[],true);
   try{
    s.startMatch({...DEFAULT_MATCH,preloads:0});s.robot!.teleport([0,.26,0]);run(s,.5);
    s.robot!.input={...NEUTRAL_INPUT,forward:1,turn:.3};run(s,.3);expect(s.robot!.telemetry.speed).toBeGreaterThan(.5);
-   if(end==='early')s.match.endEarly();else{const cutoff=end==='auto'?MATCH_TIMES.autoEnd:MATCH_TIMES.teleopEnd;while(s.match.elapsed<cutoff-1/120-1e-8)s.match.advance();}
+   if(end==='early')s.match.endEarly();else{while(s.match.elapsed<MATCH_TIMES.teleopEnd-1/120-1e-8)s.match.advance();}
    run(s,1/120);const p={...s.robot!.body.translation()},heading=s.robot!.telemetry.heading;
    expect(s.match.actuatorsEnabled).toBe(false);expect(s.robot!.telemetry.speed).toBeLessThan(1e-5);expect(Math.abs(s.robot!.body.angvel().y)).toBeLessThan(1e-5);
    run(s,2.5);const after=s.robot!.body.translation();expect(Math.hypot(after.x-p.x,after.z-p.z)).toBeLessThan(.002);expect(s.robot!.telemetry.heading).toBeCloseTo(heading,4);

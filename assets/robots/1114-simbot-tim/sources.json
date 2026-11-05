@@ -1,0 +1,380 @@
+{
+  "schemaVersion": 1,
+  "robotId": "1114-simbot-tim",
+  "team": 1114,
+  "season": 2026,
+  "name": "Simbot Tim",
+  "status": "implemented-and-locally-validated",
+  "runtimeRegistered": true,
+  "baseCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+  "cad": {
+    "url": "https://cad.onshape.com/documents/7959d159451177786d52dd9a/w/535bc31b66b0cc442967f1d0/e/a263c1a625ed8cf2484ae82f",
+    "documentId": "7959d159451177786d52dd9a",
+    "workspaceId": "535bc31b66b0cc442967f1d0",
+    "elementId": "a263c1a625ed8cf2484ae82f",
+    "revisionStatus": "workspace URL; immutable CAD revision not yet available",
+    "verification": "Exact selected URL matches official team release. Complete user GLB root/subassemblies inspected; geometry hash pins the upload, not an invented immutable Onshape revision.",
+    "completeGeometryObtained": true
+  },
+  "primarySources": [
+    {
+      "url": "https://www.chiefdelphi.com/t/team-1114-simbotics-2026-simbot-tim-cad-release/522887",
+      "purpose": "Official team release identifies season, robot, exact CAD link and final competition changes."
+    },
+    {
+      "url": "https://www.simbotics.org/robots/2026-tim/",
+      "purpose": "Official team robot page corroborates robot, season and released CAD/code."
+    }
+  ],
+  "code": {
+    "repository": "https://github.com/Simbotics/2026-Simbot-Tim",
+    "commit": "b02f50832cc0ca7694798f61d41cf230edfd62b8",
+    "role": "Parameter and mechanism evidence only; not copied simulator implementation. Code license does not establish CAD rights.",
+    "files": [
+      {
+        "path": "src/main/java/frc/robot/config/RobotConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/config/RobotConstants.java",
+        "bytes": 1463,
+        "sha256": "12b9d5e3d2c2d9c19eb787c56ee9a9b49241272e14e196edc977a4216f2a7516"
+      },
+      {
+        "path": "src/main/java/frc/robot/generated/TunerConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/generated/TunerConstants.java",
+        "bytes": 14238,
+        "sha256": "4a6d0176f4096d1b5749f76680d3e393b44ccddb9ef45a41c224e3e6323a5818"
+      },
+      {
+        "path": "src/main/java/frc/robot/subsystems/intake/IntakeConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/subsystems/intake/IntakeConstants.java",
+        "bytes": 4766,
+        "sha256": "75050fe145df4686365db417d1e469b68757be2f2c375d9e747d648f9722ff38"
+      },
+      {
+        "path": "src/main/java/frc/robot/subsystems/shooter/ShooterConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/subsystems/shooter/ShooterConstants.java",
+        "bytes": 4886,
+        "sha256": "534249b903b062c9e4927ece3dc4334d074832a544b21ff353d11a434ea8834f"
+      },
+      {
+        "path": "src/main/java/frc/robot/subsystems/indexer/IndexerConstants.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/subsystems/indexer/IndexerConstants.java",
+        "bytes": 4475,
+        "sha256": "00fcba7e613d948940d6c0cebb3473feb5ad0a98728a488bd51e6f42b1d20bdc"
+      },
+      {
+        "path": "src/main/java/frc/robot/commands/intake/AgitateIntake.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/commands/intake/AgitateIntake.java",
+        "bytes": 5831,
+        "sha256": "20aacc7be3000ba4c99b819b472ec21656bda29b5e8ccb280c373e1227510097"
+      },
+      {
+        "path": "src/main/java/frc/robot/commands/indexer/Shoot.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/commands/indexer/Shoot.java",
+        "bytes": 3639,
+        "sha256": "8cbdd0aaebe6ca761886d24641a20880f5eea00ed1d5ef730b80178232112938"
+      },
+      {
+        "path": "src/main/java/frc/robot/util/ShootMoveLUT.java",
+        "url": "https://github.com/Simbotics/2026-Simbot-Tim/blob/b02f50832cc0ca7694798f61d41cf230edfd62b8/src/main/java/frc/robot/util/ShootMoveLUT.java",
+        "bytes": 17271,
+        "sha256": "75e0994713c48da9058b0610cbbce6a4f4b1acba6f749007bc0ac069bca034eb"
+      }
+    ]
+  },
+  "redistribution": {
+    "status": "pending",
+    "evidence": [],
+    "note": "No CAD clearance inferred from official code license. Preserve owner-authorized noncommercial v1 publication policy; source export still required."
+  },
+  "unmeasured": [
+    "Empty real robot mass/inertia",
+    "Exact encoder-origin-to-CAD mate-limit mapping",
+    "Real intake/fire throughput and calibrated hit distribution",
+    "Exact hood-angle-to-launch mapping"
+  ],
+  "partialGeometry": {
+    "repository": "https://github.com/ryanabraham1/frc-3d-sim",
+    "commit": "1af807d17dcbf012c5810cc3fc7b1fa731ec5b74",
+    "url": "https://github.com/ryanabraham1/frc-3d-sim/blob/1af807d17dcbf012c5810cc3fc7b1fa731ec5b74/public/models/robots/2026/simbot-tim-1114.glb",
+    "upstreamFilename": "S26-A000.glb",
+    "upstreamAssembly": "S26-IN-A200",
+    "scope": "Intake/hopper subassembly only; not a complete robot.",
+    "documentation": "https://github.com/ryanabraham1/frc-3d-sim/blob/1af807d17dcbf012c5810cc3fc7b1fa731ec5b74/docs/ROBOT-CAD-IMPORTS.md",
+    "bytes": 571316,
+    "sha256": "aa2745c28e27df4c10b5c478876975311bf136123d45ff498a7a3f1f8141a759",
+    "trianglesReported": 110678,
+    "localIgnoredInput": "assets/source/robots/1114-simbot-tim/partial-cad/intake-hopper.glb",
+    "use": "Retained only as an ignored research input. Not registered, rendered, or copied into production. No simulation implementation copied.",
+    "missing": "Chassis, four complete swerve modules, shooter drum, hood and complete assembly mates/pivots. Source documentation describes procedural replacements for these; those are not accepted as real CAD.",
+    "redistribution": {
+      "status": "pending",
+      "evidence": []
+    }
+  },
+  "sourceParameters": {
+    "classification": "Official code configuration; not CAD measurements or guaranteed measured real-world performance. Coordinate conversion and source unit conventions require complete CAD verification.",
+    "bumperLengthMetres": {
+      "value": 0.76,
+      "symbol": "RobotConstants.ROBOT_LENGTH"
+    },
+    "bumperWidthMetres": {
+      "value": 0.92,
+      "symbol": "RobotConstants.ROBOT_WIDTH"
+    },
+    "driveSpeedAt12VoltsMetresPerSecond": {
+      "value": 4.02,
+      "symbol": "TunerConstants.kSpeedAt12Volts"
+    },
+    "wheelRadiusMetres": {
+      "value": 0.0508,
+      "symbol": "TunerConstants.kWheelRadius"
+    },
+    "moduleSourceLocationsMetres": {
+      "values": [
+        [
+          0.24765,
+          0.3175
+        ],
+        [
+          0.24765,
+          -0.3175
+        ],
+        [
+          -0.24765,
+          0.3175
+        ],
+        [
+          -0.24765,
+          -0.3175
+        ]
+      ],
+      "sourceUnits": "\u00b19.75 inches X and \u00b112.5 inches Y in WPILib; not yet mapped into Jamesim axes"
+    },
+    "hoodLowerBoundDegrees": {
+      "value": 42,
+      "symbol": "ShooterConstants.HOOD_LOWER_BOUND"
+    },
+    "hoodUpperBoundDegrees": {
+      "value": 74,
+      "symbol": "ShooterConstants.HOOD_UPPER_BOUND"
+    },
+    "hoodZeroAngleDegrees": {
+      "value": 74.484,
+      "symbol": "ShooterConstants.HOOD_ZERO_ANGLE"
+    },
+    "slideDropMetres": {
+      "value": 0.34417,
+      "symbol": "IntakeConstants.SLIDE_DROP",
+      "sourceInches": 13.55
+    },
+    "slideRaiseMetres": {
+      "value": 0.16256,
+      "symbol": "IntakeConstants.SLIDE_RAISE",
+      "sourceInches": 6.4
+    },
+    "slideEndpointDifferenceMetres": {
+      "value": 0.18161,
+      "derivation": "13.55\u22126.4 inches; not independently verified as final mechanical stroke"
+    },
+    "climber": {
+      "finalCompetitionRobot": false,
+      "evidence": "Official release author, posts5\u20136: removed before first event and remained absent."
+    },
+    "movingShotPrediction": {
+      "verified": false,
+      "evidence": "ShootMoveLUT.calculate returns distance-only result before commented velocity/latency prediction. Do not infer enabled prediction from filename."
+    },
+    "hopperAgitation": {
+      "evidence": "AgitateIntake.execute: after650ms of ready shooting, pulls slide toward MIN_AGITATION_POSITION2 (6.3in); on end restores SLIDE_DROP. Experimental oscillation code is commented out."
+    }
+  },
+  "uploadedGeometry": {
+    "fileName": "1114 Simbotics - S26-A000.glb",
+    "parts": 7,
+    "bytes": 177801492,
+    "sha256": "baff1897535f7ed692eacad69032fed7894623131762ea23ed157bf8a2ecb50c",
+    "verification": "Numeric binary concatenation; GLB magic/version/header length and uploaded SHA-256 matched. Uploaded scripts read as data, never executed.",
+    "root": "S26-A000",
+    "assemblies": [
+      "S26-IN-A200",
+      "S26-SH/BEL-A000",
+      "S26-DT-A000",
+      "S26-FL-A000"
+    ],
+    "nodes": 3357,
+    "meshes": 335,
+    "materials": 56
+  },
+  "runtime": {
+    "bytes": 2914900,
+    "sha256": "66714dc2dff08bee0d3375d9342926dd94353909c37333ca58acb59081ae3afa",
+    "triangles": 602880,
+    "primitives": 42
+  },
+  "preparation": {
+    "converter": "src/robot/robots/1114-simbot-tim/prepare.mjs",
+    "retainedBodies": 743,
+    "omittedHardwareOccurrences": 900,
+    "embeddedFuel": 0,
+    "sourceTransform": "Native +Z intake and native +Z/up hood release map to simulator -X; rotate Y -90deg, Y offset -0.223m. Fixed reversed shooter uses existing yawOffset PI.",
+    "moduleAxles": "Each source module wheel axle normalized independently; all module mounts rigid.",
+    "supplementalGeometry": "Four bumper padding bars, source CAD omits bumpers. Official code .76x.92m outer footprint; estimated .0635m padding thickness clears source frame on both axes; not passed off as team-supplied CAD.",
+    "displayOverride": "Exterior S26-IN-P322 at24% opacity for hopper visibility; source export material was opaque.",
+    "intakeArticulation": "P301/P315 rack/carriage, P302 upper roller, P322 polycarbonate U-wrap and P330 cap translate together. P303 lower kicker and P311 supports stay fixed down.",
+    "simplification": "Topology-preserving 2mm source / 4mm merged reduction. No simplifySloppy. P322/P330 original tessellation protected including 524 cap triangles.",
+    "hoodReference": {
+      "sourceReleaseElevationDegrees": 45.76394006353831,
+      "calibrationDegrees": -28.236059936461704,
+      "definitionSweepDegrees": -32,
+      "releaseYawOffsetRadians": 3.141592653589793,
+      "guideLengthMetres": 0.09,
+      "evidence": "Main shaft and final hood-roller radius define the release tangent; actual projectile/rendered tangent tested at distinct hub/pass elevations."
+    },
+    "normalOwnership": "Recomputed NORMAL data is assigned to a cloned per-primitive accessor, avoiding mutation if future sources share it. This upload had no shared NORMAL accessors; all5625834 decoded position/normal/color/index scalar values are identical before/after this guard. Binary serialization order changes the hash without changing geometry."
+  },
+  "estimates": {
+    "massKg": 64,
+    "inertiaKgM2": [
+      4.4,
+      6.8,
+      4.1
+    ],
+    "accelerationMps2": 9.5,
+    "wheelBrakingMps2": 19,
+    "grip": 1.05,
+    "intakePerSecond": 38,
+    "firePerSecond": 18,
+    "slideHorizontalMetres": 0.34417,
+    "slideRiseMetres": 0.057,
+    "shootingMinExtension": 0.47232472324723246,
+    "slideExplanation": "Boot encoder zero, source13.55in drop value, sloped rack and required floor-roller clearance. Absolute stroke and hood reference mapping remain fitted; no immutable mate limits supplied.",
+    "movingShots": false,
+    "movingShotsReason": "Official ShootMoveLUT returns distance-only before commented predictor.",
+    "scatter": {
+      "yaw": 0.032,
+      "elevation": 0.035,
+      "speed": 0.038,
+      "flyerChance": 0.1,
+      "backspin": 28
+    },
+    "lanes": [
+      -0.151,
+      0,
+      0.151
+    ],
+    "capacity": 73,
+    "hopperContactResponse": {
+      "restitution": 0.22,
+      "friction": 0.15,
+      "linearDampingPerSecond": 0.35,
+      "qualification": "Gameplay estimates; fuel mass unchanged."
+    }
+  },
+  "integrationFiles": [
+    "src/App.tsx",
+    "src/components/SetupScreen.tsx",
+    "src/controls.test.ts",
+    "src/controls.ts",
+    "src/robot/HopperGeometry.test.ts",
+    "src/robot/hopperGeometry.ts",
+    "src/robot/poses.ts",
+    "src/robot/registry.ts",
+    "src/robot/testing/hopperMotionAcceptance.ts",
+    "src/robot/types.ts",
+    "src/robot/validateDefinition.ts",
+    "src/sim/ChassisAim.test.ts",
+    "src/sim/HopperContactPhysics.test.ts",
+    "src/sim/HopperDynamics.ts",
+    "src/sim/RobotSimulation.ts",
+    "src/sim/Shooter.ts",
+    "src/sim/SlidingIntakeCompression.test.ts",
+    "src/sim/SwerveChassis.ts",
+    "src/style.css",
+    "src/view/FieldViewer.ts",
+    "src/view/RobotView.ts",
+    "src/robot/robots/8592-prismarine/definition.ts",
+    "src/robot/robots/8592-prismarine/prismarine.test.ts",
+    "src/robot/robots/8592-prismarine/README.md"
+  ],
+  "previousValidation": {
+    "branchGuard": "passed",
+    "focused": "9 tests passed: full-size packing, real CAD nodes/modules, full-hopper both-alliance release/conservation,3lanes,reset,shoot-min/manual/pause/reverse,legacydefault,real-field hub/pass oppositeheading",
+    "simulation": {
+      "tests": 375,
+      "files": 51,
+      "result": "passed",
+      "log": ".tools/full-final.log"
+    },
+    "browser": "Parent isolated CAD poses stowed/deployed/seededfull/shooting/minstop inspected; full current singleplayer search/detail/select, bothalliances, normalcontrols,savedcontrols,pause/resume/restart/setup passed without pageerrors. Ignored proofs .tools/tim-browser.json and .tools/integrated-1114.json.",
+    "build": "Node 26.13.0 / pnpm 10.20.0 release passed: 25 runtime source files, 34.48 MiB; 18 content-hashed assets. Existing Rapier chunk warning only.",
+    "assetBudget": "3,274,632 bytes;576,823triangles;41primitives;unchangedceilings",
+    "robotTests": {
+      "tests": 152,
+      "files": 25,
+      "result": "passed",
+      "log": ".tools/robots-final.log"
+    },
+    "additionalAnimation": "3 prepared-CAD renderer cases passed after the full run: fixed lower bar with sliding upper carriage, every roller around its own shaft over a full revolution, and rigid wheel/fork mounts. Production implementation and runtime CAD unchanged."
+  },
+  "validation": {
+    "focused": "15 tests across three own robot files passed; includes continuous physical intake, motion/braking, full-capacity both-alliance firing and prepared CAD articulation.",
+    "logs": [
+      ".tools/tim-73-physics.log",
+      ".tools/cargo-release.log"
+    ],
+    "shared": "20 hopper/contact cases across three files passed in the combined preview.",
+    "build": "Node 26.13.0 / pnpm 10.20.0 pnpm build:release passed: asset integrity, TypeScript/Vite and 18 content-hashed production assets. Existing bundle-size warning.",
+    "combinedBrowser": {
+      "cargo": "Actual fixed-step simulation and RobotView filled/retained 73 full-size fuel, with stable original bodies. Maximum acceleration/braking cargo displacement 0.143 m. No page errors.",
+      "app": "Real search/detail/selection, both-alliance practice, WASD/turn/intake/shoot/reverse/retraction, saved-key controls, pause/reset and return to setup passed.",
+      "evidenceInCombinedPreview": [
+        ".tools/live-cargo.json",
+        ".tools/cargo-app-1114.log"
+      ]
+    }
+  },
+  "hopperFit": {
+    "capacity": 73,
+    "diameterMetres": 0.15,
+    "minimumSeedSpacingMetres": 0.1502,
+    "sourceGeometry": "Measured moving pickup/fixed roller bed, P322 inner wall and P330 U-shaped top cap; fixed rear head sweep.",
+    "offlineGenerator": "src/robot/robots/1114-simbot-tim/pack.py",
+    "qualification": "Geometric simulation fit, not an official team capacity rating."
+  },
+  "previousBeforeCargoFix": {
+    "focused": "14 tests across2files passed after normal-accessor ownership guard:9 mechanism/physics plus5 preparedCAD animation including actual-projectile tangent.",
+    "logs": [
+      ".tools/normal-ownership-focused.log",
+      ".tools/normal-ownership-release.log"
+    ],
+    "browser": "Five isolated CAD poses recaptured/reviewed, no page errors. Exact moving polycarbonate and intact top cap inspected. .tools/tim-browser.json; .tools/feedback-browser.log",
+    "build": "Node26.13.0 / pnpm10.20.0 pnpm build:release passed after normal ownership guard:25runtime files/34.13MiB,18hashed production assets, TypeScript/Vite, asset integrity. ExistinglargeRapierbundlewarning; combined simulation ownedbyparent."
+  },
+  "independentPrIntegration": {
+    "main": "4154227b2200009ef7e0be6ece0a9d2e605604a3",
+    "existingOpenPr": 11,
+    "existingOpenPrHead": "8ad379aad9f8f8bcbf397675a8f2042e89afeeb8",
+    "mergeOrdersChecked": 24,
+    "cleanOrders": 24,
+    "commonMechanismAncestors": [
+      "56a2273",
+      "191c137",
+      "266a51a",
+      "af91f23"
+    ],
+    "qualification": "All three robot branches and PR11 merged in every order onto main, producing one identical tree. Original main robot IDs/relative order retained; each feature branch adds only its own robot. Recheck after future edits.",
+    "standaloneRelease": "Final pnpm build:release passed on Node26/pnpm10.20.0; ignored evidence .tools/pr-release-final.log."
+  },
+  "standaloneCiCorrection": {
+    "cause": "Shared sliding compression regression was included but the existing preview Prismarine compress setting and matching regression were omitted from standalone branches.",
+    "commonCommit": "4cd9ff5",
+    "behavior": "Carry the approved universal sliding-intake compression to Prismarine; preserve movement firing gate, original8 body releases and extension after shooting. Selector remains hidden.",
+    "files": [
+      "src/robot/robots/8592-prismarine/definition.ts",
+      "src/robot/robots/8592-prismarine/prismarine.test.ts",
+      "src/robot/robots/8592-prismarine/README.md"
+    ],
+    "scope": "Existing Prismarine config/test/docs only; no new robot, CAD, capacity, mass or shot tuning.",
+    "validation": "Focused shared-base11 cases passed; standalone cases and fresh GitHub runs tracked in PR notes."
+  }
+}

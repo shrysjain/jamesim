@@ -1,0 +1,424 @@
+{
+  "schemaVersion": 1,
+  "robotId": "6800-downpour",
+  "team": 6800,
+  "teamName": "Valor",
+  "season": 2026,
+  "robotName": "Downpour",
+  "status": "implemented-and-locally-validated",
+  "baseCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+  "requestedCad": {
+    "url": "https://cad.onshape.com/documents/15cd41462dc24ff986a4e549/w/1b79a7ae373e0026664ccfff/e/8fdecbfb5ab3c774cb6a4551",
+    "documentId": "15cd41462dc24ff986a4e549",
+    "workspaceId": "1b79a7ae373e0026664ccfff",
+    "elementId": "8fdecbfb5ab3c774cb6a4551",
+    "immutableRevision": null,
+    "variantEvidence": "The official CAD-release opening post links this exact workspace for Downpour; Drizzle is linked separately under workspace 4d637c0ad0806dbfe69f6666.",
+    "exportEvidence": "Contributor-provided VR26A-0000 Main.glb, reassembled and hash-verified from five numeric binary parts. Root VR26A-0000 Main and States Hopper/Hotdog Rollers/Chassis/Intake/Shooter assemblies agree with Downpour drum revision; no immutable Onshape revision supplied."
+  },
+  "sources": [
+    {
+      "role": "official-cad-release",
+      "url": "https://www.chiefdelphi.com/t/frc-6800-valor-2026-robot-cad-release/520715",
+      "publicationDate": "2026-05-13",
+      "observations": [
+        "Identifies team 6800, season 2026 and robot Downpour.",
+        "Links the requested document/workspace/assembly.",
+        "Describes four-fuel-wide shooter; reverse shot was experimental and not used in matches."
+      ]
+    },
+    {
+      "role": "official-mechanism-and-code-discussion",
+      "url": "https://www.chiefdelphi.com/t/frc-6800-valor-2026-robot-cad-release/520715?page=2",
+      "observations": [
+        "Links team code; keeps later Downpour and earlier Drizzle references separate.",
+        "Post 28 reports 790:11 hood actuator gearing; no angular limits or launch rate inferred."
+      ]
+    },
+    {
+      "role": "team-linked-technical-packet",
+      "url": "https://drive.google.com/file/d/11rQrMwCIseY18JbKFytGLXSd__x1JP1S/view",
+      "status": "District Championship mechanical chapters inspected through connected Google Drive readable extraction; raw PDF not downloaded.",
+      "providerMetadata": {
+        "fileName": "States Pages to print.pdf",
+        "bytes": 26550129,
+        "modifiedTime": "2026-04-13T23:00:56Z"
+      },
+      "variant": "District Championship Downpour drum-shooter rebuild; exact equivalence to mutable May requested workspace unverified.",
+      "extraction": {
+        "path": "assets/source/robots/6800-downpour/technical-packet-extracted.txt",
+        "bytes": 5955,
+        "sha256": "cdfc23d058c6d64613f63dd3aecf728c5271eb2c1c4ae028d3205203250f6531",
+        "kind": "readable text excerpt, not raw PDF",
+        "ignored": true
+      }
+    },
+    {
+      "role": "team-linked-code",
+      "url": "https://git.valor6800.com/valor6800/2026/robot",
+      "status": "Official project landing page resolved, but source tree and constants not inspected."
+    },
+    {
+      "role": "secondary-research-pointer",
+      "url": "https://dmeglan.github.io/frc2026-rebuilt-dashboard/",
+      "status": "Identity pointer only. Its elevator/arm description is superseded for the District Championship revision by the team packet describing a drum-shooter rebuild."
+    }
+  ],
+  "access": {
+    "checkedDate": "2026-11-02",
+    "onshapeWebReader": "Official link resolved to requested URL, zero lines of assembly data.",
+    "onshapeDirectRequest": "Proxy CONNECT 403 in selected restricted environment. Not evidence exports are disabled.",
+    "derivativeSearch": "No matching 6800 geometry found in TylerHandel/rebuilt-sim-2026 CAD README or repository code search; exact-document GitHub matches were tables/preview metadata, not geometry.",
+    "requiredResource": "Satisfied by contributor GLB upload; direct Onshape network access remains unavailable."
+  },
+  "inputs": [
+    {
+      "kind": "readable-text-extraction",
+      "sourceRole": "team-linked-technical-packet",
+      "path": "assets/source/robots/6800-downpour/technical-packet-extracted.txt",
+      "bytes": 5955,
+      "sha256": "cdfc23d058c6d64613f63dd3aecf728c5271eb2c1c4ae028d3205203250f6531",
+      "ignored": true,
+      "note": "Hash verifies this text excerpt only, not original PDF bytes."
+    },
+    {
+      "kind": "contributor-glb-export",
+      "path": "assets/source/robots/6800-downpour/VR26A-0000 Main.glb",
+      "bytes": 127464908,
+      "sha256": "02d163b47e2c0a828ba832370d32d65d3dd61f065f283ba011ad4e754adbcc46",
+      "ignored": true,
+      "parts": 5,
+      "joinMethod": "Concatenated numbered binary parts001..005; checked GLB2 magic, declared length and contributor README/script expected aggregate SHA256. Uploaded PowerShell was read as data and never executed.",
+      "onshapeSource": "https://cad.onshape.com/documents/15cd41462dc24ff986a4e549/w/1b79a7ae373e0026664ccfff/e/8fdecbfb5ab3c774cb6a4551"
+    }
+  ],
+  "measurements": {
+    "classification": "Measured from contributor export; values rounded to useful authoring precision.",
+    "nativeFrame": "Y up, intake+Z, widthX, carpetY0; runtime(-Z,Y-.223,X)",
+    "frameSizeMeters": [
+      0.6858,
+      0.6858
+    ],
+    "bumperEnvelopeMeters": [
+      0.8432,
+      0.8432
+    ],
+    "bumperCenterNativeY": 0.0889,
+    "moduleCentersNativeXZ": [
+      -0.2794,
+      0.2794
+    ],
+    "moduleWheelAxleHeightMeters": 0.0508,
+    "intakePivotNative": [
+      0,
+      0.19131,
+      0.3032
+    ],
+    "poweredIntakeRollerNative": [
+      0,
+      0.21824,
+      0.59221
+    ],
+    "staticBarCentersNative": [
+      [
+        0,
+        0.08188,
+        0.49177
+      ],
+      [
+        0,
+        0.27473,
+        0.61171
+      ]
+    ],
+    "drumAxisNative": [
+      0,
+      0.47449,
+      -0.26035
+    ],
+    "drumRadiusMeters": 0.0508,
+    "hoodRollerCentersNative": [
+      [
+        0,
+        0.55767,
+        -0.06855
+      ],
+      [
+        0,
+        0.60024,
+        -0.09334
+      ]
+    ],
+    "horizontalHopperFrontNativeZ": 0.64132,
+    "shooterLanesRuntimeZ": [
+      -0.2286,
+      -0.0762,
+      0.0762,
+      0.2286
+    ]
+  },
+  "gameplayEstimates": {
+    "massKg": 56,
+    "emptyInertiaKgM2": [
+      3.2,
+      5.9,
+      3.6
+    ],
+    "maxSpeedMps": 4.8,
+    "wheelAccelerationMps2": 10,
+    "grip": 1.05,
+    "fuelCapacity": 48,
+    "capacityBasis": "Forty-eight nonoverlapping150mm cargo seeds inside the measured extended envelope plus documented expandable net, not volume divided by fuel count.",
+    "intakeRatePerSecond": 42,
+    "fireRatePerSecond": 25,
+    "feedSeconds": 0.3,
+    "stowedPivotDegrees": -110,
+    "hopperTravelMeters": 0.3,
+    "hoodShotElevationDegrees": [
+      40,
+      78
+    ],
+    "neutralHoodCorrectionDegrees": 24.9,
+    "hoodMapping": "Exported terminal roller tangent approx53.1deg; bake+24.9deg to shared78deg neutral and use38deg operational subset. Packet80deg total travel is not an absolute shot-angle range.",
+    "passingReachMeters": 10,
+    "movingShots": false,
+    "spread": {
+      "yaw": 0.032,
+      "elevation": 0.035,
+      "speed": 0.035,
+      "flyerChance": 0.1,
+      "backspin": 28
+    },
+    "scatterBasis": "Qualitative physical launch-uncertainty estimate, slightly broader than Icarus profile, not a TBA/Statbotics hit probability or forced hit/miss rating.",
+    "hopperDynamics": "Shared full-size local sphere solver; Space folds the actual pivot as cargo empties, Intake/Reverse extends it, and the expanding horizontal hopper stays out. Net is an estimated containment envelope, not individual simulated strands.",
+    "climbing": "No identified hook mechanism in inspected export hierarchy/batched surfaces. Team packet describes a real pivoting climber; capability remains disabled in this simulator."
+  },
+  "runtime": {
+    "registered": true,
+    "preparedAsset": "public/assets/robots/6800-downpour/robot.glb",
+    "bytes": 2679448,
+    "sha256": "a8e5479035384b5a40fb14ba8bc771716a24ad0519bcd213f04f583c7993aad6",
+    "triangles": 640052,
+    "primitives": 38,
+    "converter": "src/robot/robots/6800-downpour/prepare.mjs",
+    "keptCadBodies": 398,
+    "omittedHardwareBodies": 1274,
+    "removedEmbeddedFuel": 0,
+    "preparation": "Palette batches preserve CAD colors. Original powered/static roller surfaces, exposed intake drive pulleys, support plates and hood hubs retain their actual topology and normals; bounded position-only simplification applies to other batches. Eight-corner world bounds correctly classify rotated bodies. Fixed/rotating module geometry remains split per WCP X2 occurrence; two static bar tubes never receive roller spin.",
+    "derivedPaddingBars": 4,
+    "padding": "Replace only the four lettered source foam meshes with plain boxes at their measured envelopes. Source backers and mounts remain CAD; shared renderer supplies team numbers."
+  },
+  "redistribution": {
+    "status": "pending",
+    "evidence": [],
+    "note": "Public source attribution is preserved; unrelated code licenses do not establish CAD rights."
+  },
+  "sourceSpecifications": {
+    "sourceRole": "team-linked-technical-packet",
+    "classification": "Team-stated District Championship figures; not CAD measurements or confirmed May workspace limits.",
+    "intake": {
+      "widthInches": 25.5,
+      "widthMeters": 0.6477,
+      "poweredRollerDiameterInches": 2,
+      "staticCrashBarTubeDiameterInches": 1,
+      "rollerMotors": "2 Kraken X60",
+      "rollerReduction": 1.23,
+      "deployment": "Single pivot, two ThriftyBot cycloidal gearboxes and low-mounted Kraken X60",
+      "pivotReduction": 69
+    },
+    "hopper": {
+      "unextendedVolumeCubicInches": 4613.4,
+      "extendedVolumeCubicInches": 8683.9,
+      "structure": "Stationary bumper-mounted panels and expanding top net",
+      "usableFuelCapacity": null
+    },
+    "indexer": {
+      "transferWidthFuel": 4,
+      "motors": "2 Kraken X44",
+      "reduction": 2.5,
+      "rollerDiametersInches": [
+        2,
+        1.25
+      ]
+    },
+    "shooter": {
+      "motors": "3 Kraken X60",
+      "gearing": "3:2",
+      "feederMotors": "2 Kraken X60",
+      "feederGearing": "20:9",
+      "feederRollerDiameterInches": 2
+    },
+    "hood": {
+      "motor": "Kraken X44",
+      "packetGearing": "1580:21",
+      "totalTravelDegrees": 80,
+      "absoluteOperatingAngles": null,
+      "laterMayDiscussionGearing": "790:11",
+      "note": "Different dated ratios retained, not silently reconciled; total travel does not establish absolute shot-angle limits."
+    },
+    "climber": {
+      "hooks": 2,
+      "hookType": "Pivoting, 3/8in aluminum",
+      "deployment": "Surgical tubing connected to static shaft",
+      "retraction": "Dyneema spool",
+      "motor": "Kraken X44",
+      "totalReduction": 74.1,
+      "simulationStatus": "Not implemented; real pivoting-hook attachment requires optional coordinated support contract beyond vertical side-hook-l1."
+    }
+  },
+  "validation": {
+    "node": "26.13.0",
+    "pnpm": "10.20.0",
+    "branchGuard": "passed",
+    "robotTests": "All registered robot checks included in the final 380-test simulation suite; original standalone command result retained under initialTwoRobotBase.",
+    "fullSimulation": {
+      "tests": 380,
+      "files": 53,
+      "result": "passed",
+      "base": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+      "log": ".tools/full-integrated.log"
+    },
+    "fieldShots": "4 passed: both-alliance hub scoring after stopping, plus physical passing from the opposite heading with Downpour and Reblitz.",
+    "assetIntegrity": "19 runtime files; 17.51 MiB; passed",
+    "releaseBuild": "Passed on integrated base: asset integrity (25 runtime files, 33.27 MiB), TypeScript/Vite and production payload (18 content-hashed assets). Log .tools/release-integrated.log.",
+    "browser": "Passed final CAD poses with plain padding and current-main search/detail/selection, both-alliance practice, W/L/Shift/Space/Q/V input smoke, saved-key controls, pause/resume and R restart; no page errors. Integrated evidence in .tools/integrated-6800.json and downpour-browser.json.",
+    "logs": "Ignored .tools/robots-final.log, full-simulation-node26.log, build-release-node26.log, downpour-browser.json, downpour-app.json",
+    "initialTwoRobotBase": {
+      "robotTests": {
+        "tests": 31,
+        "files": 8,
+        "result": "passed"
+      },
+      "fullSimulation": {
+        "tests": 165,
+        "files": 28,
+        "result": "passed"
+      },
+      "releaseBuild": "Asset integrity, TypeScript/Vite and production payload checks passed; 12 content-hashed runtime assets. Existing physics chunk-size warning."
+    }
+  },
+  "integrationFiles": [
+    "src/App.tsx",
+    "src/components/SetupScreen.tsx",
+    "src/controls.test.ts",
+    "src/controls.ts",
+    "src/robot/HopperGeometry.test.ts",
+    "src/robot/hopperGeometry.ts",
+    "src/robot/poses.ts",
+    "src/robot/registry.ts",
+    "src/robot/testing/hopperMotionAcceptance.ts",
+    "src/robot/types.ts",
+    "src/robot/validateDefinition.ts",
+    "src/sim/ChassisAim.test.ts",
+    "src/sim/HopperContactPhysics.test.ts",
+    "src/sim/HopperDynamics.ts",
+    "src/sim/RobotSimulation.ts",
+    "src/sim/Shooter.ts",
+    "src/sim/SlidingIntakeCompression.test.ts",
+    "src/sim/SwerveChassis.ts",
+    "src/style.css",
+    "src/view/FieldViewer.ts",
+    "src/view/RobotView.ts",
+    "src/robot/robots/8592-prismarine/definition.ts",
+    "src/robot/robots/8592-prismarine/prismarine.test.ts",
+    "src/robot/robots/8592-prismarine/README.md"
+  ],
+  "sharedAimingFix": "Retain the chosen chassis turn direction within 0.1 radians of the 180-degree wrap tie. Prevents alternating swerve commands from blocking aiming; actual-field passing cases protect Downpour and Reblitz.",
+  "initialBaseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
+  "integratedMainCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
+  "integrationNote": "Current main already includes the capability helper, wide feed paths, launch uncertainty, rigid modules and wall-contact fix. Final contribution preserves those interfaces and adds only registration, help/credit and the chassis aim-tie correction.",
+  "userFeedbackFollowup": {
+    "automaticIntakeRetraction": "Aim/shoot/pass folds the actual pivoting intake as fuel empties; hopper remains deployed. No fictional slide added.",
+    "hopperContact": {
+      "oldFrontX": -0.65,
+      "frontX": -0.6395,
+      "sourcePanelInnerX": -0.6405245,
+      "preparedPanelInnerX": -0.640502,
+      "note": "About 1mm containment margin inside the actual polycarbonate panel; capacity stays48 with sub-millimeter seed-spacing adjustment."
+    },
+    "validation": {
+      "focusedTests": 15,
+      "files": 3,
+      "command": "pnpm exec vitest run src/robot/robots/6800-downpour --maxWorkers=1 --testTimeout=30000",
+      "log": ".tools/user-feedback-tests.log",
+      "coverage": "Automatic empty/full shooting fold, both alliances, all four original-body streams, CAD panel clearance, loaded wall-contact bounds, pause/reset and rigid-module/roller articulation.",
+      "combinedValidation": "Parent integration task owns the combined full suite and browser review."
+    },
+    "runtimeModel": "Unchanged; actual CAD pivot and polycarbonate geometry retained."
+  },
+  "rollerAssemblyFollowup": {
+    "baseCommit": "ea6185af02166d587f1dfd12ef3062a4cc1ae5a4",
+    "issues": "Position-only decimation damaged the circular intake tube. Exposed drive pulleys were removed with fasteners while belt loops survived; hood roller hubs remained on the chassis as their shafts moved.",
+    "repairs": [
+      "Preserve the actual 464-triangle Roller 2 tube and its original radial/end normals, with its measured 50.8mm outside diameter and 580.8mm length.",
+      "Retain both 26T intake-drive pulleys, both 32T printed roller hubs and both fixed 18T pivot pulleys with original support plates. Bind moving pulleys to their measured axes; 26T shafts turn at 32/26 of the main roller angle.",
+      "Bind both milled and printed hood-hub pairs to their respective real Back Roller shafts before applying the existing neutral-hood correction.",
+      "Use all eight source bounding-box corners when transforming bounds; keep static pivot supports on the chassis and both bar tubes fixed on the moving intake."
+    ],
+    "sourceGeometry": "Verified original full Downpour GLB and team packet remain unchanged. No replacement roller, procedural gear or model decoder was introduced.",
+    "previousRuntime": {
+      "bytes": 2010836,
+      "sha256": "d9b8cd967b10ad351b6af4c6aa4c015b5f47618b23218a4187529a4b97b40d9c",
+      "triangles": 499168,
+      "primitives": 31
+    },
+    "validation": {
+      "focused": "17 tests across3 files passed on this production patch, including original tube radial normals/diameter, gear/shaft attachment over four fold/hood/spin poses, all prior cargo/shot/actuation cases.",
+      "focusedLog": ".tools/roller-gears-focused.log",
+      "browser": "Five fresh isolated Chromium poses passed without page errors: stowed, deployed, partial fold, intake close-up and hood close-up. Source hardware and intact roller visually inspected.",
+      "browserLog": ".tools/roller-gears-browser.json",
+      "build": "pnpm build:release passed:25 runtime files33.91MiB, TypeScript/Vite,18 hashed production assets. Existing large bundle warning remains.",
+      "buildLog": ".tools/roller-gears-release.log",
+      "fullSimulation": "Parent integration owns the new combined full suite; the earlier380-test result remains historical."
+    },
+    "remainingLimits": "Belts retain their source geometry on the relevant assembly; individual belt deformation, cycloidal internals and drive-train compliance are not simulated."
+  },
+  "retractingIntakeCargoContacts": {
+    "source": "Contributor complete VR26A-0000 export, measured moving roller/tube/crossbar/side-plate bounds.",
+    "count": 7,
+    "shape": "Conservative moving boxes around major surfaces with approximately 1 mm margin.",
+    "capacity": 48,
+    "fuelMassChanged": false,
+    "feeding": "Managed feeding also yields to moving intake contacts; static feeder obstacles do not deflect its intended feed path.",
+    "focused": "31 cases across six files passed, including full48 automatic shooting and manual16-fuel retraction, all held states checked within1mm of full-radius contact.",
+    "log": ".tools/intake-cargo-final.log",
+    "browser": "Live physical intake filled and retained48; automatic shooting captured34 remaining at intake .6565 with full .075m contact clearance, then released all48 original IDs and fully retracted, no page errors. Combined preview .tools/valor-retraction-browser.json.",
+    "transferring": "The final in-flight physical pickup also yields to moving bars, with12 contact passes matching the stored solver budget; all3 intake-fold cases pass (.tools/intake-transfer-resolved.log).",
+    "qualification": "31 robot/contact cases passed before adding the incoming-transfer edge case; the updated3-case intake-fold file passes with the final contact correction. Final all-PR suite is tracked in preview review notes.",
+    "finalAllPrValidation": {
+      "tests": 474,
+      "files": 66,
+      "result": "passed; all three robot branches plus existing PR11",
+      "robotContactCoverage": "32 cases across six files, including all3 intake fold/transfer cases.",
+      "evidence": "/workspace/jamesim-pr-compatibility/.tools/all-pr-simulation-final.log",
+      "release": "All3 standalone release builds and all-PR integration release passed."
+    }
+  },
+  "independentPrIntegration": {
+    "main": "4154227b2200009ef7e0be6ece0a9d2e605604a3",
+    "existingOpenPr": 11,
+    "existingOpenPrHead": "8ad379aad9f8f8bcbf397675a8f2042e89afeeb8",
+    "mergeOrdersChecked": 24,
+    "cleanOrders": 24,
+    "commonMechanismAncestors": [
+      "56a2273",
+      "191c137",
+      "266a51a",
+      "af91f23"
+    ],
+    "qualification": "All three robot branches and PR11 merged in every order onto main, producing one identical tree. Original main robot IDs/relative order retained; each feature branch adds only its own robot. Recheck after future edits.",
+    "standaloneRelease": "Final pnpm build:release passed on Node26/pnpm10.20.0; ignored evidence .tools/pr-release-final.log."
+  },
+  "standaloneCiCorrection": {
+    "cause": "Shared sliding compression regression was included but the existing preview Prismarine compress setting and matching regression were omitted from standalone branches.",
+    "commonCommit": "4cd9ff5",
+    "behavior": "Carry the approved universal sliding-intake compression to Prismarine; preserve movement firing gate, original8 body releases and extension after shooting. Selector remains hidden.",
+    "files": [
+      "src/robot/robots/8592-prismarine/definition.ts",
+      "src/robot/robots/8592-prismarine/prismarine.test.ts",
+      "src/robot/robots/8592-prismarine/README.md"
+    ],
+    "scope": "Existing Prismarine config/test/docs only; no new robot, CAD, capacity, mass or shot tuning.",
+    "validation": "Focused shared-base11 cases passed; standalone cases and fresh GitHub runs tracked in PR notes."
+  }
+}

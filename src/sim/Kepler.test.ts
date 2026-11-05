@@ -70,9 +70,12 @@ describe('CAD-backed Kepler player flow', () => {
   try {
    const {ALLIANCE_LINE}=await import('../field/targets');
    const x=ALLIANCE_LINE+.45-32.5*.3048;
-   for(const [robot,inRange] of [['1690-kepler',false],['2910-reblitz',true]] as const) {
+   for(const robot of ['1690-kepler','2910-reblitz'] as const) {
     s.startMatch({...DEFAULT_MATCH,robot,preloads:0});s.robot!.teleport([x,.26,0]);run(s,.5);
-    expect(!!s.robotController!.shooter.solve()).toBe(inRange);
+    const solution=s.robotController!.shooter.solve();expect(solution).not.toBeNull();
+    const target=solution!.target;expect(target.kind).toBe('Pass');
+    expect(Math.hypot(target.position.x-x,target.position.z)).toBeLessThanOrEqual((robot==='1690-kepler'?32:33)*.3048);
+    expect(target.position.x>=ALLIANCE_LINE+.45-1e-6).toBe(robot==='2910-reblitz');
    }
   } finally {s.dispose();}
  });

@@ -1,5 +1,6 @@
 import RAPIER from '@dimforge/rapier3d-compat';
-import { FIELD_HALF_LENGTH, shotTarget } from '../field/targets';
+import { FIELD_HALF_LENGTH } from '../field/targets';
+import { selectShotTarget } from '../field/passTargets';
 import type { Alliance, ShotTarget } from '../field/targets';
 import { FUEL_LINEAR_DAMPING, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { FuelSystem } from './FuelSystem';
@@ -59,9 +60,10 @@ export class Shooter {
   solution: AimSolution | null = null;
   readonly shots: ShotEvent[] = []; // bounded recent launch records for bench inspection
   shotsFired = 0;
-  private selection: { alliance: Alliance; kind: ShotTarget['kind']; time: number; extra: number; obstructed: boolean; until: number } | null = null;
+  private selection: { alliance: Alliance; kind: ShotTarget['kind']; intermediate: boolean; time: number; extra: number; obstructed: boolean; until: number } | null = null;
   private active = false;
   private blocked = false;
+  private chassisAimTurnSign = 0;
   private randomState = 29102026;
   private scatterState = 20261102;
   private velocityEstimate: Vector | null = null;
@@ -144,19 +146,21 @@ export class Shooter {
   }
 
   solve(): AimSolution | null {
-    const base = shotTarget(this.chassis.body.translation(), this.alliance), sign = this.alliance === 'blue' ? 1 : -1;
+    const { target: base, intermediate } = selectShotTarget(this.chassis.body.translation(), this.alliance,
+      this.geometry.passRange ?? SHOOTER.passRange, this.geometry.passLandingExtra ?? 0);
+    const sign = this.alliance === 'blue' ? 1 : -1;
     const targetAt = (extra: number): ShotTarget => ({ kind: base.kind, position: { ...base.position,
-      x: base.kind === 'Pass' ? sign * Math.min(FIELD_HALF_LENGTH - 0.55, Math.abs(base.position.x) + extra + (this.geometry.passLandingExtra ?? 0)) : base.position.x } });
+      x: base.kind === 'Pass' ? sign * Math.min(FIELD_HALF_LENGTH - 0.55, sign * base.position.x + extra) : base.position.x } });
     // Re-select arcs at 20 Hz; recompute motion compensation and yaw from current physics every tick.
     const cached = this.selection;
-    if (cached && cached.alliance === this.alliance && cached.kind === base.kind && this.fuel.time < cached.until) {
+    if (cached && cached.alliance === this.alliance && cached.kind === base.kind && cached.intermediate === intermediate && this.fuel.time < cached.until) {
       const current = this.candidate(targetAt(cached.extra), cached.time);
       if (current) return { ...current.solution, obstructed: cached.obstructed };
     }
     let blocked: AimSolution | null = null;
-    // A fixed hood cannot loft a steeper arc. Search farther safe landing
-    // points within the same alliance zone instead of changing its angle.
-    const passOffsets = this.geometry.fixedElevation === undefined ? [0, .2, .4, .6, .8, 1] : Array.from({ length: 16 }, (_, i) => i * .2);
+    // Keep an intermediate target on its chosen clear floor. For home-zone
+    // passes, a fixed hood can search farther instead of changing its angle.
+    const passOffsets = intermediate ? [0] : this.geometry.fixedElevation === undefined ? [0, .2, .4, .6, .8, 1] : Array.from({ length: 16 }, (_, i) => i * .2);
     for (const extra of base.kind === 'Pass' ? passOffsets : [0]) {
       const target = targetAt(extra), candidates = [];
       const times = this.geometry.fixedElevation === undefined ? Array.from({ length: 115 }, (_, i) => .35 + i * .025) : this.fixedFlightTimes(target);
@@ -166,12 +170,12 @@ export class Shooter {
       candidates.sort((a, b) => a.cost - b.cost);
       blocked ??= candidates[0]?.solution ?? null;
       for (const candidate of candidates) if (this.clearExit(0, candidate.solution.elevation) && this.clearTrajectory(candidate.muzzle, candidate.launch, candidate.solution.time, base.kind === 'Pass' ? .18 : .008)) {
-        this.selection = { alliance: this.alliance, kind: base.kind, time: candidate.solution.time, extra, obstructed: false, until: this.fuel.time + 0.05 };
+        this.selection = { alliance: this.alliance, kind: base.kind, intermediate, time: candidate.solution.time, extra, obstructed: false, until: this.fuel.time + 0.05 };
         return candidate.solution;
       }
     }
     if (blocked) {
-      this.selection = { alliance: this.alliance, kind: base.kind, time: blocked.time, extra: 0, obstructed: true, until: this.fuel.time + 0.05 };
+      this.selection = { alliance: this.alliance, kind: base.kind, intermediate, time: blocked.time, extra: 0, obstructed: true, until: this.fuel.time + 0.05 };
       return { ...blocked, obstructed: true };
     }
     this.selection = null; return null;
@@ -218,10 +222,15 @@ export class Shooter {
     if (powered) this.elevation = approach(this.elevation, this.solution?.elevation ?? this.maxElevation, dt * SHOOTER.hoodRadiansPerSecond);
     this.drumAngle = (this.drumAngle + this.rpm * 2 * Math.PI / 60 * dt) % (2 * Math.PI);
     if (requested || this.laneState.some(l => l.id !== null)) this.feederAngle += 40 * dt;
-    if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) return undefined;
+    if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) { this.chassisAimTurnSign = 0; return undefined; }
     // Own yaw only while requested. Translation and tire/traction limits remain in SwerveChassis.
     if (this.mechanism.turret) return undefined;
-    return clamp((9 * this.solution.yawError + 1.8 * this.solution.trackingRate - 0.8 * this.chassis.body.angvel().y) / DRIVE_RESPONSE.turnRate, -0.75, 0.75);
+    const yawError = this.solution.yawError;
+    // Early steering forces can cross the 180-degree wrap tie. Hold the chosen
+    // direction until clear of it rather than reversing wheel commands each tick.
+    if (!this.chassisAimTurnSign || Math.abs(yawError) < Math.PI - .1) this.chassisAimTurnSign = Math.sign(yawError);
+    const steeringError = Math.abs(yawError) >= Math.PI - .1 ? Math.abs(yawError) * this.chassisAimTurnSign : yawError;
+    return clamp((9 * steeringError + 1.8 * this.solution.trackingRate - 0.8 * this.chassis.body.angvel().y) / DRIVE_RESPONSE.turnRate, -0.75, 0.75);
   }
 
   private get stable() {
@@ -328,7 +337,7 @@ export class Shooter {
       if (lane.id !== null) { const f = this.fuel.records[lane.id]; if (f.owner === this.owner && f.state === 'feeding') { f.state = 'stored'; f.local = { ...lane.start }; } }
       lane.id = null; lane.age = lane.availableAt = 0; lane.lastShotAt = -Infinity;
     }
-    this.turretYaw = 0; this.velocityEstimate = this.previousVelocity = null; this.motionAcceleration = 0;
+    this.turretYaw = 0; this.chassisAimTurnSign = 0; this.velocityEstimate = this.previousVelocity = null; this.motionAcceleration = 0;
     this.rpm = this.drumAngle = this.feederAngle = 0; this.elevation = this.maxElevation;
     this.solution = null; this.selection = null; this.active = this.blocked = false;
     this.feedOrder = []; this.laneOrder = []; this.nextFeedAt = this.nextLaunchAt = 0;
@@ -336,7 +345,7 @@ export class Shooter {
     this.scatterState = 20261102;
     if (clearShots) { this.shots.length = 0; this.shotsFired = 0; }
   }
-  stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; }
+  stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; this.chassisAimTurnSign = 0; }
   get telemetry(): ShooterTelemetry {
     const solution = this.solution, feeding = this.laneState.filter(l => l.id !== null).length;
     const mode = !this.active ? 'Idle' : !this.fuel.ownedBy(this.owner).length ? 'Empty' : !solution ? 'Out of range' : !this.stable ? 'Unstable'
