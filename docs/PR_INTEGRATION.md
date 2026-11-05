@@ -1,5 +1,30 @@
 # Approved robot PR integration
 
+## November 5 integration
+
+Approved and incorporated: #28 Icarus 2.0, #29 Downpour, #30 Simbot Tim, #31 steady follow-camera pitch, #32 controller labels/guide, #33 AUTO coasting, #34 bump support-force budget and #35 reachable opposing-zone passing. #11 performance recalibration and #36 distance/motion scatter tuning remain excluded. Existing Re•Blitz targets, the scatter model, Vercel Analytics and Prismarine's temporary selector filter are retained.
+
+There are eleven registered CAD robots and ten visible choices. The three additions use the shared optional hopper/contact and opposed-intake contracts. Rebindable N selects Icarus's active mouth; its approved side status and on-robot arrow indicate the selected intake. Prismarine remains hidden, with the incoming shooting-compression configuration retained. Stage 20 has not started.
+
+The 44 integration commits form a single-parent sequence. Feature/refinement commits from the primary source history are retained; shared mechanism merges become linear integration commits, already-incorporated main updates are omitted, and the two additional robot histories retain their own model/definition/documentation changes without duplicating shared code. Registration/credit reconciliations are explicit commits. Every integration commit records its source SHA and PR, has corrected `couchpotato7572 <122821137+couchpotato7572@users.noreply.github.com>` authorship and is signed by the maintainer. Published main and contributor branches are not rewritten.
+
+After each PR, the resulting tree was checked against a normal cumulative Git merge of the original heads. All eight comparisons matched exactly before the maintainer documentation/attribution updates. The approved PRs are closed as incorporated after pushing this authored linear history. Related issues #6, #13, #14, #15 and #18 are closed per the owner's request. #13's contribution covers controller naming and the binding guide; physical controller behavior remains unverified.
+
+| PR | Reviewed source head |
+| --- | --- |
+| [#28](https://github.com/shrysjain/jamesim/pull/28) | `984546240a3fd5b58131ac8b94a84487fc5cf167` |
+| [#29](https://github.com/shrysjain/jamesim/pull/29) | `8f891a011a156ceb670de8096ff93ee9e728c98a` |
+| [#30](https://github.com/shrysjain/jamesim/pull/30) | `e3f1296ad18e066319bd52820c7089110e26a2bd` |
+| [#31](https://github.com/shrysjain/jamesim/pull/31) | `bba5ba1330f6c76ecf4b93fa3ab5ebf9fb273f4d` |
+| [#32](https://github.com/shrysjain/jamesim/pull/32) | `0475337b8fcdc62cf07936db51a7beb8526596d2` |
+| [#33](https://github.com/shrysjain/jamesim/pull/33) | `97f0d4b300f80fabe2a39855ccccb6f62ade286e` |
+| [#34](https://github.com/shrysjain/jamesim/pull/34) | `7b79a8a49fc80b3e0a4056e1934a9fa75e1626dd` |
+| [#35](https://github.com/shrysjain/jamesim/pull/35) | `06ff378177737fc1d2312652cb34df3fcf9d059b` |
+
+Combined verification: `pnpm test:sim` passed all **484 tests across 70 files**, covering the unit, registered-robot and complete simulation checks. `pnpm build:release` passed integrity, TypeScript/Vite compilation and production payload checks: **27 runtime files / 40.62 MiB**, with **20 content-hashed runtime assets** in production. Tests ran once after all approved code was integrated. No browser testing, application server or manual deployment was performed.
+
+## November 2 integration
+
 November 2, 2026. Eight robots are now integrated into the singleplayer flow. Stage 20 (multiple simultaneous robots) has not started. This record supersedes earlier two-robot roster and preview-branch descriptions where they differ.
 
 ## Scope

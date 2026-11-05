@@ -1,6 +1,6 @@
 # Jamesim
 
-A browser FRC 2026 REBUILT simulator built with TypeScript, React, Vite, Three.js and Rapier. The current CAD roster is **2910 Re•Blitz, 1690 Kepler, 6328 Darwin, 1678 Limestone, 9496 Matterhorn, 3847 Infrared FM, 4481 Era II Worlds, and 8592 Prismarine**.
+A browser FRC 2026 REBUILT simulator built with TypeScript, React, Vite, Three.js and Rapier. The CAD roster includes **2910 Re•Blitz, 1690 Kepler, 6328 Darwin, 1678 Limestone, 9496 Matterhorn, 3847 Infrared FM, 4481 Era II Worlds, 5000 Icarus 2.0, 6800 Downpour, 1114 Simbot Tim, and 8592 Prismarine**. Prismarine is temporarily hidden from selection; its implementation and assets are retained.
 
 ## Local play
 
