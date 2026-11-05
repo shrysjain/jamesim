@@ -4,7 +4,8 @@ import {NodeIO} from '@gltf-transform/core';
 import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
 import {MeshoptDecoder} from 'meshoptimizer';
 import type {CollisionAsset} from '../../../field/types';
-import {SIMBOT_TIM,TIM_TRAVEL,TIM_RISE} from './definition';
+import {SIMBOT_TIM,TIM_TRAVEL,TIM_RISE,TIM_HEAD,TIM_RIM_CONTACTS} from './definition';
+import {hopperFloorContact,hopperFloorPoints,hopperObstacleContact,hopperObstacles} from '../../hopperGeometry';
 import {validateRobotDefinition} from '../../validateDefinition';
 import {FieldSimulation} from '../../../sim/FieldSimulation';
 import {DEFAULT_MATCH} from '../../../sim/MatchRules';
@@ -14,13 +15,22 @@ const floor:CollisionAsset={boxes:[{element:'floor',center:[0,-.1,0],halfExtents
 const run=(s:FieldSimulation,t:number)=>{for(let i=0;i<Math.ceil(t*120);i++)s.update(1/120);};
 describe('1114 Simbot Tim complete CAD integration',()=>{
  it('packs independent full-size seeds in its measured envelope and keeps source-specific capabilities explicit',()=>{
-  const d=SIMBOT_TIM,v=d.hopper.volume!;expect(validateRobotDefinition(d)).toEqual([]);expect(d.mechanisms.capacity).toBeGreaterThan(40);
+  const d=SIMBOT_TIM,v=d.hopper.volume!;expect(validateRobotDefinition(d)).toEqual([]);expect(d.mechanisms.capacity).toBeGreaterThan(60);
+  const deployedFloor=hopperFloorPoints(d,{intake:1,hopper:1,hood:0});
+  expect(d.cargoSlots.filter(p=>p[0]<-.24&&p[1]>.16).length).toBeGreaterThan(20);
+  expect(Math.max(...d.cargoSlots.map(p=>p[1]))).toBeGreaterThan(.4);
   expect(d.mechanisms.turret).toBe(false);expect(d.mechanisms.movingShots).toBe(false);expect(d.mechanisms.climb).toBe(false);
   for(const[a,p]of d.cargoSlots.entries()){
    expect(p[0]-.075).toBeGreaterThanOrEqual(v.frontX-1e-8);expect(p[0]+.075).toBeLessThanOrEqual(v.backX+1e-8);
-   expect(Math.abs(p[2])+.075).toBeLessThanOrEqual(v.halfWidth+1e-8);expect(p[1]-.075).toBeGreaterThanOrEqual(v.floorY-1e-8);expect(p[1]+.075).toBeLessThanOrEqual(v.ceilingY+1e-8);
+   expect(Math.abs(p[2])+.075).toBeLessThanOrEqual(v.halfWidth+1e-8);expect(p[1]+.075).toBeLessThanOrEqual(v.ceilingY+1e-8);
+   expect(hopperFloorContact(p,v,deployedFloor).distance).toBeGreaterThanOrEqual(.075-1e-8);
+   expect(hopperObstacleContact(p,TIM_HEAD).distance).toBeGreaterThanOrEqual(.075-1e-8);
+   for(const lip of TIM_RIM_CONTACTS)expect(hopperObstacleContact(p,lip).distance).toBeGreaterThanOrEqual(.075-1e-8);
    for(const q of d.cargoSlots.slice(a+1))expect(Math.hypot(...p.map((x,i)=>x-q[i]))).toBeGreaterThanOrEqual(.15-1e-8);
   }
+  const closedFloor=hopperFloorPoints(d,{intake:0,hopper:0,hood:0});
+  for(const p of d.cargoSlots.slice(0,8)){expect(p[0]-.075).toBeGreaterThanOrEqual(v.frontX+TIM_TRAVEL);expect(hopperFloorContact(p,v,closedFloor).distance).toBeGreaterThanOrEqual(.075-1e-8);
+   for(const box of hopperObstacles(d,{intake:0,hopper:0,hood:0}))expect(hopperObstacleContact(p,box).distance).toBeGreaterThanOrEqual(.075-1e-8);}
   expect(partTransform(d,'intake',{intake:0,hopper:0,hood:0})).toMatchObject({shift:TIM_TRAVEL,rise:TIM_RISE});
  });
  it('contains every articulated CAD assembly and four independently normalized module roots',async()=>{

@@ -45,7 +45,7 @@ The actual P322 polycarbonate wrap and P330 top cap move with the same intake
 carriage. Rail guides and chassis supports stay on the chassis. The physical
 side-wall colliders use that same slide pose, and the local cargo front boundary
 follows it. The conservative side/front rim height fits the fully deployed shell;
-the rear feeder tower remains fixed behind its open rear. All 46 fuel seeds
+the rear feeder tower remains fixed behind its open rear. All 73 fuel seeds
 retain their original size and fit below the deployed rim. The main drum is separate
 from the hood; each of the three real hood rollers has its own shaft center.
 Floor/elevator rollers use separate centers as well, avoiding orbital cylinder
@@ -93,7 +93,7 @@ node src/robot/robots/1114-simbot-tim/prepare.mjs
 | Drive response | 9.5 m/s² powered / 19 m/s² wheel braking, grip 1.05, gameplay estimates; body traction remains physical |
 | Intake/fire rates | 38 intake/s and 18 shots/s, estimated targets, gated by physical collection and shooter readiness |
 | Feed width | Three 150 mm lanes centered at −0.151, 0 and +0.151 m; CAD lacks the clearance for four simultaneous full-size lanes |
-| Capacity | 46 fitted full-size non-overlapping sphere seeds, not a claimed real-robot rating; upper layers fit beneath the sliding shell's lowest deployed rim |
+| Capacity | 73 fitted full-size non-overlapping sphere seeds, not a claimed real-robot rating; measured bed, moving cap and fixed head contacts bound the fit |
 
 The intake IO starts its encoder at zero. The operator's alternate calibration
 can assign 13.5 in, so absolute encoder values are not treated as an independently
@@ -195,3 +195,40 @@ had no shared NORMAL accessors; comparing all 5,625,834 decoded geometry/color/
 index scalars before and after the guard found no differences. The asset hash
 changes because serialization order changes; bytes/triangles/primitives and
 rendered geometry remain the same.
+
+## Loose-cargo and capacity correction
+
+Capacity is now 73 full-size spheres, increased from 46 after fitting the actual
+sloped roller bed and usable front hopper. `cargo.ts` records the seeds;
+`pack.py` reproduces the offline NumPy gravity-grid fit and writes only an
+ignored preparation report. Seeds initialize the solver; collected fuel uses
+its original ID/body and moves independently.
+
+The contact profile follows the moving pickup roller and six fixed bed sections,
+from local Y −.0356 at the deployed pickup to the −.1344 m rear trough.
+The former flat −.08 m floor buried front fuel in the visible rollers while
+holding rear fuel above its bed. The .3725 m inner half-width fits the P322
+side walls. Nine thin moving boxes follow the measured P330 U-shaped top cap;
+the rear drum/hood sweep remains a fixed exclusion. Floor segments include
+finite endpoint contacts when the moving roller passes the fixed bed.
+
+This robot opts into shared contact impulses, with estimated restitution .22,
+friction .15 and linear damping .35/s. Incoming transfer momentum continues
+into stored cargo, so impacts, braking and turning disturb the load. Fuel mass,
+chassis payload accounting, fixed-step timing and field ownership are unchanged.
+The open rim still permits spills. These contact-response values are gameplay
+estimates, not measured material properties.
+
+Current focused validation: 15 cases across three files passed, including
+continuous physical intake to capacity, settled upper cargo above local .39 m,
+acceleration/braking displacement, original bodies, pause/reset, and both-alliance
+full-hopper discharge. Shared contact/profile regression cases also pass. Earlier
+validation above describes the previous 46-slot fit. Shared integration now also
+includes `hopperGeometry.ts`, `HopperDynamics.ts`, optional hopper types/validation,
+transfer-arrival momentum in `RobotSimulation.ts`, and the test helper
+`testing/hopperMotionAcceptance.ts`. Legacy definitions retain their contact
+response unless they opt in. The runtime CAD asset is unchanged by this correction.
+
+The refreshed Node 26 / pnpm 10.20.0 release build passes asset integrity,
+TypeScript/Vite and production-payload checks (18 hashed assets). The existing
+large Rapier bundle warning remains.
