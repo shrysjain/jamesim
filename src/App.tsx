@@ -147,6 +147,7 @@ export function App() {
           Team 1114 Simbotics,{' '}
           Team 1690 Orbit,{' '}
           Team 6328 Mechanical Advantage,{' '}
+          Team 5000 Hammerheads,{' '}
           Team 1678 Citrus Circuits,{' '}
           Team 9496 LYNK,{' '}
           Team 3847 Spectrum,{' '}
