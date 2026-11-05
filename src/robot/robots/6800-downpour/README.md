@@ -253,11 +253,12 @@ they do not model every tooth or cutout. Capacity stays 48 and fuel mass is unch
 
 Feeding fuel also yields to these moving intake contacts; static feeder envelopes
 remain excluded from that managed path so normal internal feeding still works.
-Two new cases check every held sphere against all seven contacts throughout
-full-load automatic shooting and a manual partial-load fold, retaining original
+Three new cases check every held sphere against all seven contacts throughout
+full-load automatic shooting, a manual partial-load fold and the last incoming
+physical transfer, retaining original
 IDs/bodies, all 48 physical releases, pause/reset behavior in existing cases and
-correct payload mass. The focused robot/contact run passes 31 cases across six
-files. Runtime CAD bytes/hash are unchanged by this contact correction.
+correct payload mass. The final robot/contact coverage is 32 cases across six
+files, included in the 474-case all-PR integration run. Runtime CAD bytes/hash are unchanged by this contact correction.
 
 The three contributions share optional mechanism code through common merge
 ancestors, with their registrations and credits on separate lines. Each branch
