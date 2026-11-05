@@ -12,7 +12,12 @@ export type HopperVolume = {
 };
 /** Estimated launch standard deviations: radians, fractional speed, and rad/s backspin. */
 export type ShotSpread = { yaw: number; elevation: number; speed: number; flyerChance: number; backspin: number };
-export type HopperObstacle = { center: Vec3; halfExtents: Vec3; angle?: number };
+export type HopperObstacle = { center: Vec3; halfExtents: Vec3; angle?: number;
+  /** Vertical round solids use equal X/Z radii. An annulus keeps its center open. */
+  shape?: 'box' | 'cylinder' | 'annulus'; innerRadius?: number;
+  /** Local rectangular bounds for a round platform that ends at the frame. */
+  clipHalfExtents?: Vec3 };
+export type HopperFloorPoint = { x: number; y: number; part?: 'intake' | 'opposedIntake' | 'hopper' };
 /** A second, oppositely facing mouth uses positive local X. */
 export type PickupRegion = { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
 export type RobotDefinition = {
@@ -29,6 +34,10 @@ export type RobotDefinition = {
     volume?: HopperVolume; fixedSlot?: number; entry?: Vec3; entryHalfWidth?: number;
     /** Fixed internal CAD envelopes, e.g. an indexer cone or feed tower. */
     obstacles?: HopperObstacle[];
+    /** Measured roller/tray top profile in deployed chassis coordinates. */
+    floorProfile?: HopperFloorPoint[];
+    /** Optional contact response for loose cargo; existing robots keep their prior response. */
+    physics?: { restitution: number; friction: number; linearDamping?: number };
     /** Powered rotating floor, with bounded friction against supported fuel. */
     indexer?: { center: Vec3; radius: number; angularSpeed: number; friction: number } };
   hood: { pivot: Vec3; maxAngle: number };
