@@ -23,7 +23,7 @@ describe('1678 Limestone',()=>{
       expect(s.robot!.telemetry.speed).toBeCloseTo(4.39,1);
       expect(s.robot!.telemetry.grounded).toBe(4);
       s.startSession({...DEFAULT_MATCH,robot:'2910-reblitz',preloads:0},true);
-      expect(s.robot!.tuning.maxSpeed).toBeCloseTo(16.7*.3048);
+      expect(s.robot!.tuning.maxSpeed).toBeCloseTo(14.4*.3048);
     } finally{s.dispose();}
     const w=await FieldSimulation.create(field,[],true);
     try {

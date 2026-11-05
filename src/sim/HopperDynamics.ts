@@ -95,6 +95,16 @@ export class HopperDynamics {
           for (const p of balls) externalContact(p.fuel.local,p.velocity);
         }
       }
+      // A closed hopper's ceiling/walls can undo the last moving-frame
+      // projection, especially near a roller corner. Finish those coupled
+      // contacts without repeating the quadratic ball-pair solver. Most fuel
+      // is already clear; only residual penetrations need these bounded passes.
+      if (!this.volume.rim && this.obstacles.length) for (const p of balls) {
+        for (let pass = 0; pass < 128; pass++) {
+          if (this.obstacles.every(box => hopperObstacleContact([p.fuel.local.x, p.fuel.local.y, p.fuel.local.z], box).distance >= FUEL_RADIUS - .0001)) break;
+          this.constrain(p.fuel.local, front, width, pose);
+        }
+      }
       if (this.volume.rim || this.definition.hopper.physics) this.contactVelocities(balls, front, back);
       for (const p of balls) {
         // Open hoppers resolve contact impulses directly. Turning a seed-overlap

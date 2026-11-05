@@ -17,7 +17,7 @@ export function robotStats(robot: RobotDefinition): RobotStat[] {
     { label: 'Fire rate', value: `${robot.mechanisms.fireRate} bps`, amount: robot.mechanisms.fireRate, maximum: 40, note: 'Nominal rate; aim, spin-up and feeding affect throughput.' },
     { label: 'Intake rate', value: `${robot.mechanisms.intakeRate} bps`, amount: robot.mechanisms.intakeRate, maximum: 60 },
     { label: 'Capacity', value: `${robot.mechanisms.capacity} fuel`, amount: robot.mechanisms.capacity, maximum: 80 },
-    { label: 'Shoot on move', value: moving ? accuracy === undefined ? 'Enabled' : `${Math.round(accuracy * 100)}% rating` : 'Stationary', amount: moving && accuracy !== undefined ? accuracy * 100 : null, maximum: 100, note: 'Simulator spread rating, not a measured hit percentage. Motion limits still apply.' },
+    { label: 'Shoot on move', value: moving ? accuracy === undefined ? 'Enabled' : `${Math.round(accuracy * 100)}/100 est.` : 'Stationary', amount: moving && accuracy !== undefined ? accuracy * 100 : null, maximum: 100, note: 'Estimated hub-shot motion quality, not a hit percentage. Speed and turn limits still apply.' },
   ];
 }
 
@@ -27,6 +27,7 @@ export function robotFeatures(robot: RobotDefinition): string[] {
     robot.hood.maxAngle > 0 ? 'Adjustable hood' : 'Fixed hood',
     `${robot.mechanisms.lanes.length} ${robot.mechanisms.lanes.length === 1 ? 'lane' : 'lanes'}`,
     ...(robot.mechanisms.movingShots ? ['Shoots on move'] : []),
+    ...(robot.mechanisms.movingPasses && !robot.mechanisms.movingShots ? ['Passes on move'] : []),
     ...(robot.mechanisms.simultaneousIntake ? ['Intake + shoot'] : []),
     ...(robot.mechanisms.climb ? ['L1 climb'] : []),
   ];

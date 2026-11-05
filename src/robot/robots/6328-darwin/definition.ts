@@ -1,3 +1,4 @@
+// Performance evidence, estimate ranges and retained CAD limits: docs/ROBOT_PERFORMANCE_RESEARCH.md.
 import type { RobotDefinition, RobotCollider } from '../../types';
 import { STANDARD_SWERVE, swerveModules } from '../../defaults';
 import { DARWIN_VISUAL } from './visual';
@@ -12,7 +13,7 @@ export const DARWIN: RobotDefinition = {
   model: '/assets/robots/6328-darwin/robot.glb', visual: DARWIN_VISUAL,
   mass: 150 * .45359237, inertia: [3.4, 6, 3.7], length: .8763, width: .8509,
   bumperCenterY: -.12685,
-  drive: { maxSpeed: 4.2, acceleration: 10, grip: 1.5 },
+  drive: { maxSpeed: 4.2, acceleration: 9, grip: 1.10 },
   // Actual exported wheel centers; the team code uses its own calibration axes/track dimensions.
   modules: swerveModules(.282575, .269875),
   intake: { pivot: [-.317, -.0375, 0], stowedAngle: -128.408204 * Math.PI / 180, manualRetraction: true },
@@ -23,10 +24,11 @@ export const DARWIN: RobotDefinition = {
   },
   hood: { pivot: [.26392, .26307, 0], maxAngle: 31.2 * Math.PI / 180 },
   shooterGeometry: { pivot: [.26392, .26307, 0], drumRadius: .0508, guideLength: .155, turretRadiansPerSecond: 3,
-    minElevation: 48.8 * Math.PI / 180, maxElevation: 80 * Math.PI / 180, passRange: 17.16, movingAccuracy: .93,
+    minElevation: 48.8 * Math.PI / 180, maxElevation: 80 * Math.PI / 180, passRange: 17.16, movingAccuracy: .50,
+    movingLimits: { hub: { speed: 1.2, turnRate: .25 }, pass: { speed: 2, turnRate: .25 } },
     spread: { yaw: .032, elevation: .034, speed: .035, flyerChance: .10, backspin: 32 } },
   // No climber is present in the supplied Darwin exports/published subsystem tree.
-  mechanisms: { capacity: 48, intakeRate: 40, compress: true, lanes: [-.17, 0, .17], fireRate: 24,
+  mechanisms: { capacity: 48, intakeRate: 36, compress: true, lanes: [-.17, 0, .17], fireRate: 22,
     turret: false, movingShots: true, simultaneousIntake: true, climb: false },
   cargoSlots: DARWIN_CARGO,
   pickup: { minX: -.72, maxX: -.50, halfWidth: .29, mouthX: -.60, ejectX: -.74 },

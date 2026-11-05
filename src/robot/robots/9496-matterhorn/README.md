@@ -1,5 +1,7 @@
 # 9496 LYNK · Matterhorn (2026)
 
+Performance update (November 2, 2026): [the lineup research audit](../../../../docs/ROBOT_PERFORMANCE_RESEARCH.md) supersedes earlier rate, drive/traction and motion-rating estimates below. CAD/capacity and previous validation descriptions remain historical evidence.
+
 Independent contribution `robot/9496-matterhorn`, based on `origin/main` at `0d64cbb`. Adds selectable owner-supplied release CAD, real MK5n modules, passive slapdown intake, sliding hopper front/side panels, roller floor, vertical feeder and a full-width drum with its brass flywheels. Uses the existing driver-operated match, stable fuel ownership and physical hub scoring. No separate robot simulation is introduced.
 
 ## Exact source and reproduction

@@ -53,7 +53,10 @@ export type RobotDefinition = {
     /** Unwrapped cable-safe travel relative to the prepared neutral bearing. */
     turretLimits?: [number, number];
     movingLimits?: { hub: { speed: number; turnRate: number }; pass: { speed: number; turnRate: number } } };
-  mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; movingShots: boolean; simultaneousIntake?: boolean; climb: boolean };
+  mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; /** Hub shooting while translating; movingShots also enables the legacy moving-pass behavior. */
+    movingShots: boolean;
+    /** Allows moving passes without also allowing moving hub shots. */
+    movingPasses?: boolean; simultaneousIntake?: boolean; climb: boolean };
 };
 
 /** Browser-independent model contract. Nodes use glTF extras.mechanism, not exporter names. */

@@ -19,7 +19,7 @@ describe('CAD-backed Kepler player flow', () => {
    expect(Math.max(...r.modules.map(m=>Math.abs(m.speed)))).toBeCloseTo(33*.3048*.1,4);
    expect(r.tuning.grip*KEPLER.mass*9.81/4.4482216152605).toBeCloseTo(130,5);
    run(s,1.5); expect(r.telemetry.speed).toBeCloseTo(14.4*.3048,1);
-   s.startMatch({ ...DEFAULT_MATCH, robot: '2910-reblitz', preloads: 0 }); expect(s.robot!.tuning.maxSpeed).toBeCloseTo(16.7*.3048);
+   s.startMatch({ ...DEFAULT_MATCH, robot: '2910-reblitz', preloads: 0 }); expect(s.robot!.tuning.maxSpeed).toBeCloseTo(14.4*.3048);
    s.startMatch({ ...DEFAULT_MATCH, robot: '1690-kepler', preloads: 0 }); expect(s.robot!.tuning.maxSpeed).toBeCloseTo(14.4*.3048);
   } finally { s.dispose(); }
  });
