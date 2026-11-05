@@ -98,3 +98,7 @@ At teleop and manual early-stop cutoffs, the chassis clears wheel commands and y
 Issue #15 changes the normal AUTO cutoff: driver and mechanism commands clear at 20 seconds, but chassis velocity continues through the three-second Auto scoring gap. The existing unpowered wheel contacts, yaw damping, body drag and field collisions evolve that momentum. Driver input cannot power the robot during the gap. Pause and practice behavior are unchanged.
 
 Integration order is moving-shot/match-stop, Darwin, then Citrus. These branch merges do not merge into main. Local hopper contacts and per-fuel mass remain unchanged.
+
+## Tower backing visibility
+
+The black upper/lower backing panels are removed from both tower renders, exposing their frame and rungs. This is a rendering change: original tower contacts, rung positions and climb assessment remain intact. It does not enlarge the CAD opening or change trench clearance.
