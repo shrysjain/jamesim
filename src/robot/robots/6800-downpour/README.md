@@ -269,3 +269,8 @@ compression behavior. These are disclosed in each PR; the complete current share
 path list is generated from its diff against main. Existing robot IDs/order are
 retained relative to one another. The new robots can therefore be merged in any
 order without discarding registration, credits or mechanism behavior.
+
+
+## Visible retaining fabric
+
+Source-confirmed retaining nets now have fitted open-weave rendering that follows the existing hopper bounds. The already-enclosed cargo contacts are retained; capacity, mass and CAD payload do not change. Icarus covers only its intake bays and leaves the rigid center roof/turret uncovered. Shapes and weave dimensions are estimates, not an exact cloth reconstruction. See [retaining-net notes](../../../../docs/RETAINING_NETS.md).

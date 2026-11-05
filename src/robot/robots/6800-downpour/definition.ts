@@ -29,7 +29,7 @@ export const DOWNPOUR: RobotDefinition = {
   drive: { maxSpeed: 4.8, acceleration: 10, grip: 1.05 },
   intake: { pivot: [-.3032, -.03169, 0], stowedAngle: -110 * Math.PI / 180, manualRetraction: true },
   // The measured back-panel inner face is X=-.6405245; keep a 1mm contact margin.
-  hopper: { stowTravel: .30, obstacles: DOWNPOUR_INTAKE_CONTACTS,
+  hopper: { stowTravel: .30, obstacles: DOWNPOUR_INTAKE_CONTACTS, retainingNet: { bottomY: .20 },
     volume: { frontX: -.6395, backX: .04, halfWidth: .337, floorY: -.015, ceilingY: .39, frontTravel: 0 } },
   hood: { pivot: [.26035, .25149, 0], maxAngle: 38 * Math.PI / 180 },
   shooterGeometry: {
