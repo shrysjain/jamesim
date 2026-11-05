@@ -1,8 +1,10 @@
 import { DEFAULT_CONTROLS, validateControls } from './controls';
 import type { Controls } from './controls';
+import { PLAYER_CAMERAS } from './view/playerCamera';
+import type { PlayerCamera } from './view/playerCamera';
 export type GraphicsPreset = 'low' | 'medium' | 'high';
-export type Settings = { version: 1; volume: number; muted: boolean; graphics: GraphicsPreset; controls: Controls };
-export const DEFAULT_SETTINGS: Settings = { version: 1, volume: 0.7, muted: false, graphics: 'medium', controls: validateControls(DEFAULT_CONTROLS) };
+export type Settings = { version: 1; volume: number; muted: boolean; graphics: GraphicsPreset; controls: Controls; camera: PlayerCamera };
+export const DEFAULT_SETTINGS: Settings = { version: 1, volume: 0.7, muted: false, graphics: 'medium', controls: validateControls(DEFAULT_CONTROLS), camera: 'follow' };
 export const SETTINGS_KEY = 'jamesim.settings';
 export const GRAPHICS = {
   low: { pixelRatio: 1, shadowSize: 0 },
@@ -19,6 +21,7 @@ export function validateSettings(value: unknown): Settings {
     volume: typeof s.volume === 'number' && Number.isFinite(s.volume) ? Math.max(0, Math.min(1, s.volume)) : defaults.volume,
     muted: typeof s.muted === 'boolean' ? s.muted : defaults.muted,
     graphics: s.graphics === 'low' || s.graphics === 'medium' || s.graphics === 'high' ? s.graphics : defaults.graphics,
+    camera: PLAYER_CAMERAS.some(c => c.id === s.camera) ? s.camera as PlayerCamera : defaults.camera,
   };
 }
 export function readSettings(): Settings {

@@ -18,4 +18,11 @@ describe('saved player settings', () => {
     vi.stubGlobal('localStorage', { getItem: () => { throw Error('denied'); }, setItem: () => { throw Error('full'); } });
     expect(readSettings()).toEqual(DEFAULT_SETTINGS); expect(() => saveSettings(chosen)).not.toThrow();
   });
+  it('keeps old saves on Follow and validates every saved player camera', () => {
+    expect(validateSettings({ version: 1 }).camera).toBe('follow');
+    for (const camera of ['follow', 'station', 'pov', 'fly'] as const) {
+      expect(validateSettings({ version: 1, camera }).camera).toBe(camera);
+    }
+    for (const camera of ['orbit', '', null, 1]) expect(validateSettings({ version: 1, camera }).camera).toBe('follow');
+  });
 });
