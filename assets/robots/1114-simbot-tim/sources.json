@@ -309,7 +309,15 @@
       ".tools/cargo-release.log"
     ],
     "shared": "20 hopper/contact cases across three files passed in the combined preview.",
-    "build": "Node 26.13.0 / pnpm 10.20.0 pnpm build:release passed: asset integrity, TypeScript/Vite and 18 content-hashed production assets. Existing bundle-size warning."
+    "build": "Node 26.13.0 / pnpm 10.20.0 pnpm build:release passed: asset integrity, TypeScript/Vite and 18 content-hashed production assets. Existing bundle-size warning.",
+    "combinedBrowser": {
+      "cargo": "Actual fixed-step simulation and RobotView filled/retained 73 full-size fuel, with stable original bodies. Maximum acceleration/braking cargo displacement 0.143 m. No page errors.",
+      "app": "Real search/detail/selection, both-alliance practice, WASD/turn/intake/shoot/reverse/retraction, saved-key controls, pause/reset and return to setup passed.",
+      "evidenceInCombinedPreview": [
+        ".tools/live-cargo.json",
+        ".tools/cargo-app-1114.log"
+      ]
+    }
   },
   "hopperFit": {
     "capacity": 73,
