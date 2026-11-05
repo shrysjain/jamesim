@@ -48,8 +48,9 @@ export class FieldSimulation {
       this.colliderElements.set(collider.handle, box.element);
     }
     for (const mesh of asset.meshes) {
+      // Smooth internal triangle seams so solid frame contacts do not catch on them.
       const collider = this.world.createCollider(RAPIER.ColliderDesc.trimesh(
-        new Float32Array(mesh.vertices), new Uint32Array(mesh.indices),
+        new Float32Array(mesh.vertices), new Uint32Array(mesh.indices), RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES,
       ).setFriction(0.55).setRestitution(0.18).setCollisionGroups(mesh.element.startsWith('bump-') ? CollisionGroups.bump : CollisionGroups.field));
       this.colliderElements.set(collider.handle, mesh.element);
     }
