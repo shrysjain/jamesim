@@ -248,7 +248,7 @@ export class RobotSimulation {
     // feeder contacts are intentionally omitted: the path runs through them.
     const movingContacts = this.chassis.definition.hopper.obstacles?.some(b => b.part === 'intake' || b.part === 'opposedIntake')
       ? hopperObstacles(this.chassis.definition, this.chassis.pose).filter(b => b.part === 'intake' || b.part === 'opposedIntake') : [];
-    if (movingContacts.length) for (const f of this.held) if (f.state === 'feeding') {
+    if (movingContacts.length) for (const f of this.held) if (f.state === 'feeding' || f.state === 'transferring') {
       for (let i = 0; i < 4; i++) for (const box of movingContacts) {
         const contact = hopperObstacleContact([f.local.x, f.local.y, f.local.z], box);
         const penetration = FUEL_RADIUS - contact.distance;
