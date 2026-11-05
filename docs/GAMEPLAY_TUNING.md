@@ -1,6 +1,8 @@
 # Gameplay revision — November 1, 2026
 
-The user's FRSim 2910 metrics card is the gameplay baseline. It is a simulator reference, not an independent measurement of the real robot.
+November 5 accepted tuning: [the performance research](ROBOT_PERFORMANCE_RESEARCH.md) now sets the seven original robot profiles, superseding the original numeric FRSim baseline below where values differ. Re•Blitz uses 14.4 ft/s, 9.5 m/s² wheel acceleration, grip 1.10 and 44 fuel/s intake; its 32 fuel/s fire rate and fitted 65-fuel capacity remain. Hub shots still require settling, while passes may release within its 2 m/s / .25 rad/s moving envelope. The other robot-specific rates, motion quality estimates and firing limits are recorded in that research. The three newer robot profiles are unchanged. [Shot tuning](SHOT_TUNING.md) now adds the approved distance curve and mechanism-specific movement sensitivity. The older notes below remain historical where superseded; physical fuel ownership, scoring and match timing are unchanged.
+
+The user's FRSim 2910 metrics card was the original gameplay baseline. It is a simulator reference, not an independent measurement of the real robot.
 
 | Metric | Baseline |
 | --- | --- |

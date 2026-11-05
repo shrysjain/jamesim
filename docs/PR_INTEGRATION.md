@@ -1,8 +1,22 @@
 # Approved robot PR integration
 
-## November 5 integration
+## November 5 tuning follow-up
 
-Approved and incorporated: #28 Icarus 2.0, #29 Downpour, #30 Simbot Tim, #31 steady follow-camera pitch, #32 controller labels/guide, #33 AUTO coasting, #34 bump support-force budget and #35 reachable opposing-zone passing. #11 performance recalibration and #36 distance/motion scatter tuning remain excluded. Existing Re•Blitz targets, the scatter model, Vercel Analytics and Prismarine's temporary selector filter are retained.
+The owner approved #11 performance recalibration and #36 distance/motion scatter tuning following the isolated #11 preview. Both are now incorporated. #11 uses source head `8ad379aad9f8f8bcbf397675a8f2042e89afeeb8`; #36 uses corrected head `fc942e72d48b7edb231822e789abf8318a7f49fb`.
+
+Five signed, single-parent contributor commits retain the original research change, its legal-start compatibility follow-up, and all three scatter refinements. Already-integrated dependency histories are omitted. Each commit records its original source and PR, with corrected `couchpotato7572 <122821137+couchpotato7572@users.noreply.github.com>` authorship. Before the maintainer contact correction below, the contributor tree exactly matches an ordinary cumulative merge of both approved heads onto main `b7b7515`. Published main and contributor branches are not rewritten; PRs are closed as incorporated after the linear history is pushed, consistent with the earlier integrations.
+
+The seven original robot profiles now use the estimates in [the performance research](ROBOT_PERFORMANCE_RESEARCH.md). Re•Blitz drives at 14.4 ft/s and intakes at 44 fuel/s, retaining stationary hub shooting while allowing moving passes. Fixed-shooter motion limits and relative quality vary by robot; Kepler retains its prior card calibration. New robot profiles are unchanged. [Shot tuning](SHOT_TUNING.md) records the shared distance curve and stronger fixed-shooter motion sensitivity. These remain explicit gameplay estimates, not measured team accuracy percentages. Stable fuel bodies, capacities, CAD, scoring and timing are preserved.
+
+The combined suite exposed a Downpour cargo contact corner: projecting a ball away from the folding intake could push it against the closed hopper ceiling, whose final clamp left about 2.24 mm of intake penetration. The existing full-load shooting test failed its unchanged 1 mm contact tolerance. A separate maintainer correction adds bounded refinement only for remaining frame penetrations in closed hoppers, without repeating ball-pair iterations or changing geometry, cargo size or capacities. The original shooting/manual-fold/last-transfer contact cases and shared hopper checks pass after the correction.
+
+Final verification: `pnpm test:sim` passes **492 tests across 71 files**, including all unit, robot and simulation cases. `pnpm build:release` passes runtime integrity, TypeScript/Vite compilation and production-payload checks: **27 runtime files / 40.62 MiB**, **20 content-hashed runtime assets**. The existing large physics-chunk advisory remains. No test assertions were relaxed for the contact correction.
+
+The isolated tuning server on port 5174 was stopped at the owner's request. No browser test or replacement application server is started for this integration; normal local testing uses `pnpm dev` on main. No manual deployment or hosting changes are performed.
+
+## November 5 initial integration
+
+Approved and incorporated: #28 Icarus 2.0, #29 Downpour, #30 Simbot Tim, #31 steady follow-camera pitch, #32 controller labels/guide, #33 AUTO coasting, #34 bump support-force budget and #35 reachable opposing-zone passing. #11 performance recalibration and #36 distance/motion scatter tuning were initially held for the later follow-up above. That follow-up supersedes the initially retained Re•Blitz targets and scatter coefficients. Vercel Analytics and Prismarine's temporary selector filter are retained.
 
 There are eleven registered CAD robots and ten visible choices. The three additions use the shared optional hopper/contact and opposed-intake contracts. Rebindable N selects Icarus's active mouth; its approved side status and on-robot arrow indicate the selected intake. Prismarine remains hidden, with the incoming shooting-compression configuration retained. Stage 20 has not started.
 
