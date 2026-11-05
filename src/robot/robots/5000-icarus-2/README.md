@@ -38,8 +38,8 @@ The dye-rotor hook, vertical wheel stack, top feeder roller, hood rollers, flywh
 | Command acceleration/grip | 10.0584 m/s² and 1.05, simulator estimates; the code's 25 m/s² command ceiling is not claimed as measured traction |
 | Optional wheel braking | 20.1168 m/s², an estimated Icarus-only wheel deceleration. Powered acceleration stays 10.0584 m/s²; the separate stop/reverse response prevents delayed back-out after wheel spin against a wall. |
 | Empty running mass | 66 kg estimated: 114.9 lb robot + 17.9 lb bumpers from the binder, plus an estimated 5.8 kg battery; approximate diagonal inertia 4.0 / 7.2 / 4.3 kg·m² |
-| Capacity | 37 nonoverlapping 150 mm spheres with one side open and the other closed, excluding the central feeder; the previous 51-slot fit incorrectly assumed both intakes open. No measured real-team capacity claim. |
-| Hopper | ±.585 m X, .337 m half-width, local floor −.08 m and ceiling .322 m; contact envelope estimated from CAD/net packaging, with an excluded central tower |
+| Capacity | 50 nonoverlapping 150 mm spheres with one side open and the other closed, fitted around the actual stepped bowl and feeder; no measured real-team capacity claim. |
+| Hopper | ±.585 m X, .337 m half-width, measured bowl floor −.137275 m and platform −.05155 m; .322 m roof envelope, with actual circular feeder/roof contacts |
 | Shooter axes | Flywheel center [.096721269, .260524992, 0], turret bearing [0, .2883, 0] relative to the .223 m chassis reference; original wheels 3 in diameter |
 | Hood/elevation | Source hood 6.24–47° from vertical maps to 83.76–43° elevation, following the team visualizer |
 | Turret cable range | Latest code −250..195° (445°), transformed to −160..285° after independent neutral yaw; the binder says 420°, so source versions differ |
@@ -47,7 +47,25 @@ The dye-rotor hook, vertical wheel stack, top feeder roller, hood rollers, flywh
 | Passing | 12.6 m source passing-map endpoint; physical arc/clearance/readiness still gate launch |
 | Shooting uncertainty | Estimated yaw standard deviation .028 rad, elevation .032 rad, speed fraction .032, .08 wider-tail probability, nominal 28 rad/s backspin; moving rating .90 increases dispersion rather than guaranteeing a 90% hit rate |
 
-The 37 seeds are close-packed with at least .151 m separation, lie fully inside the one-open-side volume, and avoid the tower by a full fuel radius. They are ordered so the first eight preload centers also fit the retracted starting volume. Stored positions then evolve in shared sphere dynamics; seeds are not a frozen rendered stack. The 37-slot five-column packing has 18 bottom, 11 middle and eight upper seeds. Four conservative cargo roof rails use the measured lower sheet (underside .3056375 m relative to the chassis; half-footprint .283845 × .352425 m) around a square inscribed in its .22225 m circular turret hole. They protect the covered center while allowing upper cargo outside the roof over the extended intake. Slots and evolving full hoppers on both selected sides clear those contacts by a full fuel radius within solver tolerance. The floor remains the prior −.08 m estimate; it was not lowered to force more capacity. Each end wall follows its own carriage. Primary seeds fit the closed Opposite boundary; actual intake transfer mirrors toward the selected mouth and local sphere dynamics supports filling either side. Intake transfer and shooter feed are managed paths; the rotor is not a discrete paintball-like hook/collision simulation. The model has no embedded fuel meshes. The final binder explicitly describes **opaque SRPP hopper walls**; source materials are all opaque, so those walls have not been made artificially translucent.
+The 50 seeds are fitted with at least .1502 m spacing and full 150 mm diameter.
+They fit the one-open-side volume; the first eight also fit both closed walls.
+`cargo.ts` records the measured recessed bowl, rectangular raised platform,
+round rotor/feeder, thin upper posts and turret base. The lower roof uses its
+actual .22225 m circular opening cropped to the source rectangular sheet,
+instead of four conservative square-hole rails. The former full-height central
+box excluded empty air. The bowl floor is measured at −.137275 m, the platform
+at −.05155 m; the flexible net outside the frame retains its conservative
+−.08 m floor estimate because its full shape is absent from the published CAD.
+`pack.py` reproduces the offline NumPy gravity-grid fit; no Python runs in play.
+
+Stored positions evolve under the shared sphere solver. Estimated restitution
+.22, friction .15 and linear damping .35/s preserve incoming contact momentum
+and allow impacts, acceleration and braking to redistribute cargo. Fuel mass
+and chassis payload accounting are unchanged. Each end wall follows its own
+carriage; either selected intake can fill the same cavity. Intake transfer and
+shooter feed remain managed paths; the rotor is not a discrete hook/collision
+simulation. No embedded fuel meshes exist. The binder describes **opaque SRPP
+hopper walls**; their source opacity is retained.
 
 The real dual intakes have sewn half-box mesh nets that are not fully modeled in the published meshes. The internal collision envelope approximates that containment. Small interior details and decals are omitted during preparation. The source `Bumpers:1/Body1 (1):1` contains both black foam and embossed white numbers; only that outer foam body is replaced by four flat padding bars fitted to its measured .828875 × .892375 × .128397 m envelope. Their .0524875 m thickness comes from the difference between the outer foam and backer bounds. The actual `Body19:1` backer and all frame/mechanism CAD remain. These derived padding bars approximate the wrap and remove baked glyphs, leaving the shared game labels as the only team numbers. Bumper materials still change with alliance.
 
@@ -75,10 +93,27 @@ The remaining shared additions are `opposedIntake` pose/collider transforms, a p
 
 The shared chassis-aim controller also retains one turn direction near the exact 180° wrap boundary, preventing early tire steering forces from reversing the aim demand every tick. This matches the separately validated contributor fix and keeps `DRIVE_RESPONSE.turnRate` normalization. Both-alliance real-field Re•Blitz passing tests preserve original projectiles. It does not change the Icarus turret solver.
 
-Meaningful Icarus tests exercise both-alliance selected-mouth collection/reverse, rejection of rapidly departing fuel, blocked-mouth path queries, reaction impulse, full 37-ID physical discharge, pause/restart/body/mass conservation, source cable stops, moving shots, both bump directions, loaded wall contact, independent real hood shafts, rigid CAD mounts, and a plain four-bar bumper without baked numbers. Definition tests also verify full-size packing and eight starting preloads within the retracted volume. The generic asset/definition/acceptance checks include Icarus automatically. Refreshed browser checks passed on the current-main search/details/selection flow, both alliances, saved controls, intake/reverse/shoot/V, pause/resume and restart; four CAD poses also confirmed plain blue/red padding without a baked number layer. Current validation results and historical checks are recorded separately in `sources.json`; old two-robot checks are not represented as current integration results.
+Meaningful Icarus tests exercise both-alliance selected-mouth collection/reverse, rejection of rapidly departing fuel, blocked-mouth path queries, reaction impulse, full 50-ID physical discharge, pause/restart/body/mass conservation, source cable stops, moving shots, both bump directions, loaded wall contact, independent real hood shafts, rigid CAD mounts, and a plain four-bar bumper without baked numbers. Definition tests also verify full-size packing and eight starting preloads within the retracted volume. The generic asset/definition/acceptance checks include Icarus automatically. Refreshed browser checks passed on the current-main search/details/selection flow, both alliances, saved controls, intake/reverse/shoot/V, pause/resume and restart; four CAD poses also confirmed plain blue/red padding without a baked number layer. Current validation results and historical checks are recorded separately in `sources.json`; old two-robot checks are not represented as current integration results.
 
 Historical verification before the exclusive-intake/surface fixes: `pnpm test:sim` passed **383 tests across 53 files**; `pnpm build:release` verified 25 runtime files (32.72 MiB) and 18 content-hashed production assets. The existing large bundle warning remains.
 
-Current feedback fixes passed 27 focused tests across four files (`src/controls.test.ts` and the Icarus folder), including actual continuous collection to full capacity and original-ID discharge from each selected side, exclusive sequencing, blocked loaded switching, pause/reset/respawn, saved-key conflicts, and prepared panel face normals. `pnpm build:release` passed asset integrity, TypeScript/Vite and production payload checks. Default N and a saved X binding both passed setup/control hints and live Opposite selection in the browser without page errors. The final actual CAD was inspected stowed, deployed, full, and with turret/hood movement; the roof and slide surfaces shade uniformly without the reported diagonal patches. The final HTTP GLB was verified against the prepared file hash. The full combined suite is run by the preview integration; the earlier 383-test result above is historical.
+Before the loose-cargo correction, feedback fixes passed 27 focused tests across four files (`src/controls.test.ts` and the Icarus folder), including actual continuous collection to full capacity and original-ID discharge from each selected side, exclusive sequencing, blocked loaded switching, pause/reset/respawn, saved-key conflicts, and prepared panel face normals. `pnpm build:release` passed asset integrity, TypeScript/Vite and production payload checks. Default N and a saved X binding both passed setup/control hints and live Opposite selection in the browser without page errors. The final actual CAD was inspected stowed, deployed, full, and with turret/hood movement; the roof and slide surfaces shade uniformly without the reported diagonal patches. The final HTTP GLB was verified against the prepared file hash. The full combined suite is run by the preview integration; the earlier 383-test result above is historical.
 
 Additional shared integration points for this refinement are `src/controls.ts`, its tests, `src/view/FieldViewer.ts`, `src/view/RobotView.ts`, `src/components/SetupScreen.tsx` and `src/style.css`. `RobotPose.opposedIntake` independently drives transforms, collider updates, bump reach and the rear hopper wall. The controls action is optional at runtime for other robots; UI hints/status appear only for opposed intakes. The small live side indicator is explicitly requested by this feedback and does not introduce a general gameplay HUD.
+
+## Loose-cargo verification
+
+The updated geometry and 50-slot capacity passed 27 existing robot/control cases
+across four files, plus two continuous-intake/motion cases, one for each selected
+mouth. Both acquired the full load, retained at least 43 after settling and
+moved their original spheres under acceleration/braking. Pause/reset and body
+identity are checked as well. Shared profile/contact regression cases pass in
+the combined preview. The runtime GLB is unchanged. Additional shared integration
+points are `hopperGeometry.ts`, optional hopper types/validation, contact impulses
+in `HopperDynamics.ts`, arrival momentum in `RobotSimulation.ts`, and the reusable
+`testing/hopperMotionAcceptance.ts` test helper. Earlier capacity/validation
+records in source metadata are historical.
+
+The refreshed Node 26 / pnpm 10.20.0 release build passes asset integrity,
+TypeScript/Vite and production-payload checks (18 hashed assets). The existing
+large Rapier bundle warning remains.
