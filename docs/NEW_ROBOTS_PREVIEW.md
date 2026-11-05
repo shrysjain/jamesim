@@ -75,7 +75,7 @@ remains. These checks include all registered robot acceptance cases, full-hopper
 original-body discharge, both Icarus mouths, Simbot Tim compression limits and
 actual CAD animation checks.
 
-## Feedback refinements
+## Earlier feedback refinements (historical)
 
 - Downpour now folds its real pivoting intake automatically as fuel drains while
   shooting. Its expanding hopper stays out. A CAD-measured contact margin removes
@@ -100,7 +100,7 @@ actual CAD animation checks.
 The default Windows port is now **5187**, as requested. Stop the old server and
 rerun the launcher to fetch these updates before testing.
 
-Final feedback verification on the current-main integration (`4154227`):
+Previous feedback verification on the current-main integration (`4154227`):
 
 - `pnpm test:sim`: **448 tests passed across 60 files**. The first feedback run
   found Prismarine's old extended-while-shooting assertion; it now checks the
@@ -123,3 +123,48 @@ Final feedback verification on the current-main integration (`4154227`):
 Prepared runtime hashes and provenance remain in each robot's asset records.
 The combined branch preserves all three feature histories and current main;
 no robot code is merged into main by this preview.
+
+## Loose cargo and Valor intake update
+
+- Simbot Tim now holds **73 full-size fuel** (previously 46). Its contact floor
+  follows the actual sloping fixed rollers and moving pickup; the moving U-shaped
+  cap and rear head bound the usable cavity.
+- Icarus now holds **50 full-size fuel** with one intake open (previously 37).
+  Its measured recessed bowl, raised platform, circular feeder and circular roof
+  opening replace the oversized central exclusion. The flexible net remains an
+  estimated floor envelope; N still selects one side with the eight-fuel switch
+  limit and complete close-before-open sequencing.
+- Both opt into contact restitution/friction and incoming-transfer momentum.
+  Balls respond to impacts, acceleration, turning and braking instead of losing
+  their motion on the bed. Fuel mass and payload accounting are unchanged.
+- Downpour's real 50.8 mm intake tube retains its surface tessellation/normals.
+  Exposed pulley/hub assemblies are restored, and four hubs follow their actual
+  moving shafts rather than floating independently. Runtime size is 2,679,448
+  bytes, 640,052 triangles and 38 primitives, within the existing limits.
+
+The separate feature branches merge into this preview without conflicts against
+main `4154227`. Shared additions are optional hopper floor profiles, moving lip
+contacts, clipped cylinder/annulus contact shapes, contact-response tuning and
+transfer momentum. Existing definitions retain their response unless opted in.
+
+A local isolated browser using the actual simulation and renderer collected and
+retained all 73 / 50 / 50 fuel (Simbotics, Icarus Primary, Icarus Opposite).
+Acceleration/braking displaced original stored spheres by up to .143 / .133 /
+.165 m respectively. Original body handles stayed stable and no page errors
+occurred. The screenshots show actual solved fuel, not decorative seed stacks.
+Runtime CAD for Tim and Icarus is unchanged in this update.
+
+The three individual release builds and combined release build pass integrity,
+TypeScript/Vite and payload checks; the combined pack is 27 files / 40.62 MiB,
+with 20 hashed build assets. The existing large-bundle warning remains.
+
+Final combined regression: `pnpm test:sim` passed **465 tests across 64 files**.
+All three robots passed the real app's search/detail/selection, blue/red practice,
+controls, intake/shoot/reverse/retraction, pause/reset and return-to-setup checks
+without page errors. Downpour's stowed, deployed, feeding, partial folding and
+shooting CAD poses were captured and inspected; the repaired tube and drive
+hardware remain assembled. One initial diagnostic screenshot timed out under
+concurrent software rendering; the recapture completed all five poses without
+production changes. Ignored evidence: `.tools/cargo-combined-sim.log`,
+`.tools/cargo-combined-release.log`, `.tools/live-cargo.json`,
+`.tools/valor-current-review.json` and `.tools/cargo-app-*.log`.
