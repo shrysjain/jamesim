@@ -1,4 +1,6 @@
-import { hopperObstacleContact } from '../robot/hopperGeometry';
+import { hopperFloorContact, hopperFloorHeight, hopperFloorPoints, hopperObstacleContact } from '../robot/hopperGeometry';
+import type { FloorPoint } from '../robot/hopperGeometry';
+import { COLLECTING_POSE } from '../robot/poses';
 import type { HopperVolume, RobotDefinition, RobotPose } from '../robot/RobotDefinition';
 import { FUEL_RADIUS } from './FuelSystem';
 import type { Fuel } from './FuelSystem';
@@ -16,16 +18,22 @@ const clamp = (value: number, limit: number) => Math.max(-limit, Math.min(limit,
  * double-count chassis payload mass; their local positions and velocities evolve here. */
 export class HopperDynamics {
   private particles = new Map<number, Particle>();
+  private arrivals = new Map<number, Vector>();
+  private floorPoints: FloorPoint[] = [];
   private lastMotion: Motion | null = null;
   constructor(private definition: RobotDefinition) {}
   get volume(): HopperVolume { return this.definition.hopper.volume!; }
-  reset() { this.particles.clear(); this.lastMotion = null; }
+  reset() { this.particles.clear(); this.arrivals.clear(); this.floorPoints = []; this.lastMotion = null; }
+  /** Continue the incoming transfer's local motion when ownership becomes stored. */
+  arrive(id: number, velocity: Vector) { this.arrivals.set(id, { ...velocity }); }
 
   step(dt: number, held: HopperFuel[], pose: RobotPose, motion: Motion, externalContact?: ExternalContact, indexerDirection = 0) {
+    this.floorPoints = hopperFloorPoints(this.definition, pose);
     const ids = new Set(held.filter(f => f.state === 'stored').map(f => f.id));
     for (const id of this.particles.keys()) if (!ids.has(id)) this.particles.delete(id);
     for (const fuel of held) if (fuel.state === 'stored' && !this.particles.has(fuel.id)) {
-      this.particles.set(fuel.id, { fuel, velocity: v3(), previous: { ...fuel.local } });
+      this.particles.set(fuel.id, { fuel, velocity: this.arrivals.get(fuel.id) ?? v3(), previous: { ...fuel.local } });
+      this.arrivals.delete(fuel.id);
     }
     const previous = this.lastMotion;
     // A deliberate respawn/teleport carries cargo intact instead of applying a fictitious impact.
@@ -37,7 +45,7 @@ export class HopperDynamics {
     this.lastMotion = { position: { ...motion.position }, velocity: { ...motion.velocity }, angularVelocity: { ...motion.angularVelocity }, rotation: { ...motion.rotation } };
     const gravity = unrotate(v3(0, -9.81, 0), motion.rotation);
     const balls = [...this.particles.values()];
-    const front = this.front(pose), width = this.volume.halfWidth - FUEL_RADIUS;
+    const front = this.front(pose), back = this.back(pose), width = this.volume.halfWidth - FUEL_RADIUS;
     const spills: { id: number; velocity: Vector }[] = [];
     // Two integration substeps bound moving-wall and sphere penetration without rendering dependence.
     const h = dt/2;
@@ -59,7 +67,7 @@ export class HopperDynamics {
             p.velocity.x += dx*blend; p.velocity.z += dz*blend;
           }
         }
-        const drag = Math.exp(-(this.volume.rim ? 1.8 : .8)*h);
+        const drag = Math.exp(-(this.definition.hopper.physics?.linearDamping ?? (this.volume.rim ? 1.8 : .8))*h);
         p.velocity = scale(p.velocity, drag);
         p.fuel.local = add(p.fuel.local, scale(p.velocity, h));
       }
@@ -82,14 +90,14 @@ export class HopperDynamics {
           for (const p of balls) externalContact(p.fuel.local,p.velocity);
         }
       }
-      if (this.volume.rim) this.contactVelocities(balls, front);
+      if (this.volume.rim || this.definition.hopper.physics) this.contactVelocities(balls, front, back);
       for (const p of balls) {
         // Open hoppers resolve contact impulses directly. Turning a seed-overlap
         // correction into velocity would launch fuel out of even a light load.
-        if (!this.volume.rim) p.velocity = scale(sub(p.fuel.local, p.previous), 1/h);
+        if (!this.volume.rim && !this.definition.hopper.physics) p.velocity = scale(sub(p.fuel.local, p.previous), 1/h);
         // Contact friction damps floor sliding and stops numerical vibration in settled stacks.
         const slope = this.volume.floorSlope ?? 0, normalLength = Math.sqrt(1+slope*slope);
-        if (p.fuel.local.y < this.floor(p.fuel.local.x)+FUEL_RADIUS*normalLength+.001) {
+        if (!this.definition.hopper.physics && p.fuel.local.y < this.floor(p.fuel.local.x)+FUEL_RADIUS*normalLength+.001) {
           const nx = -slope/normalLength, ny = 1/normalLength, vn = p.velocity.x*nx+p.velocity.y*ny;
           if (vn < 0) { p.velocity.x -= vn*nx; p.velocity.y -= vn*ny; }
           p.velocity = scale(p.velocity, Math.exp(-2*h));
@@ -99,7 +107,7 @@ export class HopperDynamics {
       }
       if (this.volume.rim) for (let i = balls.length - 1; i >= 0; i--) {
         const particle = balls[i], p = particle.fuel.local;
-        if (p.x >= front && p.x <= this.volume.backX && Math.abs(p.z) <= this.volume.halfWidth) continue;
+        if (p.x >= front && p.x <= back && Math.abs(p.z) <= this.volume.halfWidth) continue;
         // Once the center crosses a finite wall, hand the original fuel body
         // back to field physics at this position, with its local velocity.
         spills.push({ id: particle.fuel.id, velocity: { ...particle.velocity } });
@@ -111,25 +119,33 @@ export class HopperDynamics {
   /** Chassis motion is integrated after the local solver. Recheck static field
    * contacts at the completed pose so rendered cargo cannot lag into a beam. */
   resolveExternalContacts(held: HopperFuel[], pose: RobotPose, contact: ExternalContact) {
-    const spills: { id: number; velocity: Vector }[] = [], front = this.front(pose);
+    const spills: { id: number; velocity: Vector }[] = [], front = this.front(pose), back = this.back(pose);
     for (const f of held) if (f.state === 'stored') {
       const velocity = this.particles.get(f.id)?.velocity ?? v3();
       contact(f.local, velocity);
-      if (f.local.x >= front && f.local.x <= this.volume.backX && Math.abs(f.local.z) <= this.volume.halfWidth) continue;
+      if (f.local.x >= front && f.local.x <= back && Math.abs(f.local.z) <= this.volume.halfWidth) continue;
       spills.push({ id: f.id, velocity: { ...velocity } }); this.particles.delete(f.id);
     }
     return spills;
   }
   front(pose: RobotPose) { return this.volume.frontX + this.volume.frontTravel*(1-(this.definition.hopper.intakeCurve ? pose.hopper : pose.intake)); }
-  floor(x: number) { return this.volume.floorY + (this.volume.floorSlope ?? 0)*x; }
-  private contactVelocities(balls: Particle[], front: number) {
-    const rim = this.volume.rim!;
+  back(pose: RobotPose) { return this.volume.backX - (this.volume.backTravel ?? 0)*(1-(pose.opposedIntake ?? 0)); }
+  floor(x: number, pose?: RobotPose) {
+    const points = pose ? hopperFloorPoints(this.definition, pose) : this.floorPoints.length ? this.floorPoints : hopperFloorPoints(this.definition, COLLECTING_POSE);
+    return hopperFloorHeight(x, this.volume, points);
+  }
+  private contactVelocities(balls: Particle[], front: number, back: number) {
+    const rim = this.volume.rim, physics = this.definition.hopper.physics;
+    const restitution = (closing: number) => closing < -.25 ? physics?.restitution ?? 0 : 0;
     const stop = (velocity: Vector, normal: Vector) => {
       const closing = velocity.x*normal.x+velocity.y*normal.y+velocity.z*normal.z;
       if (closing < 0) {
-        velocity.x -= closing*normal.x; velocity.y -= closing*normal.y; velocity.z -= closing*normal.z;
-        const speed = Math.hypot(velocity.x,velocity.y,velocity.z), friction = Math.min(1,-closing*.25/(speed || 1));
-        velocity.x *= 1-friction; velocity.y *= 1-friction; velocity.z *= 1-friction;
+        const impulse = -closing*(1+restitution(closing));
+        velocity.x += impulse*normal.x; velocity.y += impulse*normal.y; velocity.z += impulse*normal.z;
+        const vn = velocity.x*normal.x+velocity.y*normal.y+velocity.z*normal.z;
+        const tangent = sub(velocity,scale(normal,vn)), speed = Math.hypot(tangent.x,tangent.y,tangent.z);
+        const friction = Math.min(1,impulse*(physics?.friction ?? .25)/(speed || 1));
+        velocity.x -= tangent.x*friction; velocity.y -= tangent.y*friction; velocity.z -= tangent.z*friction;
       }
     };
     for (let iteration = 0; iteration < 4; iteration++) {
@@ -139,23 +155,27 @@ export class HopperDynamics {
         const normal = scale(delta, 1/distance), relative = sub(b.velocity, a.velocity);
         const closing = relative.x*normal.x+relative.y*normal.y+relative.z*normal.z;
         if (closing < 0) {
-          a.velocity = add(a.velocity, scale(normal, closing/2)); b.velocity = sub(b.velocity, scale(normal, closing/2));
+          const impulse = -closing*(1+restitution(closing))/2;
+          a.velocity = sub(a.velocity, scale(normal, impulse)); b.velocity = add(b.velocity, scale(normal, impulse));
           const tangent = sub(relative,scale(normal,closing)), speed = Math.hypot(tangent.x,tangent.y,tangent.z);
-          const friction = scale(tangent,Math.min(.5,-closing*.2/(2*(speed || 1))));
+          const friction = scale(tangent,Math.min(.5,impulse*(physics?.friction ?? .2)/(speed || 1)));
           a.velocity = add(a.velocity,friction); b.velocity = sub(b.velocity,friction);
         }
       }
       for (const { fuel: { local: p }, velocity } of balls) {
         for (const [axis, plane, inward, top] of [
-          ['x',front,1,rim.front], ['x',this.volume.backX,-1,rim.back],
-          ['z',-this.volume.halfWidth,1,rim.sides], ['z',this.volume.halfWidth,-1,rim.sides],
+          ['x',front,1,rim?.front ?? Infinity], ['x',back,-1,rim?.back ?? Infinity],
+          ['z',-this.volume.halfWidth,1,rim?.sides ?? Infinity], ['z',this.volume.halfWidth,-1,rim?.sides ?? Infinity],
         ] as const) {
           const d = (p[axis]-plane)*inward, y = Math.max(0,p.y-top), distance = Math.hypot(d,y);
           if (d < 0 || distance > FUEL_RADIUS+.001 || distance < 1e-8) continue;
           stop(velocity, axis === 'x' ? v3(d*inward/distance,y/distance,0) : v3(0,y/distance,d*inward/distance));
         }
-        const slope = this.volume.floorSlope ?? 0, length = Math.sqrt(1+slope*slope);
-        if (p.y <= this.floor(p.x)+FUEL_RADIUS*length+.001) stop(velocity,v3(-slope/length,1/length,0));
+        if (!rim || p.x >= front && p.x <= back && Math.abs(p.z) <= this.volume.halfWidth) {
+          const floor = hopperFloorContact([p.x,p.y,p.z],this.volume,this.floorPoints);
+          if (floor.distance <= FUEL_RADIUS+.001) stop(velocity,v3(...floor.normal));
+        }
+        if (!rim && p.y >= this.volume.ceilingY-FUEL_RADIUS-.001) stop(velocity,v3(0,-1,0));
         for (const box of this.definition.hopper.obstacles ?? []) {
           const contact = hopperObstacleContact([p.x,p.y,p.z],box);
           if (contact.distance <= FUEL_RADIUS+.001) stop(velocity,v3(...contact.normal));
@@ -164,6 +184,7 @@ export class HopperDynamics {
     }
   }
   private constrain(p: Vector, front: number, width: number, pose: RobotPose) {
+    const back = this.back(pose);
     for (const box of this.definition.hopper.obstacles ?? []) {
       const contact = hopperObstacleContact([p.x,p.y,p.z],box), penetration = FUEL_RADIUS-contact.distance;
       if (penetration > 0) {
@@ -173,25 +194,29 @@ export class HopperDynamics {
     const rim = this.volume.rim;
     if (rim) {
       this.wall(p, 'x', front, 1, rim.front);
-      this.wall(p, 'x', this.volume.backX, -1, rim.back);
+      this.wall(p, 'x', back, -1, rim.back);
       this.wall(p, 'z', -this.volume.halfWidth, 1, rim.sides);
       this.wall(p, 'z', this.volume.halfWidth, -1, rim.sides);
       // An escaped sphere has no imaginary hopper floor outside the frame.
-      if (p.x >= front && p.x <= this.volume.backX && Math.abs(p.z) <= this.volume.halfWidth) {
-        const slope = this.volume.floorSlope ?? 0, penetration = this.floor(p.x)+FUEL_RADIUS*Math.sqrt(1+slope*slope)-p.y;
-        if (penetration > 0) { p.x -= slope*penetration/(1+slope*slope); p.y += penetration/(1+slope*slope); }
+      if (p.x >= front && p.x <= back && Math.abs(p.z) <= this.volume.halfWidth) {
+        this.constrainFloor(p);
       }
       return;
     }
-    p.x = Math.max(front+FUEL_RADIUS, Math.min(this.volume.backX-FUEL_RADIUS, p.x));
+    p.x = Math.max(front+FUEL_RADIUS, Math.min(back-FUEL_RADIUS, p.x));
     p.z = Math.max(-width, Math.min(width, p.z));
     p.y = Math.min(this.volume.ceilingY+(this.volume.ceilingTravel ?? 0)*(pose.climber ?? 0)-FUEL_RADIUS, p.y);
-    const slope = this.volume.floorSlope ?? 0, penetration = this.floor(p.x)+FUEL_RADIUS*Math.sqrt(1+slope*slope)-p.y;
-    if (penetration > 0) { p.x -= slope*penetration/(1+slope*slope); p.y += penetration/(1+slope*slope); }
+    this.constrainFloor(p);
     if (this.volume.slopedFront) {
       // REBLITZ's upper front panel slopes inward; enforce it in physics, not only in rendering.
       const diagonal = (p.y-p.x + FUEL_RADIUS*Math.SQRT2 - .832565);
       if (diagonal > 0) { p.x += diagonal/2; p.y -= diagonal/2; }
+    }
+  }
+  private constrainFloor(p: Vector) {
+    const contact = hopperFloorContact([p.x,p.y,p.z],this.volume,this.floorPoints), penetration = FUEL_RADIUS-contact.distance;
+    if (penetration > 0) {
+      p.x += contact.normal[0]*penetration; p.y += contact.normal[1]*penetration; p.z += contact.normal[2]*penetration;
     }
   }
   private wall(p: Vector, axis: 'x' | 'z', plane: number, inward: number, top: number) {
