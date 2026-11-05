@@ -30,7 +30,7 @@ export type RobotDefinition = {
     /** Optional unloaded wheel braking response; chassis forces remain grip-limited. */
     brakeAcceleration?: number };
   modules: { name: string; x: number; z: number }[];
-  intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; passiveKicker?: boolean; opposed?: { pivot: Vec3; stowTravel: number; stowRise?: number } };
+  intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; /** Optional lower slide fraction during automatic shooting compression; manual stow remains available. */ shootingMinExtension?: number; passiveKicker?: boolean; opposed?: { pivot: Vec3; stowTravel: number; stowRise?: number } };
   hopper: { stowTravel: number; coupledToIntake?: boolean; autoLift?: { loweredCapacity: number }; intakeCurve?: number[];
     volume?: HopperVolume; fixedSlot?: number; entry?: Vec3; entryHalfWidth?: number;
     /** Fixed internal CAD envelopes, e.g. an indexer cone or feed tower. */

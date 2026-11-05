@@ -42,6 +42,7 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   if (d.hopper.autoLift) check(!!d.climb && (d.hopper.volume?.ceilingTravel ?? 0) > 0 && Number.isInteger(d.hopper.autoLift.loweredCapacity) && d.hopper.autoLift.loweredCapacity > 0 && d.hopper.autoLift.loweredCapacity < m.capacity,
     'Automatic hopper lift requires the real vertical stage and a valid lowered capacity.');
   check(vector(d.intake.pivot) && vector(d.hood.pivot) && Number.isFinite(d.intake.stowedAngle) && Number.isFinite(d.hood.maxAngle), 'Mechanism transforms must be finite.');
+  if (d.intake.shootingMinExtension !== undefined) check(Number.isFinite(d.intake.shootingMinExtension) && d.intake.shootingMinExtension >= 0 && d.intake.shootingMinExtension <= 1 && positive(d.intake.stowTravel ?? 0) && m.compress, 'Shooting minimum extension requires a compressing slide and a fraction in [0,1].');
   check(d.colliders.length > 0 && d.colliders.every(c => ['chassis', 'intake', 'opposedIntake', 'hopper', 'hood', 'climber'].includes(c.part) && vector(c.center) && c.halfExtents.every(positive) && (c.radius === undefined || Number.isFinite(c.radius) && c.radius >= 0)), 'Collider envelopes must be finite with positive extents.');
   const pickupValid = (p: typeof d.pickup) => [p.minX,p.maxX,p.halfWidth,p.mouthX,p.ejectX].every(Number.isFinite) && p.minX < p.maxX && positive(p.halfWidth);
   check(pickupValid(d.pickup), 'Pickup bounds must be finite and ordered.');

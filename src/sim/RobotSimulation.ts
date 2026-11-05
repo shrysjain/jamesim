@@ -153,7 +153,8 @@ export class RobotSimulation {
       const approach = (v: number, target: number, seconds: number) => v + Math.max(-dt / seconds, Math.min(dt / seconds, target - v));
       const compress = shoot || (supportsIntakeToggle(this.chassis.definition) && !this.intakeOut && !this.input.intake && !this.input.reverse);
       const manual = this.chassis.definition.intake.manualRetraction && !this.intakeOut && !demand;
-      const target = demand ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? cargoExtension(held.length, this.capacity) : 1;
+      const shootingExtension = Math.max(cargoExtension(held.length, this.capacity), shoot ? this.chassis.definition.intake.shootingMinExtension ?? 0 : 0);
+      const target = demand ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? shootingExtension : 1;
       this.intakeTarget = target;
       let intake = approach(this.chassis.pose.intake, target, target < this.chassis.pose.intake ? INTAKE.compressSeconds : INTAKE.deploySeconds);
       let opposedIntake: number | undefined;
@@ -340,7 +341,7 @@ export class RobotSimulation {
   get telemetry(): MechanismTelemetry {
     const held = this.held, counts = this.fuel.counts;
     const mode = this.inspectionPose ? 'Pose preview' : this.overturnedFor > 0.25 ? 'Spilling' : this.outletBlocked ? 'Outlet blocked'
-      : this.input.reverse ? 'Reversing' : !this.deployed ? 'Deploying' : this.mechanism.compress && this.input.shoot && this.activeExtension > cargoExtension(held.length, this.capacity) + 0.01 ? 'Compressing'
+      : this.input.reverse ? 'Reversing' : !this.deployed ? 'Deploying' : this.mechanism.compress && this.input.shoot && this.activeExtension > Math.max(cargoExtension(held.length, this.capacity), this.chassis.definition.intake.shootingMinExtension ?? 0) + 0.01 ? 'Compressing'
       : this.input.intake ? this.activeExtension < 0.92 ? 'Deploying' : held.length === this.capacity ? 'Full' : 'Intaking' : held.length ? 'Holding' : this.activeExtension > 0.92 ? 'Deployed' : 'Stowed';
     const wantsIn = (this.mechanism.compress && !!this.input.shoot) || (supportsIntakeToggle(this.chassis.definition) && !this.intakeOut && !this.input.intake && !this.input.reverse);
     const intakeStatus = wantsIn && this.intakeTarget > .02 && Math.abs(this.activeExtension - this.intakeTarget) < .02 ? 'Cargo limited'
