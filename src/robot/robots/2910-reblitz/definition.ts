@@ -10,7 +10,7 @@ import { REBLITZ_CARGO, REBLITZ_FEEDER_POCKET, REBLITZ_VOLUME } from './cargo';
 export const REBLITZ: RobotDefinition = {
   id: '2910-reblitz', teamNumber: '2910', visual: REBLITZ_VISUAL, name: '2910 Re•Blitz', model: '/assets/robots/2910-reblitz/robot.glb',
   summary: 'Chassis aim · four shooting lanes',
-  mechanisms: { capacity: REBLITZ_CARGO.length, intakeRate: 44, compress: true, lanes: [-0.2286, -0.0762, 0.0762, 0.2286], fireRate: 32, turret: false, movingShots: false, movingPasses: true, climb: false },
+  mechanisms: { capacity: REBLITZ_CARGO.length, intakeRate: 44, compress: true, lanes: [-0.2286, -0.0762, 0.0762, 0.2286], fireRate: 32, turret: false, movingShots: false, movingPasses: true, simultaneousIntake: true, climb: false },
   ...STANDARD_SWERVE,
   cargoSlots: REBLITZ_CARGO,
   pickup: { minX: -.79, maxX: -.44, halfWidth: .29, mouthX: -.53, ejectX: -.755 },
