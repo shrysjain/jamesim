@@ -1,3 +1,4 @@
+import { keyLabel } from '../controls';
 import type { Controls } from '../controls';
 import { lazy, Suspense, useState, useRef } from 'react';
 import { ROBOTS } from '../robot/RobotDefinition';
@@ -39,6 +40,7 @@ export function SetupScreen({ config, practice: initialPractice, onStart, onSett
         <div className="section-heading"><h2>Robot</h2><button ref={changeButton} className="change-robot" onClick={() => setBrowsing(true)}>Change robot →</button></div>
         <div className={`robot-choice alliance-${alliance}`}><span className="team-number">{robot.teamNumber}</span><div className="robot-choice-identity"><strong>{identity.team}</strong>{identity.machine && <span>{identity.machine}</span>}<small>{robot.summary}</small></div></div>
         <RobotStats robot={robot} compact />
+        {robot.intake.opposed && <p className="section-note">One intake at a time. Primary follows the map arrow; Opposite faces the other way. <kbd>{controls.keys.switchIntake.map(keyLabel).join(' / ') || 'Unbound'}</kbd> switches sides after emptying to eight fuel. The gold arrow marks the selected side during play.</p>}
         <div className="robot-preview"><Suspense fallback={<p>Loading robot…</p>}><RobotPreview robot={robot} alliance={alliance} /></Suspense><span>Drag to inspect</span></div>
         <fieldset className="alliance-choice"><legend>Alliance</legend>{(['blue', 'red'] as const).map(a => <button key={a} className={a} aria-pressed={alliance === a} onClick={() => chooseAlliance(a)}><i />{a}</button>)}</fieldset>
       </section>
