@@ -381,7 +381,15 @@
     "log": ".tools/intake-cargo-final.log",
     "browser": "Live physical intake filled and retained48; automatic shooting captured34 remaining at intake .6565 with full .075m contact clearance, then released all48 original IDs and fully retracted, no page errors. Combined preview .tools/valor-retraction-browser.json.",
     "transferring": "The final in-flight physical pickup also yields to moving bars, with12 contact passes matching the stored solver budget; all3 intake-fold cases pass (.tools/intake-transfer-resolved.log).",
-    "qualification": "31 robot/contact cases passed before adding the incoming-transfer edge case; the updated3-case intake-fold file passes with the final contact correction. Final all-PR suite is tracked in preview review notes."
+    "qualification": "31 robot/contact cases passed before adding the incoming-transfer edge case; the updated3-case intake-fold file passes with the final contact correction. Final all-PR suite is tracked in preview review notes.",
+    "finalAllPrValidation": {
+      "tests": 474,
+      "files": 66,
+      "result": "passed; all three robot branches plus existing PR11",
+      "robotContactCoverage": "32 cases across six files, including all3 intake fold/transfer cases.",
+      "evidence": "/workspace/jamesim-pr-compatibility/.tools/all-pr-simulation-final.log",
+      "release": "All3 standalone release builds and all-PR integration release passed."
+    }
   },
   "independentPrIntegration": {
     "main": "4154227b2200009ef7e0be6ece0a9d2e605604a3",
