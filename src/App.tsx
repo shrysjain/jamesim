@@ -151,7 +151,8 @@ export function App() {
           Team 1678 Citrus Circuits,{' '}
           Team 9496 LYNK,{' '}
           Team 3847 Spectrum,{' '}
-          Team 4481 Rembrandts
+          Team 4481 Rembrandts,{' '}
+          Team 6800 Valor
         </p>
         <p>Match audio · Team 254 Cheesy Arena</p>
         <p>Barlow · Jeremy Tribby, SIL OFL</p>

@@ -8,6 +8,7 @@ import { DARWIN } from './robots/6328-darwin/definition';
 import { LIMESTONE } from './robots/1678-limestone/definition';
 import { MATTERHORN } from './robots/9496-matterhorn/definition';
 import { ERA_II } from './robots/4481-era-ii/definition';
+import { DOWNPOUR } from './robots/6800-downpour/definition';
 
 // Integration point: one import and entry per robot. Preserve existing IDs/order.
 export { REBLITZ, KEPLER };
@@ -22,5 +23,6 @@ export const ROBOTS = {
   '5000-icarus-2': ICARUS,
   '4481-era-ii': ERA_II,
   '8592-prismarine': PRISMARINE,
+  '6800-downpour': DOWNPOUR,
 };
 export type RobotId = keyof typeof ROBOTS;
