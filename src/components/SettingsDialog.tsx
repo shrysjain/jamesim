@@ -2,6 +2,7 @@ import { ControlsSettings } from './ControlsSettings';
 import { DEFAULT_SETTINGS } from '../settings';
 import type { GraphicsPreset, Settings } from '../settings';
 import { Dialog } from './Dialog';
+import { PLAYER_CAMERAS } from '../view/playerCamera';
 
 export function SettingsDialog({ settings, onChange, onClose, onAbout }: {
   settings: Settings; onChange: (settings: Settings) => void; onClose: () => void; onAbout: () => void;
@@ -11,6 +12,7 @@ export function SettingsDialog({ settings, onChange, onClose, onAbout }: {
     <label className="setting-volume"><span>Volume<output>{Math.round(settings.volume * 100)}%</output></span><input aria-label="Sound volume" type="range" min={0} max={1} step={0.05} value={settings.volume} onChange={e => onChange({ ...settings, volume: Number(e.target.value) })} /></label>
     <fieldset className="graphics-choice"><legend>Graphics</legend><div>{(['low', 'medium', 'high'] as const).map(preset => <button key={preset} aria-pressed={settings.graphics === preset} onClick={() => onChange({ ...settings, graphics: preset as GraphicsPreset })}>{preset}</button>)}</div><p>Medium is a good starting point. Lower graphics reduce resolution and shadows.</p></fieldset>
 
+    <fieldset className="graphics-choice"><legend>Camera</legend><div>{PLAYER_CAMERAS.map(camera => <button key={camera.id} aria-pressed={settings.camera === camera.id} onClick={() => onChange({ ...settings, camera: camera.id })}>{camera.label}</button>)}</div><p>{PLAYER_CAMERAS.find(camera => camera.id === settings.camera)?.help}</p></fieldset>
     <ControlsSettings controls={settings.controls} onChange={controls => onChange({ ...settings, controls })} />
     <div className="settings-links"><button onClick={() => onChange({ ...DEFAULT_SETTINGS })}>Restore defaults</button><button onClick={onAbout}>About & credits</button></div>
     <button className="primary-button" onClick={onClose}>Done</button>
