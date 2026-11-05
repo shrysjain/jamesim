@@ -408,9 +408,11 @@
     "cleanOrders": 24,
     "commonMechanismAncestors": [
       "56a2273",
-      "191c137"
+      "191c137",
+      "266a51a",
+      "af91f23"
     ],
     "qualification": "All three robot branches and PR11 merged in every order onto main, producing one identical tree. Original main robot IDs/relative order retained; each feature branch adds only its own robot. Recheck after future edits.",
-    "standaloneRelease": "pnpm build:release passed with pinned Node26/pnpm10.20.0; ignored evidence .tools/pr-release.log."
+    "standaloneRelease": "Final pnpm build:release passed on Node26/pnpm10.20.0; ignored evidence .tools/pr-release-final.log."
   }
 }
