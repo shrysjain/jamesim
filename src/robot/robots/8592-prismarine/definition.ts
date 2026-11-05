@@ -58,7 +58,7 @@ export const PRISMARINE: RobotDefinition = {
   mechanisms: {
     capacity: 40,
     intakeRate: 24,
-    compress: false,
+    compress: true,
     lanes: [0],
     fireRate: 8,
     feedSeconds: 0.3,

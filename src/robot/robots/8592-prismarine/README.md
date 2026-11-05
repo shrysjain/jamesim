@@ -89,3 +89,7 @@ The source foam has embossed number geometry, which remains visible even when re
 The combined roster uses the shared `fixedElevation` contract for the 64° hood. This replaces the branch-local equal-limit search special case and keeps Matterhorn and Prismarine on the same physical fixed-angle solver. The original CAD and hood angle remain unchanged. Registry integration preserves all eight robots.
 
 The combined wall-contact regression exposed slow reversal of unloaded spinning wheels at the estimated 8 m/s² powered response. Prismarine now uses the existing separate 16 m/s² braking response (a gameplay estimate, matching the 2× braking convention already used by Era II). Powered acceleration remains 8 m/s² and tire forces remain traction-limited. Empty and full-load wall escape must pass the original shared bounds.
+
+## Automatic intake compression
+
+The universal sliding-intake behavior now retracts Prismarine while Aim / shoot / pass is held, limited by owned cargo. Releasing shooting extends it again; V retains manual retraction. This changes the former `compress: false` setting without changing CAD, capacity, shot tuning or the current selector visibility.
