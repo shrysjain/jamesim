@@ -1,5 +1,6 @@
 import RAPIER from '@dimforge/rapier3d-compat';
-import { FIELD_HALF_LENGTH, shotTarget } from '../field/targets';
+import { FIELD_HALF_LENGTH } from '../field/targets';
+import { selectShotTarget } from '../field/passTargets';
 import type { Alliance, ShotTarget } from '../field/targets';
 import { FUEL_LINEAR_DAMPING, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { FuelSystem } from './FuelSystem';
@@ -59,7 +60,7 @@ export class Shooter {
   solution: AimSolution | null = null;
   readonly shots: ShotEvent[] = []; // bounded recent launch records for bench inspection
   shotsFired = 0;
-  private selection: { alliance: Alliance; kind: ShotTarget['kind']; time: number; extra: number; obstructed: boolean; until: number } | null = null;
+  private selection: { alliance: Alliance; kind: ShotTarget['kind']; intermediate: boolean; time: number; extra: number; obstructed: boolean; until: number } | null = null;
   private active = false;
   private blocked = false;
   private chassisAimTurnSign = 0;
@@ -145,19 +146,21 @@ export class Shooter {
   }
 
   solve(): AimSolution | null {
-    const base = shotTarget(this.chassis.body.translation(), this.alliance), sign = this.alliance === 'blue' ? 1 : -1;
+    const { target: base, intermediate } = selectShotTarget(this.chassis.body.translation(), this.alliance,
+      this.geometry.passRange ?? SHOOTER.passRange, this.geometry.passLandingExtra ?? 0);
+    const sign = this.alliance === 'blue' ? 1 : -1;
     const targetAt = (extra: number): ShotTarget => ({ kind: base.kind, position: { ...base.position,
-      x: base.kind === 'Pass' ? sign * Math.min(FIELD_HALF_LENGTH - 0.55, Math.abs(base.position.x) + extra + (this.geometry.passLandingExtra ?? 0)) : base.position.x } });
+      x: base.kind === 'Pass' ? sign * Math.min(FIELD_HALF_LENGTH - 0.55, sign * base.position.x + extra) : base.position.x } });
     // Re-select arcs at 20 Hz; recompute motion compensation and yaw from current physics every tick.
     const cached = this.selection;
-    if (cached && cached.alliance === this.alliance && cached.kind === base.kind && this.fuel.time < cached.until) {
+    if (cached && cached.alliance === this.alliance && cached.kind === base.kind && cached.intermediate === intermediate && this.fuel.time < cached.until) {
       const current = this.candidate(targetAt(cached.extra), cached.time);
       if (current) return { ...current.solution, obstructed: cached.obstructed };
     }
     let blocked: AimSolution | null = null;
-    // A fixed hood cannot loft a steeper arc. Search farther safe landing
-    // points within the same alliance zone instead of changing its angle.
-    const passOffsets = this.geometry.fixedElevation === undefined ? [0, .2, .4, .6, .8, 1] : Array.from({ length: 16 }, (_, i) => i * .2);
+    // Keep an intermediate target on its chosen clear floor. For home-zone
+    // passes, a fixed hood can search farther instead of changing its angle.
+    const passOffsets = intermediate ? [0] : this.geometry.fixedElevation === undefined ? [0, .2, .4, .6, .8, 1] : Array.from({ length: 16 }, (_, i) => i * .2);
     for (const extra of base.kind === 'Pass' ? passOffsets : [0]) {
       const target = targetAt(extra), candidates = [];
       const times = this.geometry.fixedElevation === undefined ? Array.from({ length: 115 }, (_, i) => .35 + i * .025) : this.fixedFlightTimes(target);
@@ -167,12 +170,12 @@ export class Shooter {
       candidates.sort((a, b) => a.cost - b.cost);
       blocked ??= candidates[0]?.solution ?? null;
       for (const candidate of candidates) if (this.clearExit(0, candidate.solution.elevation) && this.clearTrajectory(candidate.muzzle, candidate.launch, candidate.solution.time, base.kind === 'Pass' ? .18 : .008)) {
-        this.selection = { alliance: this.alliance, kind: base.kind, time: candidate.solution.time, extra, obstructed: false, until: this.fuel.time + 0.05 };
+        this.selection = { alliance: this.alliance, kind: base.kind, intermediate, time: candidate.solution.time, extra, obstructed: false, until: this.fuel.time + 0.05 };
         return candidate.solution;
       }
     }
     if (blocked) {
-      this.selection = { alliance: this.alliance, kind: base.kind, time: blocked.time, extra: 0, obstructed: true, until: this.fuel.time + 0.05 };
+      this.selection = { alliance: this.alliance, kind: base.kind, intermediate, time: blocked.time, extra: 0, obstructed: true, until: this.fuel.time + 0.05 };
       return { ...blocked, obstructed: true };
     }
     this.selection = null; return null;

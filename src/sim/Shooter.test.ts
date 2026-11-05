@@ -165,12 +165,18 @@ describe('Jamesim shooter bench', () => {
     } finally { s.dispose(); }
   });
 
-  it('retains fuel when the nearest alliance-zone pass exceeds the 33-foot reach', async () => {
+  it('passes toward home within rated reach when the alliance zone is too far away', async () => {
     const s = await setup(1, floor, [-6.2, 0.26, 1.5]);
     try {
-      s.robotController!.input.shoot = true; run(s, 0.5);
-      expect(s.robotController!.shooter.telemetry.mode).toBe('Out of range');
-      expect(s.robotController!.shooter.shotsFired).toBe(0); expect(s.robotController!.held).toHaveLength(1); conserved(s);
+      const handles = s.fuel.map(f => f.handle);
+      s.robotController!.input.shoot = true; run(s, 3);
+      const shooter = s.robotController!.shooter;
+      expect(shooter.shotsFired).toBe(1);
+      const shot = shooter.shots[0]; expect(shot.target.kind).toBe('Pass');
+      expect(shot.target.position.x).toBeGreaterThan(-6.2);
+      expect(shot.target.position.x).toBeLessThan(ALLIANCE_LINE);
+      expect(Math.hypot(shot.target.position.x + 6.2, shot.target.position.z - 1.5)).toBeLessThanOrEqual(SHOOTER.passRange);
+      expect(s.fuel.map(f => f.handle)).toEqual(handles); conserved(s);
     } finally { s.dispose(); }
   });
 
