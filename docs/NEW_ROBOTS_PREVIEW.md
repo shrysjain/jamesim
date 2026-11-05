@@ -168,3 +168,28 @@ concurrent software rendering; the recapture completed all five poses without
 production changes. Ignored evidence: `.tools/cargo-combined-sim.log`,
 `.tools/cargo-combined-release.log`, `.tools/live-cargo.json`,
 `.tools/valor-current-review.json` and `.tools/cargo-app-*.log`.
+
+## Intake retraction and independent PR review
+
+Downpour now uses seven moving cargo contact boxes fitted around its powered
+roller, two static tubes, two crossbars and both side plates. They follow the
+same pivot/pose as CAD. Feeding fuel also yields to moving intake contacts;
+static feeder envelopes remain part of its intended managed feed route.
+The 48-fuel capacity, original IDs/bodies and fuel mass are unchanged.
+Focused validation passes 31 robot/contact cases across six files, including
+all held states during full-load shooting and manual partial-load retraction.
+The live intake acquired48, retained48, kept full-radius clearance with34 held
+at intake extension .6565, and physically released all48 while fully retracting.
+No browser page errors occurred. Evidence: `.tools/valor-retraction-browser.json`.
+
+The standalone branches now share optional mechanism code through common merge
+ancestors `56a2273` and `191c137`. Their registration and attribution additions
+occupy independent lines; every original robot ID and its relative order remain.
+Each feature branch contains only its own added definition/model. All24 normal
+Git merge orders of Valor, Icarus, Tim and existing tuning PR #11 onto main
+`4154227` pass and produce one identical tree. This is a check at those refs,
+not a guarantee after future edits or history rewriting. The only other open PR
+at this check was #11 (`8ad379a`). No tuning changes or main updates were pushed
+by this preview task. Detailed shared path/source/estimate disclosures accompany
+the three individual robot PRs. The local compatibility worktree tests the
+superset with #11; this preview keeps the three-robot integration on current main.
