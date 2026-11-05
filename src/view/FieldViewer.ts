@@ -11,6 +11,7 @@ import type { CollisionAsset, FieldElement, FieldManifest, Vec3 } from '../field
 import { NEUTRAL_INPUT } from '../sim/SwerveChassis';
 import type { DriveTelemetry, DriveSpawn } from '../sim/SwerveChassis';
 import { RobotView } from './RobotView';
+import { FOLLOW_FRAME, stabilizeFollowCamera } from './followCamera';
 import { toRobotInput } from '../sim/driveInput';
 import type { DriveFrame } from '../sim/driveInput';
 import type { RobotPose } from '../robot/RobotDefinition';
@@ -464,14 +465,15 @@ export class FieldViewer {
     if (!robot) return;
     const p = robot.body.translation(), heading = this.driveFrame === 'field' ? (this.sim.robotController?.shooter.alliance === 'red' ? 0 : Math.PI) : robot.telemetry.heading;
     const forward = new THREE.Vector3(Math.cos(heading), 0, -Math.sin(heading));
-    const target = new THREE.Vector3(p.x, p.y + 0.25, p.z).addScaledVector(forward, 0.5);
-    const desired = new THREE.Vector3(p.x, p.y + 2.9, p.z).addScaledVector(forward, -4.8);
+    const target = new THREE.Vector3(p.x, p.y + FOLLOW_FRAME.targetHeight, p.z).addScaledVector(forward, FOLLOW_FRAME.ahead);
+    const desired = new THREE.Vector3(p.x, p.y + FOLLOW_FRAME.height, p.z).addScaledVector(forward, -FOLLOW_FRAME.back);
     if (snap) { this.followPosition.copy(desired); this.followTarget.copy(target); }
     else {
       this.followPosition.lerp(desired, 1 - Math.exp(-7 * delta));
       this.followTarget.lerp(target, 1 - Math.exp(-10 * delta));
     }
     // Spectator camera: field contacts must never collapse its distance to the robot.
+    stabilizeFollowCamera(this.followPosition, this.followTarget, forward);
     this.camera.position.copy(this.followPosition);
     this.camera.lookAt(this.followTarget);
     if (import.meta.env.DEV) this.controls.target.copy(this.followTarget);
