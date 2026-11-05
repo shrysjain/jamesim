@@ -2,6 +2,7 @@ import {describe,it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {FieldSimulation} from '../../../sim/FieldSimulation';
+import {RobotSimulation} from '../../../sim/RobotSimulation';
 import {DEFAULT_MATCH} from '../../../sim/MatchRules';
 import {FUEL_RADIUS,fuelRestitution} from '../../../sim/FuelSystem';
 import {CollisionGroups} from '../../../sim/collisionGroups';
@@ -12,8 +13,9 @@ import type {CollisionAsset} from '../../../field/types';
 const field=JSON.parse(readFileSync('public/assets/field-collisions.json','utf8')) as CollisionAsset;
 const run=(s:FieldSimulation,seconds:number)=>{for(let i=0;i<Math.round(seconds*120);i++)s.update(1/120);};
 const sphere=()=>new RAPIER.Ball(FUEL_RADIUS),identity={x:0,y:0,z:0,w:1};
-async function setup(x:number,z:number,count=1){
- const s=await FieldSimulation.create(field,Array.from({length:count},(_,i):[number,number,number]=>[0,.08,i*.16]),true);
+async function setup(x:number,z:number,count=1,covered=true){
+ const s=await FieldSimulation.create(field,Array.from({length:count},(_,i):[number,number,number]=>[0,.08,i*.16]),false);
+ s.robotController=new RobotSimulation(s.world,s.fuelSystem,s.colliderElements,{...MATTERHORN,hopper:{...MATTERHORN.hopper,retainingNet:covered?MATTERHORN.hopper.retainingNet:undefined}});
  s.startSession({...DEFAULT_MATCH,robot:'9496-matterhorn',preloads:0},true);
  s.robot!.teleport([x,.26,z]);run(s,.4);return s;
 }
@@ -86,8 +88,8 @@ describe('Matterhorn exposed fuel and actual field CAD',()=>{
    expect(hit.collider.contactShape(sphere(),r.renderPosition(f),identity,.005)?.distance??0).toBeGreaterThanOrEqual(-.003);
   }finally{s.dispose();}
  });
- it('lets an original spilled body hit the trench, then restores shot/reset materials',async()=>{
-  const s=await setup(3.5,3.35);
+ it('the uncovered control lets an original spilled body hit the trench, then restores shot/reset materials',async()=>{
+  const s=await setup(3.5,3.35,1,false);
   try{
    const r=s.robotController!,f=s.fuelSystem.records[0],handle=f.body.handle;
    const origin=v3(3.6,1.5,3.35),roof=s.world.castRay(new RAPIER.Ray(origin,v3(0,-1,0)),1.2,true,RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC)!;

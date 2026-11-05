@@ -46,7 +46,7 @@ Final CAD payload: **2,989,292 bytes / 617,626 rendered triangles / 121 primitiv
 | Projectile elevation | 56 degrees | Fitted complementary-angle interpretation of the early hood discussion, not a measured release calibration |
 | Full-width output | Three scheduling bands centered at Z −.12333, 0, +.12333 m, each with ±.06167 m variation | Continuous fuel-center coverage ±.185 m, with a full 75 mm sphere radius inside the measured .5255 m drum span |
 | Intake limit | 42 full-size 150 mm fuel | Fitted non-overlapping entry seeds; upper fuel can spill while driving. This is an intake limit, not a guaranteed retained load or measured team capacity |
-| Hopper floor/rim | Sloped floor; local wall tops Y=.308 front, .34 rear and .31 sides | Finite wall contacts fitted to CAD panel/shooter tops. No invisible lid or simulated retaining net |
+| Hopper floor/rim | Sloped floor; local wall tops Y=.308 front, .34 rear and .31 sides | Finite CAD panel contacts plus the fitted, source-confirmed retaining-net enclosure |
 | Cargo seed height / inlet | Local Y≤.44 m / `[-.45, .24, 0]` | Seed height is not a dynamic ceiling. Actual intake enters at the inlet and falls into evolving cargo, rather than targeting an old packing slot |
 | Rear storage limit | X = −.006 m, ahead of the CAD shooter housing | Bounds the complete 75 mm-radius fuel, so stored spheres cannot enter the drum or motor/sideplate region |
 | Hopper panel finish | Smoke-gray RGBA `[.12, .13, .14, .42]`, nonmetallic, double-sided alpha blend | User-requested visual finish on the five original hopper panels; hardware keeps its CAD material |
@@ -55,7 +55,11 @@ Final CAD payload: **2,989,292 bytes / 617,626 rendered triangles / 121 primitiv
 | Moving-accuracy rating | .90 | Relative uncertainty input, not a 90% hit guarantee |
 | Release uncertainty | .030 yaw / .035 elevation radians, .035 speed fraction, .10 wider-tail probability, 30 rad/s spin | Explicit gameplay estimates; misses/rebounds remain physical |
 
-Stored fuel subsequently moves in the existing local sphere solver. Full-size entry seeds do not pin a visual stack or create replacement ammunition. Payload mass is accounted once through original held fuel IDs/bodies. Finite wall contacts approximate the CAD panels. Spheres contact the rim and can roll over it. An escaped sphere re-enables its original Rapier body at the solved position, with local and chassis linear/angular motion, and leaves payload accounting immediately. It falls and collides on the field, can be collected again and never receives shot credit. The omitted net supplies no invisible retention; cloth and soft-fuel deformation are not simulated.
+Stored fuel subsequently moves in the existing local sphere solver. Full-size entry seeds do not pin a visual stack or create replacement ammunition. Payload mass is accounted once through original held fuel IDs/bodies. Finite wall contacts approximate the CAD panels. The uncovered control retains finite-rim spill behavior; the configured net keeps cargo inside the fitted envelope above those panels. An escaped sphere re-enables its original Rapier body at the solved position, with local and chassis linear/angular motion, and leaves payload accounting immediately. It falls and collides on the field, can be collected again and never receives shot credit. The source-confirmed net now has visible open-weave panels and matching enclosed cargo contacts. Its fitted shape is an estimate; cloth and soft-fuel deformation are not simulated.
+
+## Retaining-net follow-up
+
+The source-confirmed retaining fabric is now visible and retains cargo within the existing full hopper envelope. The fitted weave follows the sliding front during contraction. This supersedes the historical open-hopper-only spill expectations below; the original uncovered controls remain in the tests. Capacity, fuel size/mass, restitution and friction response are retained. See [retaining-net scope and estimates](../../../../docs/RETAINING_NETS.md).
 
 ## Controls and behavior
 
@@ -90,7 +94,7 @@ The rigid-mount/turning follow-up was reused from existing project commit `61c41
 
 Focused checks cover real-field hub shots on both alliances, fixed hood/backward aim, legal passing, passive deployment, full-capacity actual intake/firing, loaded wall support, original fuel bodies/mass and no fabricated retraction/climb. Asset checks cover the upload hash, runtime integrity, actual MK5n mounts/axles, drum/flywheels, moving front and feeder hierarchy. Shared acceptance checks preload, intake, reverse, shooting, pause/restart and immutable definitions.
 
-A focused real RobotView WebGL review inspected stowed, half-deployed, expanded red/blue and full-42-fuel poses with no application errors. Browser artifacts remain ignored. The source export omits its net; finite wall/contact fits, fixed release calibration, throughput, mass and contact envelopes need driver feedback. Detailed net deformation, motor gearing/control loops, roller compliance and every-CAD-surface collision are outside the shared model. The current live Onshape revision and CAD rights status remain as disclosed above.
+A focused real RobotView WebGL review inspected stowed, half-deployed, expanded red/blue and full-42-fuel poses with no application errors. Browser artifacts remain ignored. The source export omits its net; the new fitted net and finite wall/contact fits, fixed release calibration, throughput, mass and contact envelopes need driver feedback. Detailed net deformation, motor gearing/control loops, roller compliance and every-CAD-surface collision are outside the shared model. The current live Onshape revision and CAD rights status remain as disclosed above.
 
 Final checks: `pnpm test:robots` passed 28 tests across 7 files; `pnpm test:sim` passed 181 tests across 29 files. After the final CAD-fitted feeder path/spin-direction correction, 16 affected robot/asset/shared-acceptance checks passed. The final `pnpm build:release` passed asset integrity, TypeScript/Vite and the 12-asset production payload. The existing Rapier chunk advisory remains.
 
