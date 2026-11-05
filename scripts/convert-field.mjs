@@ -138,7 +138,11 @@ for (const group of groups.values()) {
     if (collides) {
       // Treat individual beams/panels as convex contact solids, omitting bolt holes
       // and extrusion slots. Preserve concave fuel passages and trench risers.
-      const preserveConcavity = /Hub Base|Hub Net \(Aesthetic\)|Funnel|Chute|Trench.*Riser.*Body/i.test(mesh.name);
+      // The thin net-base frame has an open center. Its convex hull creates
+      // an invisible horizontal shelf that traps missed fuel above the carpet.
+      const netBase = group.kind === 'hub' && size[2] < .04 && size[0] > .6 && size[1] > 1.3
+        && b.min[2] - origin[2] > 1.6 && b.max[2] - origin[2] < 1.7;
+      const preserveConcavity = netBase || /Hub Base|Hub Net \(Aesthetic\)|Funnel|Chute|Trench.*Riser.*Body/i.test(mesh.name);
       const worldPositions = [];
       for (let p = 0; p < positions.length; p += 3) worldPositions.push(...transform(positions.slice(p, p + 3)).map(round));
       let contactPositions = worldPositions, contactIndices = mesh.index.array;
