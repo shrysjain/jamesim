@@ -21,6 +21,20 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   check(!d.hopper.entry || vector(d.hopper.entry), 'Hopper entry must be a finite local position.');
   if (d.hopper.entryHalfWidth !== undefined) check(!!d.hopper.entry && positive(d.hopper.entryHalfWidth), 'A wide hopper entry requires a finite entry and positive half-width.');
   check(!d.hopper.obstacles || d.hopper.obstacles.every(b => vector(b.center) && b.halfExtents.length === 3 && b.halfExtents.every(positive) && (b.angle === undefined || Number.isFinite(b.angle))), 'Hopper obstacles require finite centers/angles and positive extents.');
+  check(!d.hopper.obstacles || d.hopper.obstacles.every(b =>
+    (b.shape === undefined || ['box', 'cylinder', 'annulus'].includes(b.shape)) &&
+    (!(b.shape === 'cylinder' || b.shape === 'annulus') || Math.abs(b.halfExtents[0] - b.halfExtents[2]) < 1e-9) &&
+    (b.shape === 'annulus' ? positive(b.innerRadius ?? 0) && b.innerRadius! < b.halfExtents[0] : b.innerRadius === undefined) &&
+    (!b.clipHalfExtents || b.shape !== undefined && b.shape !== 'box' && vector(b.clipHalfExtents) && b.clipHalfExtents.every(positive))),
+  'Round hopper contacts require equal radii, a valid annular opening and finite clipping extents.');
+  if (d.hopper.floorProfile) check(d.hopper.floorProfile.length >= 2 && d.hopper.floorProfile.every(p =>
+    Number.isFinite(p.x) && Number.isFinite(p.y) && (p.part === undefined || ['intake', 'opposedIntake', 'hopper'].includes(p.part)) &&
+    (p.part !== 'opposedIntake' || !!d.intake.opposed)), 'Hopper floor profiles require finite points and supported moving parts.');
+  if (d.hopper.physics) {
+    const p = d.hopper.physics;
+    check(Number.isFinite(p.restitution) && p.restitution >= 0 && p.restitution <= 1 && Number.isFinite(p.friction) && p.friction >= 0 &&
+      (p.linearDamping === undefined || Number.isFinite(p.linearDamping) && p.linearDamping >= 0), 'Cargo contact response requires passive restitution, friction and damping.');
+  }
   if (d.hopper.indexer) check(vector(d.hopper.indexer.center) && positive(d.hopper.indexer.radius) && positive(d.hopper.indexer.friction) && Number.isFinite(d.hopper.indexer.angularSpeed) && d.hopper.indexer.angularSpeed !== 0, 'Indexer requires a finite center, nonzero angular speed and positive radius/friction.');
   if (d.hopper.autoLift) check(!!d.climb && (d.hopper.volume?.ceilingTravel ?? 0) > 0 && Number.isInteger(d.hopper.autoLift.loweredCapacity) && d.hopper.autoLift.loweredCapacity > 0 && d.hopper.autoLift.loweredCapacity < m.capacity,
     'Automatic hopper lift requires the real vertical stage and a valid lowered capacity.');
