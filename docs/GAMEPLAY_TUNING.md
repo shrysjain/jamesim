@@ -27,6 +27,8 @@ Pitch and roll are locked; yaw and vertical suspension remain physical. The simu
 
 Bump triangles provide a level, damped support platform sampled over the robot footprint. The complete robot leans with the bump while its modules remain rigidly mounted at the prepared CAD positions. This avoids bellypan/intake beaching while preserving the bump's height change. The remaining field geometry still blocks the chassis normally.
 
+Issue #14: the wheel-spring support ceiling is now 1.8 times the loaded vehicle weight shared across its four modules. Previously each module could apply 1.8 times the empty robot weight, multiplying the ceiling to 7.2 times vehicle weight and amplifying bump rebound. The fast empty-Darwin reproduction reached 4.87 times vehicle weight and a .421 m chassis peak; sharing the budget reduced these to 1.8 and .398 m. The 1.8 factor is a gameplay force limit, not a measured real-robot acceleration. Regression cases cover empty/full48 Darwin in both bump lanes, clearance, settled landing and original fuel bodies; collision support remains force-based rather than a height clamp.
+
 Low fuel is displaced horizontally by the bumper footprint, including when landing on it. Sweeps prevent displacement through the static field. A trapped ball may briefly overlap the underside until space opens; it cannot provide vertical chassis support. Fuel-to-fuel, carpet and field physics, airborne contacts and stable IDs remain active.
 
 ## Timing and audio
