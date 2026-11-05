@@ -210,6 +210,14 @@ export class SwerveChassis {
         if (hit) terrain = Math.max(terrain, 0.5 - hit.timeOfImpact);
       }
     }
+    // Padded ramp queries can reach empty space beside a narrow intake while
+    // turning under a trench. Require a nearby physical part above the bump
+    // before applying that numerical support; keep the existing ramp response.
+    if (terrain > .001 && !this.mechanismColliders.some(({ collider }) => this.world.castShape(
+      collider.translation(), collider.rotation(), down, collider.shape, 0, this.definition.springLength, true,
+      RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+      undefined, undefined, this.body, c => !!this.fieldElements.get(c.handle)?.startsWith('bump-'),
+    ))) terrain = 0;
     this.bumpHeight = approach(this.bumpHeight, terrain, dt * (terrain > this.bumpHeight ? 1.8 : 1.2));
     let pitch = 0, roll = 0;
     if (terrain > 0.001) {
