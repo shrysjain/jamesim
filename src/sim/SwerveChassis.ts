@@ -211,10 +211,10 @@ export class SwerveChassis {
       }
     }
     // Padded ramp queries can reach empty space beside a narrow intake while
-    // turning under a trench. Require a nearby physical part above the bump
-    // before applying that numerical support; keep the existing ramp response.
+    // turning under a trench. Project actual collider footprints through the
+    // same ramp-query height range before applying numerical support.
     if (terrain > .001 && !this.mechanismColliders.some(({ collider }) => this.world.castShape(
-      collider.translation(), collider.rotation(), down, collider.shape, 0, this.definition.springLength, true,
+      { ...collider.translation(), y: .5 }, collider.rotation(), down, collider.shape, 0, .5, true,
       RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
       undefined, undefined, this.body, c => !!this.fieldElements.get(c.handle)?.startsWith('bump-'),
     ))) terrain = 0;
