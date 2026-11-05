@@ -1,5 +1,21 @@
 # Approved robot PR integration
 
+## November 5 robot follow-ups
+
+The owner additionally approved #38 Matterhorn shooting-linked folding, #37 Citrus roller repair and #39 tower-backing visibility. They are integrated in that order as three separate signed commits with corrected `couchpotato7572` authorship and source/PR trailers. #38 preserves #11's researched rates, motion limits and grip while enabling the existing load-aware hopper/intake pose controller. Its regression retains original fuel bodies and covers pause, intake/reverse overrides and full-load contraction. #37 replaces only the two source-fitted roller shells and updates the exact runtime asset/hash; unrelated CAD geometry is retained. #39 removes backing triangles only from the tower render; hub panels, field collisions, rung geometry and climbing assessment are unchanged.
+
+During the earlier tuning integration, #11 advanced from `8ad379a` to `995946d060c88d473c2294625d1e68b3e31bbf27` by merging current main and the #38 feature. That incremental Matterhorn change is now incorporated exactly once through #38. Comparing the resulting tree with the updated #11 head leaves only the separately approved scatter, maintainer contact/documentation, Citrus repair and tower-visibility changes; no research content is omitted. Published history is not reordered or rewritten.
+
+| PR | Incorporated source head |
+| --- | --- |
+| [#38](https://github.com/shrysjain/jamesim/pull/38) | `5d762d5046d51f70261a0c333467fa0555475cfa` |
+| [#37](https://github.com/shrysjain/jamesim/pull/37) | `ab820cda98a58b404123790aaf708d414ed9e7b4` |
+| [#39](https://github.com/shrysjain/jamesim/pull/39) | `a130d6c177edf1d78421ee420d0bd4e0a178240a` |
+
+The corresponding Matterhorn and Citrus issues #22/#23 are completed. #19's physical navigation-clearance request remains separate from the tower-visibility change. No browser session, application server or manual deployment is started for these follow-ups.
+
+After all three follow-ups were integrated, **51 affected checks across 9 files pass**: Matterhorn, Citrus, research envelopes and the real-asset tower regression. The release integrity, TypeScript/Vite and production-payload checks also pass, with 27 runtime files and 20 content-hashed runtime assets. The earlier 492-case complete-suite result for the shared tuning/contact integration is recorded below.
+
 ## November 5 tuning follow-up
 
 The owner approved #11 performance recalibration and #36 distance/motion scatter tuning following the isolated #11 preview. Both are now incorporated. #11 uses source head `8ad379aad9f8f8bcbf397675a8f2042e89afeeb8`; #36 uses corrected head `fc942e72d48b7edb231822e789abf8318a7f49fb`.
