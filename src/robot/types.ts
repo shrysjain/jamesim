@@ -13,6 +13,7 @@ export type HopperVolume = {
 /** Estimated launch standard deviations: radians, fractional speed, and rad/s backspin. */
 export type ShotSpread = { yaw: number; elevation: number; speed: number; flyerChance: number; backspin: number };
 export type HopperObstacle = { center: Vec3; halfExtents: Vec3; angle?: number;
+  part?: 'intake' | 'opposedIntake' | 'hopper';
   /** Vertical round solids use equal X/Z radii. An annulus keeps its center open. */
   shape?: 'box' | 'cylinder' | 'annulus'; innerRadius?: number;
   /** Local rectangular bounds for a round platform that ends at the frame. */

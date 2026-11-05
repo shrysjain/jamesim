@@ -27,6 +27,9 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
     (b.shape === 'annulus' ? positive(b.innerRadius ?? 0) && b.innerRadius! < b.halfExtents[0] : b.innerRadius === undefined) &&
     (!b.clipHalfExtents || b.shape !== undefined && b.shape !== 'box' && vector(b.clipHalfExtents) && b.clipHalfExtents.every(positive))),
   'Round hopper contacts require equal radii, a valid annular opening and finite clipping extents.');
+  check(!d.hopper.obstacles || d.hopper.obstacles.every(b => b.part === undefined ||
+    ['intake','opposedIntake','hopper'].includes(b.part) && (b.part !== 'opposedIntake' || !!d.intake.opposed)),
+  'Moving hopper contacts require a supported mechanism part.');
   if (d.hopper.floorProfile) check(d.hopper.floorProfile.length >= 2 && d.hopper.floorProfile.every(p =>
     Number.isFinite(p.x) && Number.isFinite(p.y) && (p.part === undefined || ['intake', 'opposedIntake', 'hopper'].includes(p.part)) &&
     (p.part !== 'opposedIntake' || !!d.intake.opposed)), 'Hopper floor profiles require finite points and supported moving parts.');
