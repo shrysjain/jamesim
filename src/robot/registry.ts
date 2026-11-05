@@ -10,5 +10,15 @@ import { DOWNPOUR } from './robots/6800-downpour/definition';
 
 // Integration point: one import and entry per robot. Preserve existing IDs/order.
 export { REBLITZ, KEPLER };
-export const ROBOTS = { '2910-reblitz': REBLITZ, '1690-kepler': KEPLER, '6328-darwin': DARWIN, '1678-limestone': LIMESTONE, '9496-matterhorn': MATTERHORN, '3847-infrared': INFRARED, '4481-era-ii': ERA_II, '8592-prismarine': PRISMARINE, '6800-downpour': DOWNPOUR };
+export const ROBOTS = {
+  '2910-reblitz': REBLITZ,
+  '1690-kepler': KEPLER,
+  '6328-darwin': DARWIN,
+  '1678-limestone': LIMESTONE,
+  '9496-matterhorn': MATTERHORN,
+  '3847-infrared': INFRARED,
+  '4481-era-ii': ERA_II,
+  '8592-prismarine': PRISMARINE,
+  '6800-downpour': DOWNPOUR,
+};
 export type RobotId = keyof typeof ROBOTS;

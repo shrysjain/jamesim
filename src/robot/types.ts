@@ -45,7 +45,7 @@ export type RobotDefinition = {
   colliders: RobotCollider[];
   climb?: { kind: 'side-hook-l1'; approachAxis?: 'x' | 'z'; hookOffsetsZ?: number[]; maxLift: number; rate: number; deploySeconds: number; travel: number; hook: Vec3 };
   cargoSlots: Vec3[];
-  pickup: { minX: number; maxX: number; halfWidth: number; mouthX: number; ejectX: number };
+  pickup: PickupRegion & { opposed?: PickupRegion };
   shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; passLandingExtra?: number; movingAccuracy?: number; feedPath?: Vec3[]; feedAcrossLanes?: boolean; laneJitter?: number; yawOffset?: number; fixedElevation?: number; spread?: ShotSpread;
     /** Unwrapped cable-safe travel relative to the prepared neutral bearing. */
     turretLimits?: [number, number];
