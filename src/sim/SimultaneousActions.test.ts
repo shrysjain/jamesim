@@ -11,7 +11,7 @@ it('Reblitz collects original fuel while shooting, and retains drive/intake and 
     s.startSession({ ...DEFAULT_MATCH, preloads: 4 }, true); s.robot!.teleport([6.2, .26, 0], Math.PI); run(s, .6);
     const r = s.robotController!, handles = s.fuel.map(b => b.handle), incoming = s.fuelSystem.records.find(f => f.owner === null)!;
     incoming.body.setTranslation(r.toWorld({ x: -.62, y: -.145, z: 0 }), true); incoming.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-    s.world.propagateModifiedBodyPositionsToColliders(); r.input = { intake: true, shoot: true }; run(s, .2);
+    s.world.propagateModifiedBodyPositionsToColliders(); r.input = { intake: true, reverse: false, shoot: true }; run(s, .2);
     expect(incoming.owner).toBe(r.owner); expect(r.chassis.pose.intake).toBe(1); run(s, 3);
     expect(r.shooter.shots.some(shot => shot.id === incoming.id)).toBe(true);
     r.input.shoot = false; r.input.intake = true; r.chassis.input = { ...NEUTRAL_INPUT, strafe: .3 }; run(s, .5);
