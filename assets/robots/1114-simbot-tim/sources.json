@@ -262,7 +262,13 @@
       0,
       0.151
     ],
-    "capacity": 46
+    "capacity": 73,
+    "hopperContactResponse": {
+      "restitution": 0.22,
+      "friction": 0.15,
+      "linearDampingPerSecond": 0.35,
+      "qualification": "Gameplay estimates; fuel mass unchanged."
+    }
   },
   "integrationFiles": [
     "src/robot/registry.ts",
@@ -270,7 +276,11 @@
     "src/robot/types.ts",
     "src/robot/validateDefinition.ts",
     "src/sim/RobotSimulation.ts",
-    "src/sim/Shooter.ts"
+    "src/sim/Shooter.ts",
+    "src/robot/hopperGeometry.ts",
+    "src/sim/HopperDynamics.ts",
+    "src/robot/testing/hopperMotionAcceptance.ts",
+    "src/robot/poses.ts"
   ],
   "previousValidation": {
     "branchGuard": "passed",
@@ -293,6 +303,23 @@
     "additionalAnimation": "3 prepared-CAD renderer cases passed after the full run: fixed lower bar with sliding upper carriage, every roller around its own shaft over a full revolution, and rigid wheel/fork mounts. Production implementation and runtime CAD unchanged."
   },
   "validation": {
+    "focused": "15 tests across three own robot files passed; includes continuous physical intake, motion/braking, full-capacity both-alliance firing and prepared CAD articulation.",
+    "logs": [
+      ".tools/tim-73-physics.log",
+      ".tools/cargo-release.log"
+    ],
+    "shared": "20 hopper/contact cases across three files passed in the combined preview.",
+    "build": "Node 26.13.0 / pnpm 10.20.0 pnpm build:release passed: asset integrity, TypeScript/Vite and 18 content-hashed production assets. Existing bundle-size warning."
+  },
+  "hopperFit": {
+    "capacity": 73,
+    "diameterMetres": 0.15,
+    "minimumSeedSpacingMetres": 0.1502,
+    "sourceGeometry": "Measured moving pickup/fixed roller bed, P322 inner wall and P330 U-shaped top cap; fixed rear head sweep.",
+    "offlineGenerator": "src/robot/robots/1114-simbot-tim/pack.py",
+    "qualification": "Geometric simulation fit, not an official team capacity rating."
+  },
+  "previousBeforeCargoFix": {
     "focused": "14 tests across2files passed after normal-accessor ownership guard:9 mechanism/physics plus5 preparedCAD animation including actual-projectile tangent.",
     "logs": [
       ".tools/normal-ownership-focused.log",
