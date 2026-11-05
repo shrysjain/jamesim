@@ -222,7 +222,15 @@
       ".tools/cargo-release.log"
     ],
     "shared": "20 hopper/contact cases across three files passed in the combined preview.",
-    "build": "Node 26.13.0 / pnpm 10.20.0 pnpm build:release passed: asset integrity, TypeScript/Vite and 18 content-hashed production assets. Existing bundle-size warning."
+    "build": "Node 26.13.0 / pnpm 10.20.0 pnpm build:release passed: asset integrity, TypeScript/Vite and 18 content-hashed production assets. Existing bundle-size warning.",
+    "combinedBrowser": {
+      "cargo": "Actual fixed-step simulation and RobotView filled/retained 50 from each selected mouth full-size fuel, with stable original bodies. Maximum acceleration/braking cargo displacement 0.133 m Primary / 0.165 m Opposite. No page errors.",
+      "app": "Real search/detail/selection, both-alliance practice, WASD/turn/intake/shoot/reverse/retraction, saved-key controls, pause/reset and return to setup passed.",
+      "evidenceInCombinedPreview": [
+        ".tools/live-cargo.json",
+        ".tools/cargo-app-5000.log"
+      ]
+    }
   },
   "baseCommit": "093d554e40e10f0da508fdeb21b2f1f534dcc201",
   "previousBaseCommit": "0d64cbb2f910285ccd7ac9ac747a3e21d4b861a5",
