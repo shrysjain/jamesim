@@ -5,6 +5,7 @@ import { SetupScreen } from './components/SetupScreen';
 import { MatchScoreboard, MatchResults } from './components/MatchUI';
 import { SettingsDialog } from './components/SettingsDialog';
 import { Dialog } from './components/Dialog';
+import { ControllerGuide } from './components/ControllerGuide';
 import { Icon } from './components/Icon';
 import { ACTIONS, ACTION_LABELS, keyLabel } from './controls';
 import { ROBOTS } from './robot/RobotDefinition';
@@ -123,6 +124,7 @@ export function App() {
     {showResults && match && <MatchResults match={match} onRematch={restart} onClose={() => { setResultsDismissed(true); pause(); }} restartLabel={restartLabel} onSetup={returnToSetup} />}
     {modal === 'settings' && <SettingsDialog settings={settings} onChange={setSettings} onClose={closeModal} onAbout={() => setModal('about')} />}
     {modal === 'help' && <Dialog title="Controls" eyebrow="JAMESIM · DRIVER GUIDE" onClose={closeModal}>
+      <ControllerGuide controls={settings.controls} robot={activeRobot} humanSupply={!!match?.config.humanSupply} />
       {activeRobot.shooterGeometry.fixedElevation !== undefined && <p>The hood stays fixed. Shoot aims toward the target and adjusts flywheel speed for distance.</p>}
       <p>Drive during AUTO and teleop. Shoot aims at your alliance hub, or passes into your zone. {activeRobot.name} {activeRobot.mechanisms.turret ? 'tracks with its turret' : 'aims with its chassis'}{activeRobot.mechanisms.movingShots ? ' and supports moving shots.' : ' and stops to shoot.'}{activeRobot.mechanisms.simultaneousIntake ? ' Intake can run while firing.' : ''}</p>
       {activeRobot.shooterGeometry.movingLimits && <p>Slow down before firing: hub shots allow up to {activeRobot.shooterGeometry.movingLimits.hub.speed.toFixed(1)} m/s, passes up to {activeRobot.shooterGeometry.movingLimits.pass.speed.toFixed(1)} m/s. Fast turning also pauses shots.</p>}
