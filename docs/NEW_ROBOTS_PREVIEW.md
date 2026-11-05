@@ -193,3 +193,15 @@ at this check was #11 (`8ad379a`). No tuning changes or main updates were pushed
 by this preview task. Detailed shared path/source/estimate disclosures accompany
 the three individual robot PRs. The local compatibility worktree tests the
 superset with #11; this preview keeps the three-robot integration on current main.
+
+Final review validation after protecting the last incoming transfer: **474 tests
+across66 files passed** in the all-three-robots plus PR #11 compatibility tree.
+All three standalone release builds and the all-PR release pass. All3 Downpour
+fold cases pass: full48 shooting, manual16-fuel folding and the last physical
+intake transfer. Incoming/feeding contact projection uses12 passes so adjacent
+bars resolve without leaving a sphere in the neighboring bar. The live preview
+still acquires48, retains48 and fires all48 original bodies with full-radius
+folding clearance and no page errors. Evidence: compatibility worktree
+`.tools/all-pr-simulation-final.log` and `.tools/all-pr-release-final.log`;
+preview `.tools/valor-retraction-browser-final.log` and
+`.tools/all-pr-merge-orders-final.json`.
