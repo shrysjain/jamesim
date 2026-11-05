@@ -83,6 +83,8 @@ Registry-wide regressions reproduce wall pressure with small sideways commands, 
 
 The moving-shot PR is integrated using the newer per-robot spread profiles as the single release distribution. Acceleration scales angular uncertainty; the 60 ms velocity estimate retains transient compensation error. Spin and recoil apply to original fuel bodies. This supersedes the older independent spread sampler without stacking both distributions.
 
-At AUTO, teleop and manual early-stop cutoffs, the chassis clears wheel commands and yaw, then zeros horizontal velocity while supported by grounded wheels. The hold runs at the cutoff tick and through disabled assessment, preventing momentum from carrying the robot across the carpet. Vertical falling, suspension settling and tower support remain physical, and unsupported airborne horizontal travel continues until landing. Pause and practice behavior are unchanged.
+At teleop and manual early-stop cutoffs, the chassis clears wheel commands and yaw, then zeros horizontal velocity while supported by grounded wheels. The hold runs at the cutoff tick and through final assessment. Vertical falling, suspension settling and tower support remain physical, and unsupported airborne horizontal travel continues until landing.
+
+Issue #15 changes the normal AUTO cutoff: driver and mechanism commands clear at 20 seconds, but chassis velocity continues through the three-second Auto scoring gap. The existing unpowered wheel contacts, yaw damping, body drag and field collisions evolve that momentum. Driver input cannot power the robot during the gap. Pause and practice behavior are unchanged.
 
 Integration order is moving-shot/match-stop, Darwin, then Citrus. These branch merges do not merge into main. Local hopper contacts and per-fuel mass remain unchanged.

@@ -81,13 +81,15 @@ export class FieldSimulation {
     // Roundoff at rates such as 144 Hz must not defer a whole physics tick.
     while (this.accumulator + 1e-12 >= STEP) {
       this.fuelSystem.time += STEP;
+      const coastAfterAuto = this.match.phase === 'Auto scoring';
       if (this.robotController) {
         const r = this.robotController;
         if (r.actuatorsEnabled && !this.match.actuatorsEnabled) {
-          r.clearInput(); r.chassis.stopDrive();
+          r.clearInput();
+          if (!coastAfterAuto) r.chassis.stopDrive();
         }
         r.actuatorsEnabled = this.match.actuatorsEnabled;
-        if (!r.actuatorsEnabled) r.chassis.holdDisabledDrive();
+        if (!r.actuatorsEnabled && !coastAfterAuto) r.chassis.holdDisabledDrive();
         if (!this.match.driverEnabled) {
           r.chassis.input = { ...NEUTRAL_INPUT }; r.input = { intake: false, reverse: false,
             shoot: false };
@@ -126,7 +128,7 @@ export class FieldSimulation {
         }
       }
       this.match.advance();
-      if (!this.match.actuatorsEnabled) this.robot?.holdDisabledDrive();
+      if (!this.match.actuatorsEnabled && this.match.phase !== 'Auto scoring') this.robot?.holdDisabledDrive();
       if (this.match.phase === 'Complete') { this.setRunning(false); break; }
     }
     this.physicsMs = performance.now() - start;
