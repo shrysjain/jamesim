@@ -12,8 +12,8 @@
       "files": [
         {
           "path": "public/assets/field-collisions.json",
-          "bytes": 6245994,
-          "sha256": "309e9eba4bb6ec332c4dcd1c280481a952bb5f924691022f73eef643311a619d"
+          "bytes": 6455789,
+          "sha256": "c15ed8390717061554e44c24e0789fff7c5b11ce6d58ef2a61911d2c5323f7b8"
         },
         {
           "path": "public/assets/field-manifest.json",

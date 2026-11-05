@@ -146,7 +146,11 @@ for (const group of groups.values()) {
       const worldPositions = [];
       for (let p = 0; p < positions.length; p += 3) worldPositions.push(...transform(positions.slice(p, p + 3)).map(round));
       let contactPositions = worldPositions, contactIndices = mesh.index.array;
-      if (!preserveConcavity && Math.min(...size) > 0.00001) {
+      // The tower weldment has a low interior between its raised feet. A
+      // hull bridges those heights with false slopes that can beach a chassis.
+      const towerBase = group.kind === 'tower' && size[2] < .06 && size[0] > 1.1 && size[1] > .9
+        && b.min[2] - origin[2] > 0 && b.min[2] - origin[2] < .01 && b.max[2] - origin[2] < .06;
+      if (!preserveConcavity && !towerBase && Math.min(...size) > 0.00001) {
         const points = [], used = new Set();
         for (let p = 0; p < worldPositions.length; p += 3) {
           const point = worldPositions.slice(p, p + 3), key = point.join(',');
