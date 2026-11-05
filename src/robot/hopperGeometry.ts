@@ -5,6 +5,16 @@ import { partTransform } from './poses';
 export type HopperContact = { normal: Vec3; distance: number };
 export type FloorPoint = { x: number; y: number };
 
+/** Thin lips and trays attached to a moving carriage use its existing pose. */
+export function hopperObstacles(definition: RobotDefinition, pose: RobotPose): HopperObstacle[] {
+  return (definition.hopper.obstacles ?? []).map(box => {
+    if (!box.part) return box;
+    const {angle,pivot,shift,rise} = partTransform(definition,box.part,pose), c=Math.cos(angle),s=Math.sin(angle);
+    const x=box.center[0]-pivot[0],y=box.center[1]-pivot[1];
+    return {...box,center:[pivot[0]+c*x-s*y+shift,pivot[1]+s*x+c*y+rise,box.center[2]],angle:(box.angle ?? 0)+angle};
+  });
+}
+
 function boxContact(local: number[], half: Vec3): HopperContact {
   const delta = local.map((x, k) => x - Math.max(-half[k], Math.min(half[k], x)));
   const distance = Math.hypot(...delta);
