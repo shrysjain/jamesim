@@ -379,7 +379,9 @@
     "feeding": "Managed feeding also yields to moving intake contacts; static feeder obstacles do not deflect its intended feed path.",
     "focused": "31 cases across six files passed, including full48 automatic shooting and manual16-fuel retraction, all held states checked within1mm of full-radius contact.",
     "log": ".tools/intake-cargo-final.log",
-    "browser": "Live physical intake filled and retained48; automatic shooting captured34 remaining at intake .6565 with full .075m contact clearance, then released all48 original IDs and fully retracted, no page errors. Combined preview .tools/valor-retraction-browser.json."
+    "browser": "Live physical intake filled and retained48; automatic shooting captured34 remaining at intake .6565 with full .075m contact clearance, then released all48 original IDs and fully retracted, no page errors. Combined preview .tools/valor-retraction-browser.json.",
+    "transferring": "The final in-flight physical pickup also yields to moving bars, with12 contact passes matching the stored solver budget; all3 intake-fold cases pass (.tools/intake-transfer-resolved.log).",
+    "qualification": "31 robot/contact cases passed before adding the incoming-transfer edge case; the updated3-case intake-fold file passes with the final contact correction. Final all-PR suite is tracked in preview review notes."
   },
   "independentPrIntegration": {
     "main": "4154227b2200009ef7e0be6ece0a9d2e605604a3",
@@ -389,9 +391,11 @@
     "cleanOrders": 24,
     "commonMechanismAncestors": [
       "56a2273",
-      "191c137"
+      "191c137",
+      "266a51a",
+      "af91f23"
     ],
     "qualification": "All three robot branches and PR11 merged in every order onto main, producing one identical tree. Original main robot IDs/relative order retained; each feature branch adds only its own robot. Recheck after future edits.",
-    "standaloneRelease": "pnpm build:release passed with pinned Node26/pnpm10.20.0; ignored evidence .tools/pr-release.log."
+    "standaloneRelease": "Final pnpm build:release passed on Node26/pnpm10.20.0; ignored evidence .tools/pr-release-final.log."
   }
 }
