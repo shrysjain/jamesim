@@ -205,3 +205,25 @@ folding clearance and no page errors. Evidence: compatibility worktree
 `.tools/all-pr-simulation-final.log` and `.tools/all-pr-release-final.log`;
 preview `.tools/valor-retraction-browser-final.log` and
 `.tools/all-pr-merge-orders-final.json`.
+
+## Standalone GitHub CI correction
+
+The first PR runs exposed an omitted standalone dependency: the shared sliding
+compression test expected Prismarine to compress, while the feature branches
+still had its old `compress: false` setting. Shared commit `4cd9ff5` carries the
+already-approved preview configuration and matching seven-case regression into
+all three branches. The movement gate, eight original physical releases and
+extension after shooting stops are retained. The combined preview source is
+byte-identical before and after this integration; this corrects standalone
+branch completeness rather than changing the tested preview behavior.
+
+All corrected PR heads pass complete GitHub simulation/release checks and Vercel:
+
+- Icarus #28: `9845462`, run41975745766.
+- Valor #29: `8f891a0`, run41975736633.
+- Simbot Tim #30: `e3f1296`, run41975752480.
+
+The focused standalone runs pass11 /12 /12 cases for Valor /Icarus /Tim.
+All24 normal merge orders with current main and tuning PR #11 remain clean and
+produce one tree. PR notes disclose the three existing Prismarine config/test/
+documentation paths as shared integration points.
