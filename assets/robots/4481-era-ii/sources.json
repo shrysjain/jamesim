@@ -218,5 +218,17 @@
     "matchVideoAccess": "Found via TBA 2026mil_f1m1; playback unavailable to this session, not visually reviewed.",
     "calibration": "TR26-SH-4006 cheeks join 4011 skin/4021 brace; bake +26 degrees around measured flywheel pivot to normalize exported extended hood to retracted neutral.",
     "timing": "Use pinned HoodConstants HOOD_TRAVEL_TIME 0.15 s and HOOD_DIAMETER 0.30 m; the February writeup used the older 0.08 s value."
+  },
+  "intakeContactEvidence": {
+    "sourceParts": {
+      "TR26-IN-4019": 2,
+      "TR26-IN-4020": 1
+    },
+    "inputSha256": "6502ca903919ef90fab559e73bab930cd6335a362fc9585fb2a552beca893fc4",
+    "measurement": "src/robot/robots/4481-era-ii/measure-intake-contacts.mjs",
+    "generatedOutput": "src/robot/robots/4481-era-ii/intakeContacts.ts",
+    "envelopesPerPanel": 8,
+    "paddingM": 0.00075,
+    "treatment": "Conservative convex 2D profiles sliced into cuboids; prepared polycarbonate vertices remain enclosed, including the full raised section. Existing slide travel and rise remain estimates. No CAD or field geometry is changed."
   }
 }
