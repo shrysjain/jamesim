@@ -33,12 +33,17 @@ it.each(cases)('$id enters the tower from the side and reverses clear, side $sid
   try {
     s.startSession({ ...DEFAULT_MATCH, robot: id, preloads: count, alliance: side > 0 ? 'blue' : 'red' }, true);
     const handles = s.fuel.map(b => b.handle);
-    s.robot!.teleport([7.75 * side, .26, 1.4 * side], Math.PI / 2); run(.7);
-    const before = { ...s.robot!.body.translation() }; run(1.5, .4);
+    // Approach from the outpost side, clear of the neighbouring depot, with
+    // the intake leading. Mirror the whole pose on the opposite alliance.
+    s.robot!.teleport([7.75 * side, .26, -1.4 * side], side * Math.PI / 2); run(.7);
+    const before = { ...s.robot!.body.translation() };
+    // End the approach inside the base, rather than letting faster robots
+    // cross the far post and making the reverse a second entry from that side.
+    for (let tick = 0; tick < 180 && s.robot!.body.translation().z * side < -.28; tick++) run(1 / 120, -.4);
     const entered = { ...s.robot!.body.translation() };
-    expect((before.z - entered.z) * side).toBeGreaterThan(.8);
-    run(1, -.4); expect((s.robot!.body.translation().z - entered.z) * side).toBeGreaterThan(.5);
-    run(.5, -.4); run(.4);
+    expect((entered.z - before.z) * side).toBeGreaterThan(.8);
+    run(1, .4); expect((entered.z - s.robot!.body.translation().z) * side).toBeGreaterThan(.5);
+    run(.5, .4); run(.4);
     expect(s.robot!.body.translation().y).toBeLessThan(.3);
     expect(s.robot!.telemetry.grounded).toBeGreaterThanOrEqual(3);
     expect(s.fuel.map(b => b.handle)).toEqual(handles); expect(s.fuelSystem.records).toHaveLength(count);
