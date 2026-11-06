@@ -54,6 +54,9 @@ export class FieldSimulation {
       ).setFriction(0.55).setRestitution(0.18).setCollisionGroups(mesh.element.startsWith('bump-') ? CollisionGroups.bump : CollisionGroups.field));
       this.colliderElements.set(collider.handle, mesh.element);
     }
+    // Publish the static field to scene queries before the first actuator tick.
+    // No dynamic bodies or fuel exist yet, so this advances no gameplay state.
+    this.world.step();
     this.fuelSystem = new FuelSystem(this.world, fuel.map(p => [...p]));
     this.humanPlayer = new HumanPlayer(this.world, this.fuelSystem);
     this.hubs = new HubSystem(this.world, this.fuelSystem, withHubs, event => this.match.recordProcessed(event));
