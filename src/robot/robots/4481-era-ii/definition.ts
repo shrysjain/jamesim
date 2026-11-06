@@ -25,6 +25,7 @@ export const ERA_II: RobotDefinition = {
     pivot: [.2425,.25535,-.15], turretPivot: [.15,.17315,-.15],
     drumRadius: .040, guideLength: .09, turretRadiansPerSecond: 5,
     turretLimits: [-182.8*DEG,182.8*DEG],
+    trenchSafety: { retractSeconds: .15, radius: .15 },
     minElevation: 49*DEG, maxElevation: 75*DEG, passRange: 10,
     movingAccuracy: .80, movingLimits: { hub: { speed: 1.7, turnRate: 1 }, pass: { speed: 3, turnRate: 3 } },
     spread: { yaw: .028, elevation: .032, speed: .032, flyerChance: .08, backspin: 28 },

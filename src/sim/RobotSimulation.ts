@@ -155,7 +155,7 @@ export class RobotSimulation {
       const compress = shoot || (supportsIntakeToggle(this.chassis.definition) && !this.intakeOut && !this.input.intake && !this.input.reverse);
       const manual = this.chassis.definition.intake.manualRetraction && !this.intakeOut && !demand;
       const shootingExtension = Math.max(cargoExtension(held.length, this.capacity), shoot ? this.chassis.definition.intake.shootingMinExtension ?? 0 : 0);
-      const target = demand ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? shootingExtension : 1;
+      const target = demand || this.shooter.trenchRestricted ? 1 : manual ? cargoExtension(held.length, this.capacity) : this.mechanism.compress && this.deployed && compress ? shootingExtension : 1;
       this.intakeTarget = target;
       let intake = approach(this.chassis.pose.intake, target, target < this.chassis.pose.intake ? INTAKE.compressSeconds : INTAKE.deploySeconds);
       let opposedIntake: number | undefined;

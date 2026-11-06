@@ -1,5 +1,17 @@
 # 4481 Team Rembrandts — Era II (2026 Worlds)
 
+## Trench hood correction — November 6
+
+The supplied export has its hood extended. Both `TR26-SH-4006` cheeks belong with the `4011` hood skin and `4021` cross brace; leaving those cheeks fixed kept the turret above trench height even when the skin moved. Preparation now groups all four original solids and rotates them +26° about the measured flywheel axle into the retracted neutral pose. Runtime hood movement restores the original extended shape at the other end of travel. The bearing, flywheel, modules, intake geometry and launch calibration are retained.
+
+The team's [automatic hood-retraction explanation](https://www.chiefdelphi.com/t/frc-4481-team-rembrandts-2026-build-thread-open-alliance/507296/402), [zone-priority explanation](https://www.chiefdelphi.com/t/frc-4481-team-rembrandts-2026-build-thread-open-alliance/507296/423) and pinned final code establish this behavior. `RobotContainer` defaults to retraction, gives trench safety priority and cancels shooting there. The final `HoodConstants` use **0.15 s travel** and a **300 mm hood diameter**, superseding the February write-up's 0.08 s. New source-file hashes are in the robot source record. The [Worlds finals match reference](https://www.youtube.com/watch?v=tSeGDeeX4JE) was found via TBA, but playback was blocked; no visual match review is claimed.
+
+Optional `shooterGeometry.trenchSafety` activates a conservative swept envelope around the real offset bearing using its point velocity, hood radius, travel time and powered acceleration. All four prepared-field trench arms are covered. It retracts before overlap, inhibits new/queued releases on both sides of the physics step, and keeps the intake extended so its inclined slide cannot raise the side panels into the arm while Shoot is held. Existing feeder paths return queued fuel to storage. Normal held-Shoot behavior resumes outside the zone; other robots do not opt in.
+
+The **fully stowed intake remains taller than the trench**: its current fitted slide pose reaches about 628 mm, versus the 565 mm arm clearance; deployed CAD panels reach about 533 mm. Setup continues rejecting that obstructed starting pose. This correction addresses the moving hood and transit safety; it does not shrink the CAD, alter the field or claim that the current retracted intake can start underneath. Exact stowed-intake calibration remains a separate part of #21.
+
+Prepared runtime: **3,653,292 bytes, 573,898 triangles, 71 primitives**, SHA-256 `41f3fda85fed7c66ddaf2df6a283a88cbc7bd89af398f63faf91f37d246aee17`. The same 894 CAD bodies and five removed decorative fuel bodies are retained. Geometry remains within the original budgets and source/redistribution status is unchanged. Historical measurements below describe the earlier preparation where superseded by this correction.
+
 Performance update (November 2, 2026): [the lineup research audit](../../../../docs/ROBOT_PERFORMANCE_RESEARCH.md) supersedes earlier rate, drive/traction and motion-rating estimates below. CAD/capacity and previous validation descriptions remain historical evidence.
 
 Selectable, owner-supplied Worlds CAD robot with a linear intake, fuel-dependent shooting retraction, an independent lower bar, two intake rollers, rotating-floor indexer, fixed feed tower, finite-travel turret and adjustable hood. Uses the shared simulation, fuel bodies, controls, camera and match lifecycle.

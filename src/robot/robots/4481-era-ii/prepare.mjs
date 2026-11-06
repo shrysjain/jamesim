@@ -23,6 +23,9 @@ const neutralAngle=-Math.atan2(.35700663924217224,.9341018199920654);
 const neutral=new Matrix4().makeTranslation(...bearing).multiply(new Matrix4().makeRotationY(neutralAngle)).multiply(new Matrix4().makeTranslation(...bearing.map(x=>-x)));
 const shooterPoint=p=>new Vector3(...runtime(p)).applyMatrix4(neutral).toArray();
 const drum=shooterPoint([.18302311,.47835,.23640442]);
+// The export shows the extended hood. Normalize its complete moving cheeks,
+// skin and cross brace to the code's retracted (-75°) starting position.
+const retractHood=new Matrix4().makeTranslation(...drum).multiply(new Matrix4().makeRotationZ(26*Math.PI/180)).multiply(new Matrix4().makeTranslation(...drum.map(x=>-x)));
 const groups=new Map(),batches=new Map(),materials=new Map(),report={inputBytes:input.length,inputSha256:hash(input),kept:0,omitted:0,embeddedFuelRemoved:0,duplicates:0,assemblies:{},bearing,drum,neutralAngle};
 function group(name,world=[0,0,0],parent=''){
  if(groups.has(name))return name;
@@ -90,8 +93,8 @@ for(const node of source.getRoot().listNodes())if(node.getMesh()){
  if(kickerParts.has(name)){parent='passive-kicker';matrix.premultiply(foldKicker);}
  if(assembly.startsWith('TR26-SH')){
   parent='turret';matrix.premultiply(neutral);
-  // Inner curved hood skin and its cross brace; bearing rails/side plates stay on the turret.
-  if(['TR26-SH-4011','TR26-SH-4021'].includes(name))parent='turret-hood';
+  // The two 4006 hood cheeks move with the skin, not the fixed turret frame.
+  if(['TR26-SH-4006','TR26-SH-4011','TR26-SH-4021'].includes(name)){parent='turret-hood';matrix.premultiply(retractHood);}
   if(['TR_79mm SS Flywheel','TR26-SH-4003','TR26-SH-4015'].includes(name))parent='shooter-drum';
  }
  if(name==='TR26-HW-3001')parent='indexer-disk';

@@ -8,6 +8,7 @@ import type { SwerveChassis } from './SwerveChassis';
 import { DRIVE_RESPONSE } from './SwerveChassis';
 import { DEFAULT_SHOT_SPREAD, sampleShotScatter } from './ShotScatter';
 import { turretTravelError } from './TurretTravel';
+import { needsTrenchRetraction } from './TrenchSafety';
 import { add, sub, scale, lerp, rotate, unrotate, v3 } from './vector';
 import type { Vector } from './vector';
 
@@ -88,6 +89,12 @@ export class Shooter {
 
   constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem, private owner: string, private payloadChanged: () => void) { this.laneState = this.makeFeedSlots(); this.elevation = this.maxElevation; }
   get hood() { return this.geometry.fixedElevation === undefined ? (this.maxElevation - this.elevation) / (this.maxElevation - this.minElevation) : 0; }
+  get trenchRestricted() {
+    const safety = this.geometry.trenchSafety;
+    if (!safety) return false;
+    const body = this.chassis.body, position = add(body.translation(), rotate(v3(...(this.geometry.turretPivot ?? this.geometry.pivot)), body.rotation()));
+    return needsTrenchRetraction(position, body.velocityAtPoint(position), safety.retractSeconds, safety.radius, this.chassis.tuning.acceleration);
+  }
   /** Measured drum tangent plus 155 mm of guide clearance; not the bumper edge. */
   muzzleLocal(elevation: number, z: number) {
     const radius = this.geometry.drumRadius + FUEL_RADIUS + 0.004;
@@ -208,7 +215,7 @@ export class Shooter {
     this.motionAcceleration = Math.min(12, Math.hypot(change.x, change.y, change.z) / dt);
     this.previousVelocity = { ...velocity };
     this.velocityEstimate = this.velocityEstimate ? lerp(this.velocityEstimate, velocity, 1 - Math.exp(-dt / .06)) : { ...velocity };
-    this.active = requested; this.blocked = false;
+    this.active = requested; const restricted = this.trenchRestricted; requested &&= !restricted; this.blocked = restricted;
     this.solution = requested ? this.solve() : null;
     if (this.mechanism.turret && powered && this.solution) {
       const predictedError = turretTravelError(this.turretYaw, this.solution.yawError + (this.solution.trackingRate - this.chassis.body.angvel().y) * dt, this.geometry.turretLimits);
@@ -216,10 +223,11 @@ export class Shooter {
       if (this.geometry.turretLimits) this.turretYaw = clamp(this.turretYaw, ...this.geometry.turretLimits);
       this.solution = this.solve();
     }
-    this.blocked = !!this.solution?.obstructed;
+    this.blocked ||= !!this.solution?.obstructed;
     const targetRpm = this.solution ? this.solution.speed / this.speedPerRpm : 0;
     this.rpm = approach(this.rpm, targetRpm, dt * (targetRpm > this.rpm ? SHOOTER.rpmPerSecond : SHOOTER.coastPerSecond));
-    if (powered) this.elevation = approach(this.elevation, this.solution?.elevation ?? this.maxElevation, dt * SHOOTER.hoodRadiansPerSecond);
+    const hoodRate = restricted ? (this.maxElevation - this.minElevation) / this.geometry.trenchSafety!.retractSeconds : SHOOTER.hoodRadiansPerSecond;
+    if (powered) this.elevation = approach(this.elevation, this.solution?.elevation ?? this.maxElevation, dt * hoodRate);
     this.drumAngle = (this.drumAngle + this.rpm * 2 * Math.PI / 60 * dt) % (2 * Math.PI);
     if (requested || this.laneState.some(l => l.id !== null)) this.feederAngle += 40 * dt;
     if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) { this.chassisAimTurnSign = 0; return undefined; }
@@ -275,8 +283,9 @@ export class Shooter {
 
   postStep(dt: number, requested: boolean) {
     // Re-evaluate after physics so crossing the zone line or rotating this tick cannot fire on stale aim.
-    this.active = requested; this.solution = requested ? this.solve() : null;
-    this.blocked = !!this.solution?.obstructed;
+    this.active = requested; const restricted = this.trenchRestricted; requested &&= !restricted;
+    this.solution = requested ? this.solve() : null;
+    this.blocked = restricted || !!this.solution?.obstructed;
     if (!this.feedOrder.length) this.refillOrder();
     for (const lane of this.laneState) {
       let f = lane.id === null ? null : this.fuel.records[lane.id];
@@ -349,7 +358,7 @@ export class Shooter {
   stopRequest() { this.active = false; this.solution = null; this.selection = null; this.blocked = false; this.chassisAimTurnSign = 0; }
   get telemetry(): ShooterTelemetry {
     const solution = this.solution, feeding = this.laneState.filter(l => l.id !== null).length;
-    const mode = !this.active ? 'Idle' : !this.fuel.ownedBy(this.owner).length ? 'Empty' : !solution ? 'Out of range' : !this.stable ? 'Unstable'
+    const mode = !this.active ? 'Idle' : !this.fuel.ownedBy(this.owner).length ? 'Empty' : this.blocked && !solution ? 'Blocked' : !solution ? 'Out of range' : !this.stable ? 'Unstable'
       : this.blocked ? 'Blocked' : Math.abs(solution.yawError) >= SHOOTER.yawTolerance || (!this.mechanism.turret && Math.abs(this.chassis.body.angvel().y) >= 0.3) ? 'Aiming'
       : !this.motionReady ? 'Waiting to stop'
       : Math.abs(this.elevation - solution.elevation) >= SHOOTER.hoodTolerance ? 'Adjusting hood'
