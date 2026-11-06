@@ -231,8 +231,10 @@ export class Shooter {
     this.drumAngle = (this.drumAngle + this.rpm * 2 * Math.PI / 60 * dt) % (2 * Math.PI);
     if (requested || this.laneState.some(l => l.id !== null)) this.feederAngle += 40 * dt;
     if (!requested || !this.solution || !powered || !this.fuel.ownedBy(this.owner).length) { this.chassisAimTurnSign = 0; return undefined; }
-    // Own yaw only while requested. Translation and tire/traction limits remain in SwerveChassis.
-    if (this.mechanism.turret) return undefined;
+    // Manual turning takes priority over fixed-shooter aim assist. Keep solving
+    // and spinning up; normal aim/motion gates decide when a release is safe.
+    // Releasing turn resumes chassis alignment without releasing Shoot.
+    if (this.mechanism.turret || this.chassis.input.turn !== 0) { this.chassisAimTurnSign = 0; return undefined; }
     const yawError = this.solution.yawError;
     // Early steering forces can cross the 180-degree wrap tie. Hold the chosen
     // direction until clear of it rather than reversing wheel commands each tick.

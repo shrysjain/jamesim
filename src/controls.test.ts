@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONTROLS, axisValue, bindKey, bindButton, readActions, validateControls } from './controls';
 describe('player controls', () => {
+  it('retains WASD, intake and shoot when the driver releases only turn', () => {
+    const keys = new Set(['KeyW', 'KeyD', 'ShiftLeft', 'Space', 'KeyJ']);
+    expect(readActions(keys, DEFAULT_CONTROLS)).toMatchObject({ forward: 1, right: 1, intake: 1, shoot: 1, turnLeft: 1 });
+    keys.delete('KeyJ');
+    expect(readActions(keys, DEFAULT_CONTROLS)).toMatchObject({ forward: 1, right: 1, intake: 1, shoot: 1, turnLeft: 0 });
+  });
+  it('combines controller translation, turning, intake and shoot independently', () => {
+    const buttons = Array.from({ length: 8 }, (_, i) => ({ pressed: i === 4 || i === 7 })) as GamepadButton[];
+    const actions = readActions(new Set(), DEFAULT_CONTROLS, { axes: [.5, -.8, -.6], buttons });
+    expect(actions).toMatchObject({ intake: 1, shoot: 1 });
+    expect(actions.forward).toBeGreaterThan(.5); expect(actions.right).toBeGreaterThan(.2); expect(actions.turnLeft).toBeGreaterThan(.4);
+  });
   it('adds an independent intake key and gamepad button without overwriting saved assignments', () => {
     expect(DEFAULT_CONTROLS.keys.switchIntake).toEqual(['KeyN']);
     const c = validateControls({ keys: { forward: ['KeyN'] }, buttons: { shoot: 3 } });
