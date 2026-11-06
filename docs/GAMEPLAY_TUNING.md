@@ -1,5 +1,38 @@
 # Gameplay revision — November 1, 2026
 
+## Swerve response — November 6, 2026
+
+The owner's driving feedback in #25 calls for quicker starts, direction changes
+and release. The shared tire controller now feeds the acceleration-limited wheel
+command forward, with velocity feedback against the previous tick's command.
+Previously it waited for speed error to build after already slewing the wheel
+target, adding a second response delay. Feedback uses the previous command so
+the new tick's acceleration is not counted again as a velocity error.
+
+Module steering increases from 24 to 32 rad/s and drive cosine compensation uses
+the remaining steering error after that tick's azimuth update. Robots without an
+explicit braking rate default to twice their powered wheel acceleration; existing
+robot-owned braking rates take precedence. Powered acceleration, maximum speed,
+6.4 rad/s full-turn demand, precision mode, grip, mass and payload inertia are
+retained. Forces still pass through the existing per-tire traction circle and
+ground support. There is no direct drive velocity assignment or moving suspension.
+
+Deterministic empty-robot flat-floor samples at 120 Hz:
+
+| Robot | Forward speed after 100 ms, old → new | Yaw rate after 200 ms, old → new | Full-speed neutral stopping distance, old → new |
+| --- | --- | --- | --- |
+| Re•Blitz | 0.485 → 0.949 m/s | 3.783 → 5.268 rad/s | 1.284 → 0.900 m |
+| Darwin | 0.460 → 0.899 m/s | 3.832 → 5.270 rad/s | 1.238 → 0.826 m |
+| Icarus 2.0 | 0.514 → 1.004 m/s | 4.049 → 5.646 rad/s | 1.750 → 1.647 m |
+
+These are simulator measurements and fitted response choices, not measured team
+sprint data. All 11 registered robots are checked empty and with eight original
+preloads for starts, strafe, reversal, turn/release, speed limits, traction-limited
+braking, ground support and retained fuel bodies. Existing full-hopper turning,
+wall sliding, airborne and fixed-step checks remain in force. The alliance-wall
+fixture approaches from the clear outpost side; its old +Z path crossed the depot
+before reaching the wall. Wall position and stopping assertions are unchanged.
+
 November 5 accepted tuning: [the performance research](ROBOT_PERFORMANCE_RESEARCH.md) now sets the seven original robot profiles, superseding the original numeric FRSim baseline below where values differ. Re•Blitz uses 14.4 ft/s, 9.5 m/s² wheel acceleration, grip 1.10 and 44 fuel/s intake; its 32 fuel/s fire rate and fitted 65-fuel capacity remain. Hub shots still require settling, while passes may release within its 2 m/s / .25 rad/s moving envelope. The other robot-specific rates, motion quality estimates and firing limits are recorded in that research. The three newer robot profiles are unchanged. [Shot tuning](SHOT_TUNING.md) now adds the approved distance curve and mechanism-specific movement sensitivity. The older notes below remain historical where superseded; physical fuel ownership, scoring and match timing are unchanged.
 
 The user's FRSim 2910 metrics card was the original gameplay baseline. It is a simulator reference, not an independent measurement of the real robot.
