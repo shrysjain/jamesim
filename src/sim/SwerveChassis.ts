@@ -1,7 +1,8 @@
 import RAPIER from '@dimforge/rapier3d-compat';
 import type { Vec3 } from '../field/types';
 import { CollisionGroups } from './collisionGroups';
-import { REBLITZ, COLLECTING_POSE, partTransform } from '../robot/RobotDefinition';
+import { REBLITZ, COLLECTING_POSE } from '../robot/RobotDefinition';
+import { constrainMechanismPose, mechanismColliderPose } from './MechanismMotion';
 import type { RobotDefinition, RobotPose, RobotCollider } from '../robot/RobotDefinition';
 
 type Vector = { x: number; y: number; z: number };
@@ -134,19 +135,18 @@ export class SwerveChassis {
   }
 
   /** Update the articulated collision proxies for simulation or pose inspection. */
-  setPose(pose: RobotPose) {
-    const next = { intake: Math.max(0, Math.min(1, pose.intake)), hopper: Math.max(0, Math.min(1, pose.hopper)), hood: Math.max(0, Math.min(1, pose.hood)), climber: Math.max(0, Math.min(1, pose.climber ?? 0)) };
+  setPose(pose: RobotPose, contactConstrained = false) {
+    let next: RobotPose = { intake: Math.max(0, Math.min(1, pose.intake)), hopper: Math.max(0, Math.min(1, pose.hopper)), hood: Math.max(0, Math.min(1, pose.hood)), climber: Math.max(0, Math.min(1, pose.climber ?? 0)) };
     const nextOpposed = this.definition.intake.opposed ? Math.max(0, Math.min(1, pose.opposedIntake ?? 0)) : undefined;
     const previousOpposed = this.pose.opposedIntake;
     if (nextOpposed !== undefined) Object.assign(next, { opposedIntake: nextOpposed });
     if (this.poseInitialized && nextOpposed === previousOpposed && next.intake === this.pose.intake && next.hopper === this.pose.hopper && next.hood === this.pose.hood && next.climber === this.pose.climber) return;
+    if (contactConstrained && this.poseInitialized) next = constrainMechanismPose(this.world, this.body, this.definition, this.mechanismColliders, this.fieldElements, this.pose, next);
     this.poseInitialized = true; this.pose = next;
     for (const { collider, definition: shape } of this.mechanismColliders) {
-      const { angle, pivot, shift, rise } = partTransform(this.definition, shape.part, this.pose);
-      const x = shape.center[0] - pivot[0], y = shape.center[1] - pivot[1];
-      collider.setTranslationWrtParent(vec(pivot[0] + Math.cos(angle) * x - Math.sin(angle) * y + shift,
-        pivot[1] + Math.sin(angle) * x + Math.cos(angle) * y + rise, shape.center[2]));
-      collider.setRotationWrtParent({ x: 0, y: 0, z: Math.sin(angle / 2), w: Math.cos(angle / 2) });
+      const transform = mechanismColliderPose(this.definition, shape, this.pose);
+      collider.setTranslationWrtParent(transform.position);
+      collider.setRotationWrtParent(transform.rotation);
     }
     // Refresh attached collider world transforms even when inspection is paused.
     this.body.setTranslation(this.body.translation(), true);

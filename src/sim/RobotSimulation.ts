@@ -171,7 +171,7 @@ export class RobotSimulation {
       const hopper = this.chassis.definition.hopper.intakeCurve ? linkedHopperExtension(this.chassis.definition, intake) : (this.chassis.definition.hopper.coupledToIntake || this.chassis.definition.hopper.stowTravel && this.chassis.definition.intake.stowTravel) ? intake : approach(this.chassis.pose.hopper, 1, INTAKE.deploySeconds);
       if (hopper === 1 && (this.selectedOpposed ? opposedIntake : intake) === 1) this.deployed = true;
       if (this.chassis.definition.intake.passiveKicker && intake > .1) this.kickerDeployment = Math.min(1, this.kickerDeployment + dt / .25);
-      this.chassis.setPose({ intake, ...(opposedIntake === undefined ? {} : { opposedIntake }), hopper, hood: this.shooter.hood, climber: this.climber.telemetry.extension });
+      this.chassis.setPose({ intake, ...(opposedIntake === undefined ? {} : { opposedIntake }), hopper, hood: this.shooter.hood, climber: this.climber.telemetry.extension }, true);
       if (demand) this.rollerAngle += (this.input.reverse ? -1 : 1) * 32 * dt;
     }
     for (const f of held) {
