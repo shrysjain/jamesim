@@ -49,6 +49,8 @@ export type RobotDefinition = {
   shooterGeometry: { pivot: Vec3; drumRadius: number; guideLength: number; turretRadiansPerSecond: number; turretPivot?: Vec3; minElevation?: number; maxElevation?: number; passRange?: number; passLandingExtra?: number; movingAccuracy?: number; feedPath?: Vec3[]; feedAcrossLanes?: boolean; laneJitter?: number; yawOffset?: number; fixedElevation?: number; spread?: ShotSpread;
     /** Unwrapped cable-safe travel relative to the prepared neutral bearing. */
     turretLimits?: [number, number];
+    /** Optional automatic hood retraction and firing inhibit near field trenches. */
+    trenchSafety?: { retractSeconds: number; radius: number };
     movingLimits?: { hub: { speed: number; turnRate: number }; pass: { speed: number; turnRate: number } } };
   mechanisms: { capacity: number; intakeRate: number; compress: boolean; lanes: number[]; fireRate: number; feedSeconds?: number; turret: boolean; /** Hub shooting while translating; movingShots also enables the legacy moving-pass behavior. */
     movingShots: boolean;

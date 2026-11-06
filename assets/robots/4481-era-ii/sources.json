@@ -85,6 +85,30 @@
         "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/VisionConstants.java",
         "bytes": 5239,
         "sha256": "ed44e230fc6cb4ca8e5b29d2932aa881d50acb376acb33f1bbc7ea6f32308075"
+      },
+      {
+        "name": "RobotContainer.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/RobotContainer.java",
+        "bytes": 15623,
+        "sha256": "d520443e399b7e5ab88086c8ba09d36215317047f8ca9dfa9b6b07f6db9f65fe"
+      },
+      {
+        "name": "TrenchZone.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/util/TrenchZone.java",
+        "bytes": 2896,
+        "sha256": "722d50be2547821ccd265eb5e53533bb2267241714dfca351678a2e3ffd9ce63"
+      },
+      {
+        "name": "Hood.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/subsystems/hood/Hood.java",
+        "bytes": 3528,
+        "sha256": "97974fb602515d6cff0dc3ba183ccf62afdddf75ee9066780e6bffcb0adf0530"
+      },
+      {
+        "name": "FieldConstants.java",
+        "url": "https://github.com/FRC-4481-Team-Rembrandts/2026-robot-public/blob/e00d344b705b5e272229ba6ca5b6de26d93337af/robot/src/main/java/frc/robot/constants/FieldConstants.java",
+        "bytes": 9272,
+        "sha256": "d0db5c49517919a8105d1c1ba2b3924359ecc4f1f986cd094a425c93204989e4"
       }
     ]
   },
@@ -186,5 +210,13 @@
       "lowerBar": "independent passive kicker remains deployed during carriage retraction",
       "sourceDistinction": "Team release describes passive extension; automatic shooting compression is an owner-requested simulation behavior."
     }
+  },
+  "trenchSafetyEvidence": {
+    "teamWriteup": "https://www.chiefdelphi.com/t/frc-4481-team-rembrandts-2026-build-thread-open-alliance/507296/402",
+    "priorityWriteup": "https://www.chiefdelphi.com/t/frc-4481-team-rembrandts-2026-build-thread-open-alliance/507296/423",
+    "matchVideoReference": "https://www.youtube.com/watch?v=tSeGDeeX4JE",
+    "matchVideoAccess": "Found via TBA 2026mil_f1m1; playback unavailable to this session, not visually reviewed.",
+    "calibration": "TR26-SH-4006 cheeks join 4011 skin/4021 brace; bake +26 degrees around measured flywheel pivot to normalize exported extended hood to retracted neutral.",
+    "timing": "Use pinned HoodConstants HOOD_TRAVEL_TIME 0.15 s and HOOD_DIAMETER 0.30 m; the February writeup used the older 0.08 s value."
   }
 }

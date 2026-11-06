@@ -9,6 +9,15 @@ const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'
 let nodes:Map<string,Node>;
 beforeAll(async()=>{await MeshoptDecoder.ready;const doc=await io.readBinary(readFileSync(`public${D.model}`));nodes=new Map(doc.getRoot().listNodes().filter(n=>n.getExtras().mechanism).map(n=>[n.getExtras().mechanism as string,n]));});
 describe('4481 articulated original CAD',()=>{
+ it('retracts the complete CAD hood below trench height and restores the exported extended pose',()=>{
+  const turret=nodes.get('turret')!,hood=nodes.get('turret-hood')!;
+  const height=()=>{let top=-Infinity;turret.traverse(n=>{const matrix=new Matrix4().fromArray(n.getWorldMatrix());for(const p of n.getMesh()?.listPrimitives()??[]){const a=p.getAttribute('POSITION')!;for(let i=0;i<a.getCount();i++)top=Math.max(top,new Vector3(...a.getElement(i,[])).applyMatrix4(matrix).y+.223);}});return top;};
+  try {
+   expect(height()).toBeLessThan(.56515);
+   const angle=-26*Math.PI/180;hood.setRotation([0,0,Math.sin(angle/2),Math.cos(angle/2)]);
+   expect(height()).toBeGreaterThan(.59);expect(height()).toBeLessThan(.60);
+  }finally{hood.setRotation([0,0,0,1]);}
+ });
  it('keeps the hood and complete flywheel under the real offset bearing',()=>{
   const turret=nodes.get('turret')!,hood=nodes.get('turret-hood')!,drum=nodes.get('shooter-drum')!;
   expect(turret.getWorldTranslation()).toEqual(D.shooterGeometry.turretPivot);
