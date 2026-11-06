@@ -3,6 +3,7 @@ import type { RobotDefinition, RobotCollider } from '../../types';
 import { STANDARD_SWERVE, swerveModules } from '../../defaults';
 import { ERA_II_VISUAL } from './visual';
 import { ERA_CARGO, ERA_HOPPER } from './cargo';
+import { ERA_INTAKE_PANELS } from './intakeContacts';
 const DEG = Math.PI/180;
 /** Owner-supplied Worlds CAD + pinned official 2026 code. Rates, mass/inertia,
  * capacity, scatter and SI launch-angle mapping are estimates: see README. */
@@ -25,6 +26,7 @@ export const ERA_II: RobotDefinition = {
     pivot: [.2425,.25535,-.15], turretPivot: [.15,.17315,-.15],
     drumRadius: .040, guideLength: .09, turretRadiansPerSecond: 5,
     turretLimits: [-182.8*DEG,182.8*DEG],
+    trenchSafety: { retractSeconds: .15, radius: .15 },
     minElevation: 49*DEG, maxElevation: 75*DEG, passRange: 10,
     movingAccuracy: .80, movingLimits: { hub: { speed: 1.7, turnRate: 1 }, pass: { speed: 3, turnRate: 3 } },
     spread: { yaw: .028, elevation: .032, speed: .032, flyerChance: .08, backspin: 28 },
@@ -40,13 +42,12 @@ export const ERA_II: RobotDefinition = {
       { part: 'chassis', center: [sign*.38565,-.10275,0], halfExtents: [.04055,.05715,.4262], radius: .008 },
       { part: 'chassis', center: [0,-.10275,sign*.38565], halfExtents: [.3451,.05715,.04055], radius: .008 },
       { part: 'chassis', center: [0,.115,sign*.348], halfExtents: [.348,.2125,.002] },
-      { part: 'intake', center: [-.357,.1716,sign*.3405], halfExtents: [.287,.1383,.0015] },
     ]),
     { part: 'chassis', center: [0,-.1546,0], halfExtents: [.335,.002,.335] },
     { part: 'chassis', center: [.348,.115,0], halfExtents: [.002,.2125,.348] },
     { part: 'chassis', center: [.15,.065,-.15], halfExtents: [.16,.138,.094] },
     { part: 'intake', center: [-.614,-.063,0], halfExtents: [.025,.025,.29], radius: .003 },
     { part: 'intake', center: [-.5718,.0276,0], halfExtents: [.025,.025,.29], radius: .003 },
-    { part: 'intake', center: [-.59,.123,0], halfExtents: [.004,.132,.335] },
+    ...ERA_INTAKE_PANELS,
   ],
 };
