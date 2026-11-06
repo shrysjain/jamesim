@@ -9,12 +9,13 @@ const floor: CollisionAsset = {
   boxes: [{ element: 'floor', center: [0, -.1, 0], halfExtents: [50, .1, 50] }], meshes: [],
 };
 
-for (const definition of Object.values(ROBOTS)) describe(`${definition.id}: driver response`, () => {
+for (const id of Object.keys(ROBOTS) as (keyof typeof ROBOTS)[]) describe(`${id}: driver response`, () => {
+  const definition = ROBOTS[id];
   it.each([0, 8])('responds to starts, reversals and release with %i original preloads', async preloads => {
     const seeds = Array.from({ length: preloads }, (_, i): Vec3 => [0, .08, i * .16]);
     const sim = await FieldSimulation.create(floor, seeds, true);
     try {
-      sim.startSession({ ...DEFAULT_MATCH, robot: definition.id, preloads }, true);
+      sim.startSession({ ...DEFAULT_MATCH, robot: id, preloads }, true);
       const robot = sim.robot!, bodies = sim.fuel.map(body => body.handle);
       const tick = (seconds: number) => {
         for (let i = 0; i < Math.round(seconds * 120); i++) {
