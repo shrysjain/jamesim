@@ -11,7 +11,8 @@ themselves a reason to delete contacts or enlarge a passage. Internal-edge
 smoothing addresses false seam contacts; bump assistance requires a real
 articulated collider footprint above the bump.
 
-The 44 roster cases mirror the complete pose and driver input across alliances.
+The 88 roster cases mirror the complete pose and driver input across alliances
+and exercise both lanes on each alliance, covering all four trench meshes.
 Each robot starts with its configured full capacity of original fuel, approaches
 the trench squarely or at .25 radians, then backs clear by more than .5 m in one
 second. They check actual approach progress, stable ground support, bounded

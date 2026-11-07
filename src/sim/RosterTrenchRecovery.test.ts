@@ -10,9 +10,9 @@ import type { CollisionAsset } from '../field/types';
 
 const field = JSON.parse(readFileSync('public/assets/field-collisions.json', 'utf8')) as CollisionAsset;
 const cases = (Object.keys(ROBOTS) as (keyof typeof ROBOTS)[]).flatMap(id =>
-  [1, -1].flatMap(side => [0, .25].map(angle => ({ id, side, angle }))));
+  [1, -1].flatMap(side => [1, -1].flatMap(lane => [0, .25].map(angle => ({ id, side, lane, angle })))));
 
-it.each(cases)('$id withdraws from the trench fully loaded, side $side, angle $angle', async ({ id, side, angle }) => {
+it.each(cases)('$id withdraws from the trench fully loaded, side $side, lane $lane, angle $angle', async ({ id, side, lane, angle }) => {
   const d = ROBOTS[id], count = d.mechanisms.capacity;
   const s = await FieldSimulation.create(field, Array.from({ length: count }, (_, i) =>
     [(i % 10) * .16, .08, -3 + Math.floor(i / 10) * .16]), true);
@@ -25,7 +25,7 @@ it.each(cases)('$id withdraws from the trench fully loaded, side $side, angle $a
   try {
     s.startSession({ ...DEFAULT_MATCH, robot: id, preloads: 0, alliance: side > 0 ? 'blue' : 'red' }, true);
     const r = s.robotController!, b = r.chassis, handles = s.fuel.map(f => f.handle);
-    b.teleport([side * 5.35, .26, side * 3.2], (side > 0 ? Math.PI : 0) + angle); run(.7);
+    b.teleport([side * 5.35, .26, side * lane * 3.2], (side > 0 ? Math.PI : 0) + angle); run(.7);
     for (const [slot, f] of s.fuelSystem.records.entries()) {
       expect(s.fuelSystem.capture(f, r.owner, slot, r.storageSlots[slot])).toBe(true); f.state = 'stored';
     }
