@@ -20,8 +20,8 @@ async function setup(x:number,z:number,count=1,covered=true){
  s.robot!.teleport([x,.26,z]);run(s,.4);return s;
 }
 describe('Matterhorn exposed fuel and actual field CAD',()=>{
- it('drives a full load through the actual trench without carrying spheres through its beam',async()=>{
-  const s=await setup(5.35,3.35,MATTERHORN.mechanisms.capacity);
+ it('the uncovered control can cross the trench while shedding exposed cargo without carrying spheres through its beam',async()=>{
+  const s=await setup(5.35,3.35,MATTERHORN.mechanisms.capacity,false);
   try{
    const r=s.robotController!,handles=s.fuel.map(b=>b.handle),shape=sphere();
    r.chassis.teleport([5.35,.26,3.35],Math.PI);

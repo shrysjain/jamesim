@@ -4,6 +4,7 @@ import { selectShotTarget } from '../field/passTargets';
 import type { Alliance, ShotTarget } from '../field/targets';
 import { FUEL_LINEAR_DAMPING, FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
 import type { FuelSystem } from './FuelSystem';
+import { CollisionGroups } from './collisionGroups';
 import type { SwerveChassis } from './SwerveChassis';
 import { DRIVE_RESPONSE } from './SwerveChassis';
 import { DEFAULT_SHOT_SPREAD, sampleShotScatter } from './ShotScatter';
@@ -317,7 +318,7 @@ export class Shooter {
       // Include own proxies and other loose balls: never create a projectile in solid geometry.
       const sweepStart = position;
       const hit = this.world.castShape(sweepStart, q, scale(relative, 0.25), new RAPIER.Ball(FUEL_RADIUS + 0.002), 0, 1, true,
-        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
+        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, CollisionGroups.fuel);
       if (hit || !this.clearExit(z)) { this.blocked = true; continue; }
       const scatter = sampleShotScatter(this.geometry.spread ?? DEFAULT_SHOT_SPREAD, this.geometry.movingAccuracy ?? .9,
         this.chassis.telemetry.speed, this.chassis.body.angvel().y, this.scatterRandom,
