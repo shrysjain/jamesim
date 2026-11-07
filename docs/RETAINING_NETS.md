@@ -10,4 +10,29 @@ The simple open-weave panels are authored approximations, not recovered CAD fabr
 
 `hopper.retainingNet` opts a definition into visible panels and enclosed local cargo contacts. Existing full-size spheres, capacity, ownership, payload mass and original Rapier bodies remain. Matterhorn keeps its previous open-hopper contact-response values while gaining the missing top/upper-side containment. Icarus and Valor were already enclosed, so their cargo contact response is unchanged. Reverse/ejection and feeding use their existing managed routes.
 
-The uncovered Matterhorn controls still verify physical spilling and original-body contact/material handoffs. A covered-versus-uncovered regression tests retention above a finite rim; layout tests verify moving bounds and Icarus's center gap. These are local owned-cargo envelopes, not full external-body collision surfaces or deformable cloth. Field contacts can still strip cargo when geometry forces it outside; no fuel is created or scored by the cover.
+The uncovered Matterhorn controls still verify physical spilling and original-body contact/material handoffs. A covered-versus-uncovered regression tests retention above a finite rim; layout tests verify moving bounds and Icarus's center gap.
+
+## Covered cargo against the field
+
+The original field-contact handoff could still strip Matterhorn fuel through the
+net at a trench beam. Downpour's enclosed cargo could also overlap that beam.
+Covered stored fuel now has zero-density, field-only sphere proxies attached to
+the existing chassis. They follow the same full-size spheres and rendered cargo
+positions. Original fuel bodies remain disabled while owned, and the existing
+payload mass is counted once; no additional rigid body or ammunition is created.
+
+Field contacts can rearrange fuel inside the cover. When a packed covered load
+cannot fit, its attached contacts react on the chassis rather than ejecting fuel
+through fabric. A full hopper can therefore impede a low passage until there is
+clearance. Existing finite-rim spill behavior remains for uncovered robots.
+
+Stored proxies are removed on feeding, ejection, restart or ownership change.
+The physical projectile-clearance query uses the projectile's collision groups,
+so these field-only proxies do not block managed feeding or create duplicate
+ball-to-ball contacts. Floor/bump support and loose-fuel displacement are retained.
+
+Checks cover full covered loads at both trench approaches, physical sphere/field
+clearance, backing clear, retained records/bodies, zero proxy mass, feeding/reverse
+cleanup, pause and restart. This remains a fitted cover/contact approximation;
+cloth deformation, tension and tearing are not simulated. Net shape, capacities,
+mass, friction and source attribution are unchanged.
