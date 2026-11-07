@@ -54,6 +54,16 @@ bumper envelope and module centers at native XZ ±.2794 m. Native Y is up and +Z
 the intake; preparation maps coordinates to `(-Z,Y-.223,X)`. Runtime +X shoots,
 −X intakes and Z spans the roller length. The model's carpet is native Y=0.
 
+Numerical ground support uses `STANDARD_SWERVE`'s .12 m length to settle the
+rigid model near its .223 m carpet reference. The former .1122 m override put
+the frame about 8 mm too low; a tower foot could then support a bumper with all
+four tire loads at zero, preventing both driving and turning. Restoring the
+standard value keeps tire support available so the driver can turn away from
+the post and withdraw. Module CAD transforms, real feet/posts, mass and traction
+limits are retained. A diagonal robot can still be geometrically obstructed;
+straight driving is not guaranteed to clear a real post. Tests cover empty,
+eight-fuel and full loads on both alliance towers, plus flat-carpet height.
+
 Measured native pivots/shafts include:
 
 | Part | Native center (m) |

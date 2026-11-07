@@ -24,7 +24,10 @@ export const DOWNPOUR: RobotDefinition = {
   summary: 'Four-wide drum · pivoting intake · expanding hopper',
   model: '/assets/robots/6800-downpour/robot.glb', visual: DOWNPOUR_VISUAL,
   mass: 56, inertia: [3.2, 5.9, 3.6], length: .8432, width: .8432,
-  bumperCenterY: -.1341, springLength: .1122,
+  // The export uses the same .223 m carpet reference as STANDARD_SWERVE.
+  // Keep its standard numerical support length; the old override sank the
+  // rigid CAD wheels and unloaded every tire when a tower foot caught a bumper.
+  bumperCenterY: -.1341,
   modules: swerveModules(.2794, .2794),
   drive: { maxSpeed: 4.8, acceleration: 10, grip: 1.05 },
   intake: { pivot: [-.3032, -.03169, 0], stowedAngle: -110 * Math.PI / 180, manualRetraction: true },
