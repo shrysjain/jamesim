@@ -18,7 +18,9 @@ describe('moving shots and disabled drive hold',()=>{
   for(const moving of [false,true]){
    const s=await FieldSimulation.create(field,seeds.map((_,i)=>[0,.08,(i%20)*.16]),true);
    try{
-    s.startMatch({...DEFAULT_MATCH,robot:'1690-kepler',preloads:0});s.robot!.teleport([6.2,.26,0]);run(s,.5);fill(s);
+    // Sample an oblique approach on the clear outpost side. The old centered,
+    // close-range circle can make every shot with the faster drive response.
+    s.startMatch({...DEFAULT_MATCH,robot:'1690-kepler',preloads:0});s.robot!.teleport([6.2,.26,-1.5]);run(s,.5);fill(s);
     if(moving)s.robot!.input={...NEUTRAL_INPUT,strafe:.15,turn:.3};s.robotController!.input.shoot=true;run(s,8);
     expect(s.robotController!.shooter.shotsFired).toBe(50);hits.push(s.hubs.telemetry.blue.hits);
    }finally{s.dispose();}

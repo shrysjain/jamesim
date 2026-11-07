@@ -137,7 +137,8 @@ describe('swerve dynamics', () => {
 
 describe('chassis on the official field', () => {
   it('is stopped by the alliance wall at full speed', async () => {
-    const sim = await setup(field, [6.1, 0.26, 2.1]);
+    // Approach from the clear outpost side; +Z crosses depot hardware first.
+    const sim = await setup(field, [6.1, 0.26, -2.1]);
     try {
       sim.robot!.input = { ...NEUTRAL_INPUT, forward: 1 }; run(sim, 1.5);
       expect(sim.robot!.body.translation().x).toBeLessThan(7.9);

@@ -48,11 +48,15 @@ export class FieldSimulation {
       this.colliderElements.set(collider.handle, box.element);
     }
     for (const mesh of asset.meshes) {
+      // Smooth internal triangle seams so solid frame contacts do not catch on them.
       const collider = this.world.createCollider(RAPIER.ColliderDesc.trimesh(
-        new Float32Array(mesh.vertices), new Uint32Array(mesh.indices),
+        new Float32Array(mesh.vertices), new Uint32Array(mesh.indices), RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES,
       ).setFriction(0.55).setRestitution(0.18).setCollisionGroups(mesh.element.startsWith('bump-') ? CollisionGroups.bump : CollisionGroups.field));
       this.colliderElements.set(collider.handle, mesh.element);
     }
+    // Publish the static field to scene queries before the first actuator tick.
+    // No dynamic bodies or fuel exist yet, so this advances no gameplay state.
+    this.world.step();
     this.fuelSystem = new FuelSystem(this.world, fuel.map(p => [...p]));
     this.humanPlayer = new HumanPlayer(this.world, this.fuelSystem);
     this.hubs = new HubSystem(this.world, this.fuelSystem, withHubs, event => this.match.recordProcessed(event));

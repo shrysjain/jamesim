@@ -1,7 +1,8 @@
 import RAPIER from '@dimforge/rapier3d-compat';
 import type { Vec3 } from '../field/types';
 import { CollisionGroups } from './collisionGroups';
-import { REBLITZ, COLLECTING_POSE, partTransform } from '../robot/RobotDefinition';
+import { REBLITZ, COLLECTING_POSE } from '../robot/RobotDefinition';
+import { constrainMechanismPose, mechanismColliderPose } from './MechanismMotion';
 import type { RobotDefinition, RobotPose, RobotCollider } from '../robot/RobotDefinition';
 
 type Vector = { x: number; y: number; z: number };
@@ -11,7 +12,7 @@ export const NEUTRAL_INPUT: DriveInput = { forward: 0, strafe: 0, turn: 0, slow:
 export type DriveTuning = { maxSpeed: number; acceleration: number; grip: number };
 // Legacy fallback; definition-owned drive targets take precedence.
 export const DEFAULT_TUNING: DriveTuning = { maxSpeed: 16.7 * 0.3048, acceleration: 33 * 0.3048, grip: 1.05 };
-export const DRIVE_RESPONSE = { turnRate: 6.4, steerRate: 24 };
+export const DRIVE_RESPONSE = { turnRate: 6.4, steerRate: 32, brakingMultiplier: 2 };
 export const CHASSIS = REBLITZ;
 export const DRIVE_SPAWNS = {
   practice: { label: 'Blue practice', position: [6.1, 0.26, 2.1] as Vec3, yaw: 0 },
@@ -134,19 +135,18 @@ export class SwerveChassis {
   }
 
   /** Update the articulated collision proxies for simulation or pose inspection. */
-  setPose(pose: RobotPose) {
-    const next = { intake: Math.max(0, Math.min(1, pose.intake)), hopper: Math.max(0, Math.min(1, pose.hopper)), hood: Math.max(0, Math.min(1, pose.hood)), climber: Math.max(0, Math.min(1, pose.climber ?? 0)) };
+  setPose(pose: RobotPose, contactConstrained = false) {
+    let next: RobotPose = { intake: Math.max(0, Math.min(1, pose.intake)), hopper: Math.max(0, Math.min(1, pose.hopper)), hood: Math.max(0, Math.min(1, pose.hood)), climber: Math.max(0, Math.min(1, pose.climber ?? 0)) };
     const nextOpposed = this.definition.intake.opposed ? Math.max(0, Math.min(1, pose.opposedIntake ?? 0)) : undefined;
     const previousOpposed = this.pose.opposedIntake;
     if (nextOpposed !== undefined) Object.assign(next, { opposedIntake: nextOpposed });
     if (this.poseInitialized && nextOpposed === previousOpposed && next.intake === this.pose.intake && next.hopper === this.pose.hopper && next.hood === this.pose.hood && next.climber === this.pose.climber) return;
+    if (contactConstrained && this.poseInitialized) next = constrainMechanismPose(this.world, this.body, this.definition, this.mechanismColliders, this.fieldElements, this.pose, next);
     this.poseInitialized = true; this.pose = next;
     for (const { collider, definition: shape } of this.mechanismColliders) {
-      const { angle, pivot, shift, rise } = partTransform(this.definition, shape.part, this.pose);
-      const x = shape.center[0] - pivot[0], y = shape.center[1] - pivot[1];
-      collider.setTranslationWrtParent(vec(pivot[0] + Math.cos(angle) * x - Math.sin(angle) * y + shift,
-        pivot[1] + Math.sin(angle) * x + Math.cos(angle) * y + rise, shape.center[2]));
-      collider.setRotationWrtParent({ x: 0, y: 0, z: Math.sin(angle / 2), w: Math.cos(angle / 2) });
+      const transform = mechanismColliderPose(this.definition, shape, this.pose);
+      collider.setTranslationWrtParent(transform.position);
+      collider.setRotationWrtParent(transform.rotation);
     }
     // Refresh attached collider world transforms even when inspection is paused.
     this.body.setTranslation(this.body.translation(), true);
@@ -248,10 +248,11 @@ export class SwerveChassis {
       if (Math.abs(angleDelta(targetAngle, m.angle)) > Math.PI / 2) { targetAngle += Math.PI; targetSpeed *= -1; }
       const error = angleDelta(targetAngle, m.angle);
       if (powered) m.angle += Math.max(-DRIVE_RESPONSE.steerRate * dt, Math.min(DRIVE_RESPONSE.steerRate * dt, error));
-      targetSpeed *= Math.max(0, Math.cos(error));
-      if (powered) m.speed = this.input.brake ? 0 : this.definition.drive?.brakeAcceleration === undefined
-        ? approach(m.speed, targetSpeed, this.tuning.acceleration * dt)
-        : nextWheelSpeed(m.speed,targetSpeed,dt,this.tuning.acceleration,this.definition.drive.brakeAcceleration);
+      targetSpeed *= Math.max(0, Math.cos(angleDelta(targetAngle, m.angle)));
+      const previousSpeed = m.speed;
+      if (powered) m.speed = this.input.brake ? 0 : nextWheelSpeed(m.speed, targetSpeed, dt,
+        this.tuning.acceleration, this.definition.drive?.brakeAcceleration ?? this.tuning.acceleration * DRIVE_RESPONSE.brakingMultiplier);
+      const commandAcceleration = powered ? (m.speed - previousSpeed) / dt : 0;
       const mount = add(position, rotate(vec(m.x, this.definition.mountY, m.z), q));
       const maxRay = this.definition.springLength + this.definition.travel + this.definition.wheelRadius;
       // Fuel never acts as a support surface. It still collides with the frame and wheel proxies.
@@ -277,7 +278,10 @@ export class SwerveChassis {
       const lateral = normalize(vec(hit.normal.y * tangent.z - hit.normal.z * tangent.y,
         hit.normal.z * tangent.x - hit.normal.x * tangent.z, hit.normal.x * tangent.y - hit.normal.y * tangent.x));
       if (!powered) m.speed = dot(velocity, tangent);
-      const motorForce = powered ? (m.speed - dot(velocity, tangent)) * (this.definition.mass / 4) * 14 : 0;
+      // Feed the already acceleration-limited wheel command forward instead of
+      // waiting for a velocity error to build. Payload and tire grip still limit
+      // the resulting chassis acceleration; this never assigns body velocity.
+      const motorForce = powered ? (commandAcceleration + (previousSpeed - dot(velocity, tangent)) * 14) * (this.definition.mass / 4) : 0;
       const sideForce = -dot(velocity, lateral) * (this.definition.mass / 4) * 22;
       let tireForce = add(mul(tangent, motorForce), mul(lateral, sideForce));
       const limit = this.tuning.grip * m.load;
