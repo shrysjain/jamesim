@@ -1,14 +1,45 @@
 import RAPIER from '@dimforge/rapier3d-compat';
 import type { SwerveChassis } from './SwerveChassis';
 import { FUEL_MASS, FUEL_RADIUS } from './FuelSystem';
-import type { FuelSystem } from './FuelSystem';
+import type { Fuel, FuelSystem } from './FuelSystem';
 import { add, sub, scale, rotate, unrotate, v3 } from './vector';
 import { CollisionGroups } from './collisionGroups';
 
-/** Floor fuel is a horizontal bumper contact, never a wheel or belly support. */
+/** Loose floor fuel uses horizontal bumper contacts. Covered stored fuel
+ * transfers field contacts to the chassis without adding payload mass. */
 export class GameplayContacts {
+  private coveredCargo = new Map<number, RAPIER.Collider>();
   constructor(private world: RAPIER.World, private chassis: SwerveChassis, private fuel: FuelSystem,
     private fieldElements: Map<number, string>) {}
+
+  /** Original owned bodies stay disabled and payload mass is counted once.
+   * Massless field-only spheres transfer contact through a retaining cover to
+   * the chassis, rather than ejecting cargo through fabric or ignoring beams. */
+  syncCoveredCargo(held: Fuel[]) {
+    const stored = this.chassis.definition.hopper.retainingNet ? held.filter(f => f.state === 'stored') : [];
+    if (!stored.length && !this.coveredCargo.size) return;
+    const wanted = new Set(stored.map(f => f.id));
+    for (const [id, collider] of this.coveredCargo) if (!wanted.has(id)) {
+      this.world.removeCollider(collider, true); this.coveredCargo.delete(id);
+    }
+    const body = this.chassis.body, q = body.rotation(), render = this.chassis.renderRotation;
+    for (const f of stored) {
+      const offset = rotate(f.local, render), local = unrotate(offset, q);
+      let collider = this.coveredCargo.get(f.id);
+      if (!collider) {
+        collider = this.world.createCollider(RAPIER.ColliderDesc.ball(FUEL_RADIUS).setDensity(0)
+          .setTranslation(local.x, local.y, local.z)
+          .setFriction(.05).setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min)
+          .setRestitution(.05).setContactSkin(.001).setCollisionGroups(CollisionGroups.coveredCargo), body);
+        this.coveredCargo.set(f.id, collider);
+      }
+      collider.setTranslationWrtParent(local);
+      // Keep the world pose current even for a proxy created after physics,
+      // e.g. when a cancelled feed returns to storage this tick.
+      collider.setTranslation(add(body.translation(), offset));
+    }
+    this.world.propagateModifiedBodyPositionsToColliders();
+  }
 
   displaceFuel() {
     const robot = this.chassis.body, origin = robot.translation(), q = robot.rotation();

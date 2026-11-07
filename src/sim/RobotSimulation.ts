@@ -196,7 +196,7 @@ export class RobotSimulation {
       const body = this.chassis.body, q = this.chassis.renderRotation;
       const spills = this.hopper.step(dt, held, this.chassis.pose, {
         position: body.translation(), velocity: body.linvel(), angularVelocity: body.angvel(), rotation: q,
-      }, this.chassis.definition.hopper.volume.rim ? this.hopperFieldContact : undefined, indexerDirection);
+      }, this.chassis.definition.hopper.volume.rim || this.chassis.definition.hopper.retainingNet ? this.hopperFieldContact : undefined, indexerDirection);
       this.releaseSpills(spills);
     }
     this.updatePayload();
@@ -236,7 +236,7 @@ export class RobotSimulation {
   };
   postStep(dt: number) {
     if (this.inspectionPose || !this.actuatorsEnabled) return;
-    if (this.chassis.definition.hopper.volume?.rim) {
+    if (this.chassis.definition.hopper.volume && (this.hopper.volume.rim || this.chassis.definition.hopper.retainingNet)) {
       this.releaseSpills(this.hopper.resolveExternalContacts(this.held, this.chassis.pose, this.hopperFieldContact));
     }
     const up = rotate(v3(0, 1, 0), this.chassis.body.rotation());
@@ -346,8 +346,10 @@ export class RobotSimulation {
   private updatePayload() {
     const points = this.held.map(f => f.local);
     const signature = points.map(p => `${p.x.toFixed(4)},${p.y.toFixed(4)},${p.z.toFixed(4)}`).join(';');
-    if (signature === this.payloadSignature) return;
-    this.payloadSignature = signature; this.chassis.setPayload(points, FUEL_MASS, FUEL_RADIUS);
+    if (signature !== this.payloadSignature) {
+      this.payloadSignature = signature; this.chassis.setPayload(points, FUEL_MASS, FUEL_RADIUS);
+    }
+    this.contacts.syncCoveredCargo(this.held);
   }
   toWorld(local: Vector) { return add(this.chassis.body.translation(), rotate(local, this.chassis.body.rotation())); }
   renderPosition(fuel: Fuel) {

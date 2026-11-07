@@ -7,6 +7,9 @@ export const CollisionGroups = {
   fuel: 0x0002ffff,
   groundFuel: 0x0002fffb,
   chassis: 0x0004ffff,
+  // Carried fuel transmits static-field contacts through a retaining cover.
+  // Zero-density attached proxies share chassis membership, excluding bumps.
+  coveredCargo: 0x00040001,
   wheelFuel: 0x00040002,
   probe: 0x0008ffff,
 };

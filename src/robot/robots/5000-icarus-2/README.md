@@ -129,3 +129,8 @@ relative order. All 24 merge orders of the three robots plus existing tuning
 PR #11 onto main `4154227` passed and produced the same final tree. The source
 record's `integrationFiles` lists every shared path; PR descriptions disclose
 them. The refreshed standalone release build passes. Recheck future edits.
+
+
+## Visible retaining fabric
+
+Source-confirmed retaining nets now have fitted open-weave rendering that follows the existing hopper bounds. The already-enclosed cargo contacts are retained; capacity, mass and CAD payload do not change. Icarus covers only its intake bays and leaves the rigid center roof/turret uncovered. Shapes and weave dimensions are estimates, not an exact cloth reconstruction. See [retaining-net notes](../../../../docs/RETAINING_NETS.md).

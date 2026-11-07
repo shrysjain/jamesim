@@ -22,8 +22,11 @@ export class HopperDynamics {
   private floorPoints: FloorPoint[] = [];
   private obstacles: HopperObstacle[] = [];
   private lastMotion: Motion | null = null;
-  constructor(private definition: RobotDefinition) {}
-  get volume(): HopperVolume { return this.definition.hopper.volume!; }
+  private netVolume: HopperVolume | null;
+  constructor(private definition: RobotDefinition) {
+    this.netVolume = definition.hopper.retainingNet && definition.hopper.volume ? { ...definition.hopper.volume, rim: undefined } : null;
+  }
+  get volume(): HopperVolume { return this.netVolume ?? this.definition.hopper.volume!; }
   reset() { this.particles.clear(); this.arrivals.clear(); this.floorPoints = []; this.lastMotion = null; }
   /** Continue the incoming transfer's local motion when ownership becomes stored. */
   arrive(id: number, velocity: Vector) { this.arrivals.set(id, { ...velocity }); }
@@ -89,7 +92,12 @@ export class HopperDynamics {
         }
         for (const p of balls) this.constrain(p.fuel.local, front, width, pose);
         if (externalContact && iteration === 11) {
-          for (const p of balls) externalContact(p.fuel.local,p.velocity);
+          for (const p of balls) {
+            externalContact(p.fuel.local,p.velocity);
+            // A field contact may rearrange covered cargo, but cannot hand it
+            // through the cover. Remaining contact reacts on the chassis.
+            if (!this.volume.rim) this.constrain(p.fuel.local, front, width, pose);
+          }
         }
       }
       // A closed hopper's ceiling/walls can undo the last moving-frame
@@ -135,6 +143,10 @@ export class HopperDynamics {
     for (const f of held) if (f.state === 'stored') {
       const velocity = this.particles.get(f.id)?.velocity ?? v3();
       contact(f.local, velocity);
+      if (!this.volume.rim) {
+        this.constrain(f.local, front, this.volume.halfWidth - FUEL_RADIUS, pose);
+        continue;
+      }
       if (f.local.x >= front && f.local.x <= back && Math.abs(f.local.z) <= this.volume.halfWidth) continue;
       spills.push({ id: f.id, velocity: { ...velocity } }); this.particles.delete(f.id);
     }

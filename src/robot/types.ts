@@ -32,6 +32,9 @@ export type RobotDefinition = {
   modules: { name: string; x: number; z: number }[];
   intake: { pivot: Vec3; stowedAngle: number; stowTravel?: number; stowRise?: number; manualRetraction?: boolean; /** Optional lower slide fraction during automatic shooting compression; manual stow remains available. */ shootingMinExtension?: number; passiveKicker?: boolean; opposed?: { pivot: Vec3; stowTravel: number; stowRise?: number } };
   hopper: { stowTravel: number; coupledToIntake?: boolean; autoLift?: { loweredCapacity: number }; intakeCurve?: number[];
+    /** Source-confirmed retaining fabric; fitted envelope, not a cloth solver.
+     * A center gap leaves an existing rigid roof/turret uncovered in rendering. */
+    retainingNet?: { bottomY: number; centerGap?: [number, number] };
     volume?: HopperVolume; fixedSlot?: number; entry?: Vec3; entryHalfWidth?: number;
     /** Fixed internal CAD envelopes, e.g. an indexer cone or feed tower. */
     obstacles?: HopperObstacle[];

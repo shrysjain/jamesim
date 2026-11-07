@@ -33,6 +33,13 @@ export function validateRobotDefinition(d: RobotDefinition): string[] {
   if (d.hopper.floorProfile) check(d.hopper.floorProfile.length >= 2 && d.hopper.floorProfile.every(p =>
     Number.isFinite(p.x) && Number.isFinite(p.y) && (p.part === undefined || ['intake', 'opposedIntake', 'hopper'].includes(p.part)) &&
     (p.part !== 'opposedIntake' || !!d.intake.opposed)), 'Hopper floor profiles require finite points and supported moving parts.');
+  if (d.hopper.retainingNet) {
+    const net = d.hopper.retainingNet, v = d.hopper.volume;
+    check(!!v && Number.isFinite(net.bottomY) && net.bottomY >= v.floorY && net.bottomY < v.ceilingY,
+      'Retaining nets require a hopper and a finite lower edge below its roof.');
+    if (net.centerGap) check(net.centerGap.length === 2 && net.centerGap.every(Number.isFinite) && net.centerGap[0] < net.centerGap[1]
+      && !!v && net.centerGap[0] > v.frontX && net.centerGap[1] < v.backX, 'Net roof gaps must lie inside the deployed hopper.');
+  }
   if (d.hopper.physics) {
     const p = d.hopper.physics;
     check(Number.isFinite(p.restitution) && p.restitution >= 0 && p.restitution <= 1 && Number.isFinite(p.friction) && p.friction >= 0 &&
