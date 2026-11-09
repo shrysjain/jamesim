@@ -1,5 +1,35 @@
 # Approved robot PR integration
 
+## November 9 integration
+
+The owner approved all open PRs #40–54. They are incorporated in numeric order, which places every prerequisite before its dependent PR. The 23 signed, single-parent contributor commits preserve distinct features and refinements, with corrected `couchpotato7572 <122821137+couchpotato7572@users.noreply.github.com>` authorship and original author dates. Each records its source SHA and PR. Seven already-incorporated dependency or main-update commits are omitted; the Matterhorn fold from #38 is not replayed. Existing published main and contributor branches are unchanged.
+
+Every cumulative PR result exactly matches its ordinary Git merge onto the preceding combined source tree. Old Re•Blitz baseline conflicts are resolved to that cumulative tree, retaining the accepted researched rates and simultaneous-intake flag. The final contributor tree includes every approved head without copying prerequisite changes twice. PRs are closed as incorporated after pushing this linear history, following the previous attribution-preserving integrations.
+
+| PR | Incorporated source head | Result |
+| --- | --- | --- |
+| [#40](https://github.com/shrysjain/jamesim/pull/40) | `2ac33f7fc94fa375fdafeddf60a69fde62b343dc` | Concave hub net-base contacts |
+| [#41](https://github.com/shrysjain/jamesim/pull/41) | `2cd6d60ade052cbff199132f0db93969590b4168` | Re•Blitz concurrent intake/shooting |
+| [#42](https://github.com/shrysjain/jamesim/pull/42) | `3c0c6c3367d637b9800b000586d55dd9bf4261ff` | Source-confirmed retaining covers |
+| [#43](https://github.com/shrysjain/jamesim/pull/43) | `be2b0d7b32451bd79fbb95c924c435c2b23aa05b` | Internal field-mesh edge contacts |
+| [#44](https://github.com/shrysjain/jamesim/pull/44) | `6aedb6fae27d8d95cfc4f1efca5317e77b490508` | Physical-footprint bump support |
+| [#45](https://github.com/shrysjain/jamesim/pull/45) | `a2347b0b5d5d5117fe1cda695d3872bf8198dffc` | Saved player camera modes |
+| [#46](https://github.com/shrysjain/jamesim/pull/46) | `8a2877bf3a012a869a1262a70cde62a6c4eb5b52` | Concave tower-base contacts |
+| [#47](https://github.com/shrysjain/jamesim/pull/47) | `be790bc59c9729b4062b961710d66241c9201427` | Rembrandts hood, intake profiles and trench safety |
+| [#48](https://github.com/shrysjain/jamesim/pull/48) | `3b71925ea42fad94c370df4dc04b0de4ddbc2f0d` | Faster swerve response and braking |
+| [#49](https://github.com/shrysjain/jamesim/pull/49) | `366f9122098d2e9a03a8595c7dba95138b7e9c80` | Driver-priority turning and concurrent actions |
+| [#50](https://github.com/shrysjain/jamesim/pull/50) | `4818230884d5381784d2a578e488d1aca15b7277` | Field-constrained mechanism actuation |
+| [#51](https://github.com/shrysjain/jamesim/pull/51) | `7bf7d0cc36fa2b8a02d92af09501df7e53e9b85d` | Covered cargo/field contacts and retention |
+| [#52](https://github.com/shrysjain/jamesim/pull/52) | `78d1f47dfacb3239000930295c07ba1f136ae7e2` | Downpour carpet reference and tower support |
+| [#53](https://github.com/shrysjain/jamesim/pull/53) | `7093ac3a800100c8012c777c6b2eccf132c380be` | Roster-wide loaded trench recovery |
+| [#54](https://github.com/shrysjain/jamesim/pull/54) | `0884e23d633a9d21ccebac5097809850d6ce5774` | Roster-wide tower exit routes |
+
+Follow framing remains the default; player-selected station, POV and free cameras are available in settings. Supported simultaneous intake/shooting and manual-turn priority preserve robot-specific release limits. Source-confirmed retaining nets on Matterhorn, Icarus and Downpour retain original cargo while massless proxies transmit field contacts to the chassis. Moving mechanisms stall against real field geometry and resume when clear. The prepared field repairs remove false filled surfaces while retaining rails, feet, posts and the actual narrow tower gap. Rembrandts uses its corrected prepared hood and conservative intake profiles with predictive shooting protection. No capacity, fuel size/mass, scoring, match timing, roster visibility or hosting policy is changed.
+
+Issues #7, #8, #16, #19, #20, #21, #24, #25 and #26 have their reviewed implementation complete; merging is the final unchecked item in their retained verification lists. These fixes and recovery routes cover the documented reproductions, not every possible contact configuration. Stage 20 remains unstarted. Browser playtesting is left to the owner; no application server or manual deployment is started.
+
+Final combined validation: `pnpm test:sim` passes **865 tests across 88 files**, including all unit, robot and full-simulation cases. `pnpm build:release` passes runtime integrity, TypeScript/Vite compilation and production-payload checks: **27 runtime files / 40.86 MiB** and **20 content-hashed runtime assets**. Tests ran once after all 15 PRs were incorporated; no production integration fix or relaxed assertion was needed. The existing physics-chunk size advisory remains.
+
 ## November 5 robot follow-ups
 
 The owner additionally approved #38 Matterhorn shooting-linked folding, #37 Citrus roller repair and #39 tower-backing visibility. They are integrated in that order as three separate signed commits with corrected `couchpotato7572` authorship and source/PR trailers. #38 preserves #11's researched rates, motion limits and grip while enabling the existing load-aware hopper/intake pose controller. Its regression retains original fuel bodies and covers pause, intake/reverse overrides and full-load contraction. #37 replaces only the two source-fitted roller shells and updates the exact runtime asset/hash; unrelated CAD geometry is retained. #39 removes backing triangles only from the tower render; hub panels, field collisions, rung geometry and climbing assessment are unchanged.

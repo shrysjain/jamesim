@@ -18,11 +18,14 @@ Jamesim is a browser-only FRC 2026 REBUILT simulator. Read `docs/STAGE_19_5.md` 
 - SI units; X runs along the field, Y is up, Z across it. Blue is +X. The robot shoots along local +X and intakes along −X.
 - Run simulation at 120 Hz. Rendering, settings and wall-clock timers must not change match progression.
 - Preserve one stable ID/body per fuel. Capturing, storing, shooting, processing, returning and restarting must conserve the configured supply (currently 504).
+- Source-confirmed covered hoppers may use massless field-contact proxies; original owned fuel bodies stay disabled and payload mass is counted once. Retain uncovered finite-rim spilling and horizontal loose-fuel displacement.
 - AUTO and teleop are both driver-operated. Keep the disabled assessment gaps and processed-fuel scoring windows.
 - Controls: WASD drive, J/L turn, Shift intake, Space align/shoot/pass, Q reverse, C toggle supported climbers, V toggle supported manual intakes, N switch Icarus intake sides, R restart the selected session.
 - 2910 starts retracted and passively deploys both assemblies. The hopper stays out. Only the intake compresses while shooting and returns out when shooting stops.
 - Retain horizontal fuel displacement and stable collision support. Bump-only visual lean is intentional; free physical tipping is not the current model.
 - Preserve the approved follow-camera framing and field occlusion behavior unless the task changes them.
+- Follow remains the default player camera. Settings also persist Driver station, Robot POV and Freecam. Freecam owns movement keys and suspends robot controls while the unpaused match clock continues; orbit inspection remains development-only. See `docs/PLAYER_CAMERAS.md`.
+- Manual turning takes priority over chassis auto-aim; intake, drive and shoot requests remain concurrent within each robot's readiness limits. Mechanism actuation must respect field sweeps, and Rembrandts retains its optional predictive trench protection. See `docs/MULTIPLE_ACTIONS.md` and `docs/MECHANISM_CONTACTS.md`.
 - Launch opens singleplayer setup with the registered CAD robot roster, alliance and pose selection. Active play shows the scoreboard; Icarus additionally shows its selected intake side and switch status from the approved November 5 robot integration. Escape owns pause/settings/restart/back-to-setup; no fuel HUD, general controls overlay, toolbar or singleplayer foul UI. High Tide and the fictional trainer are removed. Prismarine remains temporarily hidden from selection. Inspector, tuning and development shortcuts belong only in development builds.
 
 ## Assets and publication
