@@ -29,7 +29,7 @@ export class GameplayContacts {
       if (!collider) {
         collider = this.world.createCollider(RAPIER.ColliderDesc.ball(FUEL_RADIUS).setDensity(0)
           .setTranslation(local.x, local.y, local.z)
-          .setFriction(.05).setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min)
+          .setFriction(.01).setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min)
           .setRestitution(.05).setContactSkin(.001).setCollisionGroups(CollisionGroups.coveredCargo), body);
         this.coveredCargo.set(f.id, collider);
       }
