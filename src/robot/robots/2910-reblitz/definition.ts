@@ -27,7 +27,10 @@ export const REBLITZ: RobotDefinition = {
     { name: 'module-rear-right', x: -0.282575, z: 0.276225 },
   ],
   intake: { pivot: [-0.27305, -0.0467875, 0], stowedAngle: -114 * Math.PI / 180 },
-  hopper: { stowTravel: 0.29845, fixedSlot: REBLITZ_FEEDER_POCKET, volume: REBLITZ_VOLUME }, // measured between collecting and starting CAD configurations
+  hopper: { stowTravel: 0.29845, fixedSlot: REBLITZ_FEEDER_POCKET, volume: REBLITZ_VOLUME,
+    // Fitted intake handoff behind the pickup. Preserve the captured lane;
+    // storage slots seed preloads, rather than receiving each new ball directly.
+    entry: [-.37, .10, 0], entryHalfWidth: .27 }, // measured hopper travel between collecting/starting CAD configurations
   hood: { pivot: [0.282575, 0.25325, 0], maxAngle: 37 * Math.PI / 180 },
   colliders: [
     // Bumpers match the CAD envelope; contact surfaces use rounded edges.

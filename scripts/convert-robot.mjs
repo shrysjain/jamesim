@@ -118,7 +118,11 @@ for(const g of groups.values()){
 }
 await doc.transform(weld(),prune(),meshopt({encoder:MeshoptEncoder,level:'high'}));
 await mkdir(output,{recursive:true});const glb=await io.writeBinary(doc);await writeFile(`${output}/robot.glb`,glb);
+// Derive each complete feeder assembly's shaft center after preparation;
+// one Silicone subpart's bounds are offset from the actual roller axis.
+await import('../src/robot/robots/2910-reblitz/repair-rollers.mjs');
+const preparedBytes = (await readFile(`${output}/robot.glb`)).length;
 const bounds=Object.fromEntries([...measurements].map(([key,b])=>[key,{min:b.min.toArray(),max:b.max.toArray(),size:b.getSize(new Vector3()).toArray()}]));
-const report={source:input,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceBytes:source.length,modelBytes:glb.length,triangles:doc.getRoot().listMeshes().reduce((s,m)=>s+m.listPrimitives().reduce((t,p)=>t+p.getIndices().getCount()/3,0),0),removed,kept,excludedFuel,sourceToRobot:frame.toArray(),bounds,intakePivot,hoodPivot,parts};
+const report={source:input,sourceSha256:createHash('sha256').update(source).digest('hex'),sourceBytes:source.length,modelBytes:preparedBytes,triangles:doc.getRoot().listMeshes().reduce((s,m)=>s+m.listPrimitives().reduce((t,p)=>t+p.getIndices().getCount()/3,0),0),removed,kept,excludedFuel,sourceToRobot:frame.toArray(),bounds,intakePivot,hoodPivot,parts};
 await writeFile(`${output}/asset-report.json`,JSON.stringify(report,null,2));
 console.log(JSON.stringify({...report,parts:undefined},null,2));
