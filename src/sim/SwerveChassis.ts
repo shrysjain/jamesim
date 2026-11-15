@@ -119,9 +119,9 @@ export class SwerveChassis {
       const r = Math.min(shape.radius ?? 0, ...shape.halfExtents) * 0.95;
       const half = shape.halfExtents.map(v => v - r) as Vec3;
       const desc = (r ? RAPIER.ColliderDesc.roundCuboid(...half, r) : RAPIER.ColliderDesc.cuboid(...half))
-        // Tire traction is solved below. Let the low-friction frame slide on
-        // walls instead of averaging its friction up to the field material.
-        .setDensity(0).setFriction(shape.part === 'chassis' && shape.halfExtents[1] < 0.01 ? 0.02 : 0.05)
+        // Tire traction is solved below. Side frames need very little material
+        // drag while the driver presses into a wall; retain bellypan support.
+        .setDensity(0).setFriction(shape.part === 'chassis' && shape.halfExtents[1] < 0.01 ? 0.02 : 0.01)
         .setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min).setRestitution(0.05).setCollisionGroups(CollisionGroups.chassis);
       this.mechanismColliders.push({ collider: world.createCollider(desc, this.body), definition: shape });
     }

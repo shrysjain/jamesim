@@ -62,6 +62,17 @@ Eight or fewer balls allow full intake compression. Required extension increases
 
 ## Forgiving contacts
 
+Issue #57: frame and articulated mechanism material friction is .01 instead of
+.05, retaining the minimum combine rule. Covered cargo's field-contact proxies
+use the same .01 value. The thin chassis bellypan keeps its .02 friction and
+the separately solved tire grip is unchanged. These are fitted gameplay
+coefficients: the change reduces drag while pressing diagonally against a wall
+without removing normal contacts, assigning chassis velocity or changing drive
+response. An empty-robot flat-wall sample with full forward and .15 strafe input
+increased the 1.5-second tangent displacement from .317–.421 m to .445–.590 m
+across the roster. The regression now requires useful tangent speed/distance,
+in addition to wall containment, ground support, withdrawal and stable fuel IDs.
+
 Pitch and roll are locked; yaw and vertical suspension remain physical. The simulation also projects physical rotation and angular velocity onto yaw before suspension queries and after each world step. Rotation locks alone allowed small off-axis errors to accumulate during loaded driving until the mechanism colliders supported the robot above the floor. This correction preserves linear velocity, height and yaw; it is not a height clamp or automatic respawn.
 
 Bump triangles provide a level, damped support platform sampled over the robot footprint. The complete robot leans with the bump while its modules remain rigidly mounted at the prepared CAD positions. This avoids bellypan/intake beaching while preserving the bump's height change. The remaining field geometry still blocks the chassis normally.

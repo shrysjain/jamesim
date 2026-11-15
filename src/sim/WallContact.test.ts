@@ -31,6 +31,11 @@ for (const definition of Object.values(ROBOTS)) describe(`${definition.id}: wall
       r.input = { ...NEUTRAL_INPUT, forward: 1, strafe: .15 }; run(s, 1.5);
       const slide = { ...r.body.translation() };
       expect(slide.z - contact.z).toBeGreaterThan(.2);
+      // A token displacement can pass while still feeling stuck. A small
+      // tangent command should retain useful motion under full wall pressure.
+      const tangentSpeed = r.tuning.maxSpeed * .15 / Math.hypot(1, .15);
+      expect(slide.z - contact.z).toBeGreaterThan(tangentSpeed * 1.5 * .4);
+      expect(r.body.linvel().z).toBeGreaterThan(tangentSpeed * .5);
       expect(slide.y).toBeLessThan(.35); expect(r.telemetry.grounded).toBe(4);
       r.input = { ...NEUTRAL_INPUT, forward: -1 }; run(s, 1);
       expect(r.body.translation().x).toBeLessThan(slide.x - .8);
